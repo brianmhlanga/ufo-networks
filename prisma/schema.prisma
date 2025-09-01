@@ -1,0 +1,491 @@
+// ---------------------------
+// Prisma + MySQL datasource
+// ---------------------------
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------
+// Enums
+// ---------------------------
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  AGENT
+  CUSTOMER
+}
+
+enum VoucherStatus {
+  AVAILABLE      // generated & sellable
+  RESERVED       // held briefly for checkout/assignment
+  SOLD           // sold but not yet redeemed
+  REDEEMED       // fully used/redeemed
+  EXPIRED        // expired by date
+  DISABLED       // soft-blocked by admin
+}
+
+enum PaymentProvider {
+  PAYNOW
+}
+
+enum PaymentStatus {
+  PENDING
+  AUTHORIZED
+  PAID
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum AdPlacementPage {
+  SUCCESS        // "success page" after router sign-in
+}
+
+// ---------------------------
+// Core Users & Agents
+// ---------------------------
+model User {
+  id           String   @id @default(cuid())
+  email        String?  @unique
+  phone        String?  @unique
+  passwordHash String?
+  name         String?
+  role         Role     @default(CUSTOMER)
+  agentProfile AgentProfile?
+  orders       Order[]
+  auditLogs    AuditLog[]
+  assignedVouchers Voucher[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([role])
+}
+
+model AgentProfile {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  displayName        String
+  // default discount can be overridden per agent purchase
+  defaultDiscountPct Decimal  @default(0.0) @db.Decimal(5,2)
+  // optional cash-handling flags/limits
+  cashOnly           Boolean  @default(true)
+
+  // Agent activity
+  purchases          AgentPurchase[]   // bulk buys (e.g., "100 vouchers" entitlement)
+  sales              AgentSale[]       // individual cash sales
+  voucherDiscounts   AgentVoucherDiscount[] // percentage discounts for specific voucher types
+  assignedVouchers   Voucher[]
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------
+// Agent Voucher Discounts
+// ---------------------------
+model AgentVoucherDiscount {
+  id                String   @id @default(cuid())
+  agentId           String
+  // scope: can be tied to location, batch, or voucher type
+  locationId        String?
+  batchId           String?
+  voucherType       String?  // e.g., "1hour", "24hour", "unlimited"
+  
+  // percentage discount (e.g., 10 for 10%)
+  discountPercentage Decimal  @db.Decimal(5,2)
+  
+  // optional conditions
+  minQuantity        Int?     // minimum quantity to qualify for this discount
+  maxQuantity        Int?     // maximum quantity this discount applies to
+  active             Boolean  @default(true)
+  notes              String?
+
+  // relations
+  agent              AgentProfile @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  location           Location?    @relation(fields: [locationId], references: [id])
+  batch              VoucherBatch?@relation(fields: [batchId], references: [id])
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([agentId])
+  @@index([locationId, batchId, voucherType])
+  @@index([active])
+}
+
+// ---------------------------
+// Locations (network points)
+// ---------------------------
+model Location {
+  id          String   @id @default(cuid())
+  name        String
+  code        String   @unique // e.g., short code used by routers/SSIDs
+  town        String?
+  area        String?
+  province    String?
+  // router metadata if needed
+  meta        Json?
+  latitude    Float?
+  longitude   Float?
+  // Voucher generation & stock
+  batches     VoucherBatch[]
+  vouchers    Voucher[]
+
+  // Ads targeting
+  adLinks     AdLocationLink[]
+
+  // Agent discounts
+  agentDiscounts AgentVoucherDiscount[]
+  agentPurchases AgentPurchase[]
+  orderItems     OrderItem[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([province, town, area])
+  @@index([code])
+}
+
+// ---------------------------
+// Vouchers & Batches
+// ---------------------------
+// A batch defines a template/config for a set of vouchers at a location
+model VoucherBatch {
+  id              String   @id @default(cuid())
+  locationId      String
+  name            String
+  // commercial defaults for generated vouchers in this batch
+  retailPrice     Decimal  @db.Decimal(10,2)
+  hours           Int
+  numberOfUsers   Int       // concurrent users allowed
+  startDate       DateTime  // when vouchers in this batch can start being used
+  endDate         DateTime  // soft business end date (can be <= voucher expiry)
+  // safety flags
+  active          Boolean   @default(true)
+  notes           String?
+
+  // relations
+  location        Location  @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  vouchers        Voucher[]
+  agentDiscounts  AgentVoucherDiscount[]
+  agentPurchases  AgentPurchase[]
+  orderItems      OrderItem[]
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([locationId, active])
+  @@index([startDate, endDate])
+}
+
+// Each voucher has its own dates & status
+model Voucher {
+  id              String        @id @default(cuid())
+  batchId         String
+  locationId      String
+  // the human-facing "voucher number" (can be printed). Keep distinct from the secret PIN.
+  voucherNumber   String        @unique
+  // secret PIN delivered to buyer; must be unique globally
+  pin             String        @unique
+  retailPrice     Decimal       @db.Decimal(10,2)
+  // capacity & accounting
+  hours           Int
+  numberOfUsers   Int
+  usageCount      Int           @default(0)
+  // availability windows
+  startDate       DateTime
+  endDate         DateTime
+  expiryDate      DateTime      // hard expiry
+  status          VoucherStatus @default(AVAILABLE)
+
+  // Ownership after sale (either agent sale or public order)
+  soldAt          DateTime?
+  assignedToUserId  String?     // for public buyer (optional)
+  assignedToAgentId String?     // for agent who sold it (optional)
+  redeemedAt      DateTime?
+
+  // soft locks during checkout
+  reservedByOrderId String?
+  reservedAt        DateTime?
+
+  // relations
+  batch           VoucherBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  location        Location     @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  assignedToUser  User?        @relation(fields: [assignedToUserId], references: [id])
+  assignedToAgent AgentProfile?@relation(fields: [assignedToAgentId], references: [id])
+  reservedByOrder Order?       @relation("OrderReservedVouchers", fields: [reservedByOrderId], references: [id])
+
+  agentSale       AgentSale?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([locationId, status])
+  @@index([expiryDate])
+  @@index([reservedByOrderId])
+  @@index([assignedToAgentId])
+  @@index([assignedToUserId])
+}
+
+// ---------------------------
+// Agent "claim on sale" flow
+// ---------------------------
+// Agents pre-purchase ENTITLEMENTS in bulk (e.g., 100 units) at a discount.
+// No specific voucher is tied until each unit is sold; then we "claim" one AVAILABLE voucher.
+model AgentPurchase {
+  id                String   @id @default(cuid())
+  agentId           String
+  // scope: an entitlement is tied to a location or batch (choose one).
+  // Many deployments will tie to a specific Location (any voucher from that location),
+  // but you can also lock it to a Batch for stricter controls.
+  locationId        String?
+  batchId           String?
+
+  quantity          Int
+  // pricing the agent pays (discounted from retail)
+  unitCost          Decimal  @db.Decimal(10,2)
+  totalCost         Decimal  @db.Decimal(12,2)
+
+  // accounting
+  claimedCount      Int      @default(0) // how many units turned into real vouchers (AgentSale created)
+  notes             String?
+
+  // relations
+  agent             AgentProfile @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  location          Location?    @relation(fields: [locationId], references: [id])
+  batch             VoucherBatch?@relation(fields: [batchId], references: [id])
+  sales             AgentSale[]
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([agentId])
+  @@index([locationId, batchId])
+}
+
+// Each cash sale by an agent "claims" an AVAILABLE voucher that matches the entitlement scope.
+model AgentSale {
+  id                String   @id @default(cuid())
+  agentId           String
+  agentPurchaseId   String
+  voucherId         String    @unique   // the specific voucher claimed at sale time
+  // cash price the end customer paid (can be = retail or agent's own price)
+  soldPrice         Decimal   @db.Decimal(10,2)
+  buyerPhone        String?   // optional for SMSing PIN
+  buyerNote         String?
+
+  // relations
+  agent             AgentProfile @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  agentPurchase     AgentPurchase @relation(fields: [agentPurchaseId], references: [id], onDelete: Cascade)
+  voucher           Voucher       @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([agentId])
+  @@index([agentPurchaseId])
+}
+
+// ---------------------------
+// Public checkout (no account needed) + Paynow
+// ---------------------------
+// Public Orders can be anonymous; we still capture contact so we can deliver PINs.
+model Order {
+  id              String        @id @default(cuid())
+  userId          String?
+  // anonymous buyer contact
+  buyerEmail      String?
+  buyerPhone      String?
+  buyerName       String?
+  currency        String        @default("USD")
+
+  subtotal        Decimal       @db.Decimal(12,2)
+  discountTotal   Decimal       @default(0.00) @db.Decimal(12,2)
+  total           Decimal       @db.Decimal(12,2)
+
+  status          String        @default("PENDING") // keep flexible; derive from payments
+  // Reserve → Pay → Assign flow:
+  // - Create Order + reserve n vouchers (status RESERVED)
+  // - On Paynow PAID → assign vouchers to user (status SOLD)
+  // - If timeout/failed → release reservations
+
+  payments        Payment[]
+  items           OrderItem[]
+  // soft relation for reserved vouchers (see Voucher.reservedByOrderId)
+  reservedVouchers Voucher[]    @relation("OrderReservedVouchers")
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User?    @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  // optional scoping preferences (e.g., buyer chose a location or batch to draw from)
+  locationId  String?
+  batchId     String?
+  // quantity of vouchers to fulfill from AVAILABLE stock
+  quantity    Int
+  unitPrice   Decimal  @db.Decimal(10,2)
+  lineTotal   Decimal  @db.Decimal(12,2)
+
+  order       Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  location    Location?    @relation(fields: [locationId], references: [id])
+  batch       VoucherBatch?@relation(fields: [batchId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([locationId, batchId])
+}
+
+model Payment {
+  id               String          @id @default(cuid())
+  orderId          String
+  provider         PaymentProvider
+  status           PaymentStatus   @default(PENDING)
+  amount           Decimal         @db.Decimal(12,2)
+
+  // Paynow-specific fields
+  paynowReference  String?         @unique
+  paynowPollUrl    String?         // useful for backend polling
+  paynowStatusMsg  String?
+  // raw payloads for audits/debugging
+  providerPayload  Json?
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  order            Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([provider, status])
+}
+
+// ---------------------------
+// Advertising on Success Page
+// ---------------------------
+// Monthly packages (number of active ads included)
+model AdPackage {
+  id               String   @id @default(cuid())
+  name             String
+  advertsIncluded  Int
+  monthlyPrice     Decimal  @db.Decimal(10,2)
+  active           Boolean  @default(true)
+
+  subscriptions    AdSubscription[]
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([active])
+}
+
+// Who buys ads (can be a user or external)
+model Advertiser {
+  id          String   @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  company     String?
+  meta        Json?
+
+  subscriptions AdSubscription[]
+  ads           Ad[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AdSubscription {
+  id             String     @id @default(cuid())
+  advertiserId   String
+  adPackageId    String
+  startsAt       DateTime
+  endsAt         DateTime   // typically startsAt + 1 month
+  remainingSlots Int        // how many ads can still be created/activated under this sub
+  active         Boolean    @default(true)
+
+  advertiser     Advertiser @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  package        AdPackage  @relation(fields: [adPackageId], references: [id], onDelete: Restrict)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([advertiserId])
+  @@index([adPackageId, active])
+  @@index([endsAt])
+}
+
+// The ad itself
+model Ad {
+  id             String          @id @default(cuid())
+  advertiserId   String
+  title          String
+  mediaUrl       String?         // image/video (CDN)
+  targetUrl      String?
+  htmlSnippet    String?         // optional custom creative
+  placementPage  AdPlacementPage @default(SUCCESS)
+  // schedule
+  startsAt       DateTime
+  endsAt         DateTime?       // nullable; if null, run while subscription active
+  active         Boolean         @default(true)
+
+  // targeting: many-to-many with Location
+  locations      AdLocationLink[]
+
+  // metrics
+  impressions    Int             @default(0)
+  clicks         Int             @default(0)
+
+  advertiser     Advertiser @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([active, placementPage])
+  @@index([startsAt, endsAt])
+}
+
+model AdLocationLink {
+  adId       String
+  locationId String
+
+  ad        Ad       @relation(fields: [adId], references: [id], onDelete: Cascade)
+  location  Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@id([adId, locationId])
+  @@index([locationId])
+}
+
+// ---------------------------
+// System & Audit
+// ---------------------------
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  entity    String?
+  entityId  String?
+  details   Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  actor     User?    @relation(fields: [actorId], references: [id])
+
+  @@index([actorId, createdAt])
+  @@index([entity, entityId])
+}
