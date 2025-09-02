@@ -56,14 +56,18 @@ model User {
   passwordHash String?
   name         String?
   role         Role     @default(CUSTOMER)
+  status       String   @default("ACTIVE") // ACTIVE, INACTIVE, BLACKLISTED
   agentProfile AgentProfile?
   orders       Order[]
   auditLogs    AuditLog[]
   assignedVouchers Voucher[]
+  agentSales   AgentSale[]
+  agentPurchases AgentPurchase[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   @@index([role])
+  @@index([status])
 }
 
 model AgentProfile {
@@ -188,7 +192,7 @@ model VoucherBatch {
 // Each voucher has its own dates & status
 model Voucher {
   id              String        @id @default(cuid())
-  batchId         String
+  batchId         String?
   locationId      String
   // the human-facing "voucher number" (can be printed). Keep distinct from the secret PIN.
   voucherNumber   String        @unique
@@ -216,7 +220,7 @@ model Voucher {
   reservedAt        DateTime?
 
   // relations
-  batch           VoucherBatch @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  batch           VoucherBatch? @relation(fields: [batchId], references: [id], onDelete: SetNull)
   location        Location     @relation(fields: [locationId], references: [id], onDelete: Cascade)
   assignedToUser  User?        @relation(fields: [assignedToUserId], references: [id])
   assignedToAgent AgentProfile?@relation(fields: [assignedToAgentId], references: [id])
@@ -259,6 +263,7 @@ model AgentPurchase {
 
   // relations
   agent             AgentProfile @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  user              User         @relation(fields: [agentId], references: [id], onDelete: Cascade, map: "AgentPurchase_userId_fkey")
   location          Location?    @relation(fields: [locationId], references: [id])
   batch             VoucherBatch?@relation(fields: [batchId], references: [id])
   sales             AgentSale[]
@@ -283,6 +288,7 @@ model AgentSale {
 
   // relations
   agent             AgentProfile @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  user              User         @relation(fields: [agentId], references: [id], onDelete: Cascade, map: "AgentSale_userId_fkey")
   agentPurchase     AgentPurchase @relation(fields: [agentPurchaseId], references: [id], onDelete: Cascade)
   voucher           Voucher       @relation(fields: [voucherId], references: [id], onDelete: Cascade)
 
@@ -433,7 +439,7 @@ model AdSubscription {
 // The ad itself
 model Ad {
   id             String          @id @default(cuid())
-  advertiserId   String
+  advertiserId   String?
   title          String
   mediaUrl       String?         // image/video (CDN)
   targetUrl      String?
@@ -451,7 +457,7 @@ model Ad {
   impressions    Int             @default(0)
   clicks         Int             @default(0)
 
-  advertiser     Advertiser @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
+  advertiser     Advertiser? @relation(fields: [advertiserId], references: [id], onDelete: Cascade)
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt

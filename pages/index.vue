@@ -26,8 +26,12 @@
 
           <!-- CTA Buttons -->
           <div class="hidden lg:flex items-center space-x-3">
-            <Button label="Sign In" class="px-6 py-2.5 text-secondary hover:text-primary hover:bg-gray-50 rounded-xl font-medium transition-all" text />
-            <Button label="Get Started" class="px-6 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-900 font-medium shadow-lg hover:shadow-xl transition-all" />
+            <NuxtLink to="/login">
+              <Button label="Sign In" class="px-6 py-2.5 text-secondary hover:text-primary hover:bg-gray-50 rounded-xl font-medium transition-all" text />
+            </NuxtLink>
+            <NuxtLink to="/signup">
+              <Button label="Get Started" class="px-6 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-900 font-medium shadow-lg hover:shadow-xl transition-all" />
+            </NuxtLink>
           </div>
 
           <!-- Mobile Menu Button -->
@@ -49,8 +53,12 @@
             <NuxtLink to="/contact" class="block px-6 py-4 text-secondary hover:text-primary hover:bg-gray-50 rounded-xl transition-all font-medium text-lg" @click="mobileMenuOpen = false">Contact</NuxtLink>
             
             <div class="pt-6 space-y-3">
-              <Button label="Sign In" class="w-full px-6 py-3 text-secondary border border-gray-200 rounded-xl hover:bg-gray-50 font-medium text-lg transition-all" text @click="mobileMenuOpen = false" />
-              <Button label="Get Started" class="w-full px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary-900 font-medium text-lg shadow-lg transition-all" @click="mobileMenuOpen = false" />
+              <NuxtLink to="/login" class="w-full block" @click="mobileMenuOpen = false">
+                <Button label="Sign In" class="w-full px-6 py-3 text-secondary border border-gray-200 rounded-xl hover:bg-gray-50 font-medium text-lg transition-all" text />
+              </NuxtLink>
+              <NuxtLink to="/signup" class="w-full block" @click="mobileMenuOpen = false">
+                <Button label="Get Started" class="w-full px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary-900 font-medium text-lg shadow-lg transition-all" />
+              </NuxtLink>
             </div>
           </nav>
         </div>
@@ -105,13 +113,17 @@
 
           <!-- CTA Buttons -->
           <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-            <Button class="px-8 py-3 bg-primary text-white rounded-2xl hover:bg-primary-900 shadow-2xl hover:shadow-primary/25 font-semibold text-lg transition-all transform hover:scale-105">
-              <span>Start Browsing Now</span>
-              <i class="pi pi-arrow-right ml-2"></i>
-            </Button>
-            <Button class="px-8 py-3 bg-white/90 text-secondary border border-gray-200 rounded-2xl hover:bg-white shadow-xl font-semibold text-lg transition-all transform hover:scale-105" text>
-              <span>Learn More</span>
-            </Button>
+            <NuxtLink to="/vouchers">
+              <Button class="px-8 py-3 bg-primary text-white rounded-2xl hover:bg-primary-900 shadow-2xl hover:shadow-primary/25 font-semibold text-lg transition-all transform hover:scale-105">
+                <span>Start Browsing Now</span>
+                <i class="pi pi-arrow-right ml-2"></i>
+              </Button>
+            </NuxtLink>
+            <NuxtLink to="/locations">
+              <Button class="px-8 py-3 bg-white/90 text-secondary border border-gray-200 rounded-2xl hover:bg-white shadow-xl font-semibold text-lg transition-all transform hover:scale-105" text>
+                <span>Learn More</span>
+              </Button>
+            </NuxtLink>
           </div>
 
           <!-- Modern Stats Grid -->

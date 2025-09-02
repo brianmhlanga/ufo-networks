@@ -25,36 +25,36 @@
          </button>
        </div>
 
-                           <!-- Navigation Menu -->
-        <nav class="flex-1 overflow-y-auto p-4 space-y-2" style="height: calc(100vh - 140px);">
-          <div v-for="section in navigationSections" :key="section.title" class="mb-6">
-            <h3 class="text-xs font-semibold text-white/60 uppercase tracking-wider mb-3 px-3">
-              {{ section.title }}
-            </h3>
-            <div class="space-y-1">
-              <NuxtLink
-                v-for="item in section.items"
-                :key="item.path"
-                :to="item.path"
-                class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group"
-                :class="[
-                  $route.path.startsWith(item.path) 
-                    ? 'bg-white/20 text-white border-r-2 border-white shadow-lg backdrop-blur-sm' 
-                    : 'text-white/80 hover:bg-white/10 hover:text-white hover:shadow-md backdrop-blur-sm'
-                ]"
-              >
-                <span class="material-icons text-lg group-hover:scale-110 transition-transform">
-                  {{ item.icon }}
-                </span>
-                <span>{{ item.label }}</span>
+                                                                                                               <!-- Navigation Menu -->
+          <nav class="flex-1 overflow-y-auto p-4 space-y-2">
+           <div v-for="section in navigationSections" :key="section.title" class="mb-6">
+             <h3 class="text-xs font-semibold text-white/60 uppercase tracking-wider mb-3 px-3">
+               {{ section.title }}
+             </h3>
+             <div class="space-y-1">
+               <NuxtLink
+                 v-for="item in section.items"
+                 :key="item.path"
+                 :to="item.path"
+                 class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group"
+                 :class="[
+                   $route.path.startsWith(item.path) 
+                     ? 'bg-white/20 text-white border-r-2 border-white shadow-lg backdrop-blur-sm' 
+                     : 'text-white/80 hover:bg-white/10 hover:text-white hover:shadow-md backdrop-blur-sm'
+                 ]"
+               >
+                 <span class="material-icons text-lg group-hover:scale-110 transition-transform">
+                   {{ item.icon }}
+                 </span>
+                 <span>{{ item.label }}</span>
 
-              </NuxtLink>
-            </div>
-          </div>
-        </nav>
+               </NuxtLink>
+             </div>
+           </div>
+         </nav>
 
-             <!-- User Profile Section -->
-       <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-white/20 bg-white/10 backdrop-blur-sm">
+                            <!-- User Profile Section -->
+         <div class="flex-shrink-0 p-4 border-t border-white/20 bg-white/10 backdrop-blur-sm">
          <div class="flex items-center space-x-3">
            <div class="w-10 h-10 bg-gradient-to-br from-white/20 to-white/10 rounded-full flex items-center justify-center border border-white/30">
              <span class="material-icons text-white text-sm">person</span>
@@ -292,16 +292,7 @@ const navigationSections = ref([
   {
     title: 'Overview',
     items: [
-      { label: 'Dashboard', icon: 'dashboard', path: '/admin' },
-      { label: 'Analytics', icon: 'analytics', path: '/admin/analytics' }
-    ]
-  },
-  {
-    title: 'User Management',
-    items: [
-      { label: 'Users', icon: 'people', path: '/admin/users' },
-      { label: 'Agents', icon: 'store', path: '/admin/agents' },
-      { label: 'Roles & Permissions', icon: 'security', path: '/admin/roles' }
+      { label: 'Dashboard', icon: 'dashboard', path: '/admin' }
     ]
   },
   {
@@ -329,11 +320,11 @@ const navigationSections = ref([
     ]
   },
   {
-    title: 'System',
+    title: 'User Management',
     items: [
-      { label: 'Settings', icon: 'settings', path: '/admin/settings' },
-      { label: 'Audit Logs', icon: 'history', path: '/admin/audit-logs' },
-      { label: 'Reports', icon: 'assessment', path: '/admin/reports' }
+      { label: 'Users', icon: 'people', path: '/admin/users' },
+      { label: 'Agents', icon: 'store', path: '/admin/agents' },
+      { label: 'Roles & Permissions', icon: 'security', path: '/admin/roles' }
     ]
   }
 ])

@@ -17,8 +17,7 @@ export default defineNuxtRouteMiddleware((to) => {
     
     // Define protected routes for different user types
     const userRoutes = ['/user']
-    const protectedRoutes = ['/write-review']
-    const writeReviewRoutes = ['/write-review-']
+    
     const adminRoutes = ['/admin']
     const agentRoutes = ['/agent']
     const companyDashboardRoutes = ['/company/dashboard', '/company/analytics', '/company/reports', '/company/responses', '/company/edit', '/company/subscription', '/company/abuse-reports']
@@ -26,8 +25,6 @@ export default defineNuxtRouteMiddleware((to) => {
     
     // Check if current route is protected
     const isUserRoute = userRoutes.some(route => to.path.startsWith(route))
-    const isProtectedRoute = protectedRoutes.some(route => to.path === route)
-    const isWriteReviewRoute = writeReviewRoutes.some(route => to.path.startsWith(route))
     const isAdminRoute = adminRoutes.some(route => to.path.startsWith(route))
     const isAgentRoute = agentRoutes.some(route => to.path.startsWith(route))
     const isCompanyDashboardRoute = companyDashboardRoutes.some(route => to.path.startsWith(route))
@@ -38,8 +35,8 @@ export default defineNuxtRouteMiddleware((to) => {
     const currentUser = user && user.value ? user.value : null
     
     // If user is not logged in and trying to access protected routes
-    if (!isLoggedIn && (isUserRoute || isProtectedRoute || isWriteReviewRoute || isAdminRoute || isAgentRoute || isCompanyDashboardRoute)) {
-      return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
+    if (!isLoggedIn && (isUserRoute  || isAdminRoute || isAgentRoute || isCompanyDashboardRoute)) {
+      return navigateTo(`/login`)
     }
     
 

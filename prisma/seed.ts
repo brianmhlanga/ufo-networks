@@ -37,7 +37,8 @@ async function main() {
       phone: '+263771234567',
       passwordHash: await hash('admin123', 12),
       name: 'Super Administrator',
-      role: 'SUPER_ADMIN'
+      role: 'SUPER_ADMIN',
+      status: 'ACTIVE'
     }
   })
 
@@ -47,7 +48,8 @@ async function main() {
       phone: '+263772345678',
       passwordHash: await hash('manager123', 12),
       name: 'System Manager',
-      role: 'ADMIN'
+      role: 'ADMIN',
+      status: 'ACTIVE'
     }
   })
 
@@ -57,7 +59,8 @@ async function main() {
       phone: '+263773456789',
       passwordHash: await hash('agent123', 12),
       name: 'John Agent',
-      role: 'AGENT'
+      role: 'AGENT',
+      status: 'ACTIVE'
     }
   })
 
@@ -67,7 +70,19 @@ async function main() {
       phone: '+263774567890',
       passwordHash: await hash('agent123', 12),
       name: 'Sarah Agent',
-      role: 'AGENT'
+      role: 'AGENT',
+      status: 'ACTIVE'
+    }
+  })
+
+  const agent3 = await prisma.user.create({
+    data: {
+      email: 'agent3@ufonetworks.com',
+      phone: '+263774567891',
+      passwordHash: await hash('agent123', 12),
+      name: 'Mike Blacklisted',
+      role: 'AGENT',
+      status: 'BLACKLISTED'
     }
   })
 
@@ -77,7 +92,8 @@ async function main() {
       phone: '+263775678901',
       passwordHash: await hash('customer123', 12),
       name: 'Alice Customer',
-      role: 'CUSTOMER'
+      role: 'CUSTOMER',
+      status: 'ACTIVE'
     }
   })
 
@@ -87,7 +103,8 @@ async function main() {
       phone: '+263776789012',
       passwordHash: await hash('customer123', 12),
       name: 'Bob Customer',
-      role: 'CUSTOMER'
+      role: 'CUSTOMER',
+      status: 'ACTIVE'
     }
   })
 
