@@ -307,17 +307,32 @@ const handleLogin = async () => {
       
       // Redirect immediately after successful login
       console.log('Redirecting user:', response.user.role, 'to:', redirectUrl || '/admin')
+      console.log('User data:', response.user)
+      
+      // Small delay to ensure session is updated
+      await new Promise(resolve => setTimeout(resolve, 100))
       
       if (redirectUrl) {
+        console.log('Using redirect URL from query params:', redirectUrl)
         await navigateTo(redirectUrl, { replace: true })
       } else {
         // Redirect based on user role
+        console.log('No redirect URL, using role-based redirect')
         if (response.user.role === 'SUPER_ADMIN' || response.user.role === 'ADMIN') {
+          console.log('Redirecting admin to /admin')
           await navigateTo('/admin', { replace: true })
+          // Force refresh to ensure session is loaded
+          window.location.href = '/admin'
         } else if (response.user.role === 'AGENT') {
+          console.log('Redirecting agent to /agent')
           await navigateTo('/agent', { replace: true })
+          // Force refresh to ensure session is loaded
+          window.location.href = '/agent'
         } else {
+          console.log('Redirecting user to /user')
           await navigateTo('/user', { replace: true })
+          // Force refresh to ensure session is loaded
+          window.location.href = '/user'
         }
       }
     }

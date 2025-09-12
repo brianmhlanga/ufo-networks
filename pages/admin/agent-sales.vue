@@ -34,7 +34,7 @@
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-green-100 text-sm font-medium">Total Revenue</p>
-                <p class="text-2xl font-bold">${{ (stats.totalRevenue || 0).toFixed(2) }}</p>
+                <p class="text-2xl font-bold">${{ Number(stats.totalRevenue || 0).toFixed(2) }}</p>
               </div>
               <span class="material-icons text-3xl text-green-200">attach_money</span>
             </div>
@@ -46,7 +46,7 @@
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-purple-100 text-sm font-medium">Average Sale</p>
-                <p class="text-2xl font-bold">${{ (stats.averageSaleValue || 0).toFixed(2) }}</p>
+                <p class="text-2xl font-bold">${{ Number(stats.averageSaleValue || 0).toFixed(2) }}</p>
               </div>
               <span class="material-icons text-3xl text-purple-200">trending_up</span>
             </div>
@@ -58,7 +58,7 @@
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-orange-100 text-sm font-medium">Active Agents</p>
-                <p class="text-2xl font-bold">{{ stats.topAgents?.length || 0 }}</p>
+                <p class="text-2xl font-bold">{{ (stats.topAgents || []).length }}</p>
               </div>
               <span class="material-icons text-3xl text-orange-200">people</span>
             </div>

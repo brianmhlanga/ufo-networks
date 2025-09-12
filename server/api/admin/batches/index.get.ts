@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 
+
 const prisma = new PrismaClient()
 
 export default defineEventHandler(async (event) => {
@@ -28,13 +29,13 @@ export default defineEventHandler(async (event) => {
     // Get query parameters
     const query = getQuery(event)
     const page = parseInt(query.page as string) || 1
-    const limit = parseInt(query.limit as string) || 20
-    const search = query.search as string
-    const locationId = query.locationId as string
-    const status = query.status as string
+    const limit = parseInt(query.limit as string) || 10
+    const search = query.search as string || ''
+    const locationId = query.locationId as string || ''
+    const active = query.active === 'true' ? true : query.active === 'false' ? false : null
 
-    // Calculate pagination
-    const skip = (page - 1) * limit
+    // Calculate offset
+    const offset = (page - 1) * limit
 
     // Build where clause
     const where: any = {}
@@ -42,7 +43,7 @@ export default defineEventHandler(async (event) => {
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } }
+        { location: { name: { contains: search, mode: 'insensitive' } } }
       ]
     }
     
@@ -50,40 +51,46 @@ export default defineEventHandler(async (event) => {
       where.locationId = locationId
     }
     
-    if (status) {
-      where.status = status
+    if (active !== null) {
+      where.active = active
     }
 
-    // Fetch batches with pagination
-    const [batches, total] = await Promise.all([
-      prisma.voucherBatch.findMany({
-        where,
-        include: {
-          location: {
-            select: {
-              id: true,
-              name: true,
-              code: true
-            }
+    // Get total count
+    const total = await prisma.voucherBatch.count({ where })
+
+    // Get batches with pagination
+    const batches = await prisma.voucherBatch.findMany({
+      where,
+      include: {
+        location: {
+          select: {
+            id: true,
+            name: true,
+            code: true
           }
         },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit
-      }),
-      prisma.voucherBatch.count({ where })
-    ])
+        _count: {
+          select: {
+            vouchers: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      },
+      skip: offset,
+      take: limit
+    })
 
     return {
       success: true,
       batches,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit)
-      }
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit)
     }
+
   } catch (error) {
     console.error('Error fetching batches:', error)
     

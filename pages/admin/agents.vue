@@ -173,6 +173,19 @@
               <span class="text-[#2d3040] font-medium">{{ data.agentProfile?.displayName || 'N/A' }}</span>
             </template>
           </Column>
+
+          <Column field="agentProfile.location.name" header="Location" sortable>
+            <template #body="{ data }">
+              <div v-if="data.agentProfile?.location" class="flex items-center space-x-2">
+                <span class="material-icons text-gray-400 text-sm">location_on</span>
+                <div>
+                  <div class="text-[#2d3040] font-medium">{{ data.agentProfile.location.name }}</div>
+                  <div class="text-xs text-[#2d3040]/60">{{ data.agentProfile.location.town }}, {{ data.agentProfile.location.province }}</div>
+                </div>
+              </div>
+              <span v-else class="text-[#2d3040]/40 text-sm">No location assigned</span>
+            </template>
+          </Column>
           
           <Column field="agentProfile.defaultDiscountPct" header="Discount" sortable>
             <template #body="{ data }">
@@ -379,18 +392,32 @@
             />
           </div>
 
+
           <div>
-            <label for="commissionRate" class="block text-sm font-medium text-[#2d3040] mb-2">Commission Rate (%)</label>
-            <InputNumber
-              id="commissionRate"
-              v-model="agentForm.agentProfile.commissionRate"
-              placeholder="0.00"
-              :minFractionDigits="2"
-              :maxFractionDigits="2"
-              suffix="%"
-              :min="0"
-              :max="100"
-            />
+            <label for="locationId" class="block text-sm font-medium text-[#2d3040] mb-2">Primary Location</label>
+            <Dropdown
+              id="locationId"
+              v-model="agentForm.agentProfile.locationId"
+              :options="locationOptions"
+              optionLabel="name"
+              optionValue="id"
+              placeholder="Select location"
+              :loading="loadingLocations"
+              :disabled="locationOptions.length === 0"
+              class="w-full"
+            >
+              <template #option="{ option }">
+                <div class="flex flex-col">
+                  <span class="font-medium">{{ option.name }}</span>
+                  <span class="text-sm text-gray-500">{{ option.code }} - {{ option.town }}</span>
+                </div>
+              </template>
+              <template #empty>
+                <div class="text-center py-2 text-gray-500">
+                  {{ loadingLocations ? 'Loading locations...' : 'No locations available' }}
+                </div>
+              </template>
+            </Dropdown>
           </div>
         </div>
       </div>
@@ -579,7 +606,7 @@ const agentForm = ref({
     displayName: '',
     defaultDiscountPct: 0,
     cashOnly: true,
-    commissionRate: 10
+    locationId: null
   }
 })
 
@@ -588,6 +615,10 @@ const agents = ref<any[]>([])
 const totalAgents = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(10)
+
+// Location data
+const locationOptions = ref<any[]>([])
+const loadingLocations = ref(false)
 
 // Agent stats
 const agentStats = ref({
@@ -645,6 +676,21 @@ const fetchAgentStats = async () => {
   }
 }
 
+const fetchLocations = async () => {
+  loadingLocations.value = true
+  try {
+    const response: any = await $fetch('/api/locations')
+    if (response.success) {
+      locationOptions.value = response.data
+    }
+  } catch (error) {
+    console.error('Error fetching locations:', error)
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to fetch locations', life: 3000 })
+  } finally {
+    loadingLocations.value = false
+  }
+}
+
 // Watch for filter changes
 watch([filters, currentPage], () => {
   fetchAgents()
@@ -654,6 +700,7 @@ watch([filters, currentPage], () => {
 onMounted(() => {
   fetchAgents()
   fetchAgentStats()
+  fetchLocations()
 })
 
 // Methods
@@ -702,7 +749,7 @@ const resetForm = () => {
       displayName: '',
       defaultDiscountPct: 0,
       cashOnly: true,
-      commissionRate: 10
+      locationId: null
     }
   }
   submitted.value = false
@@ -791,12 +838,12 @@ const editAgent = (agent: any) => {
       displayName: agent.agentProfile.displayName || '',
       defaultDiscountPct: agent.agentProfile.defaultDiscountPct || 0,
       cashOnly: agent.agentProfile.cashOnly !== false,
-      commissionRate: agent.agentProfile.commissionRate || 10
+      locationId: agent.agentProfile.locationId || null
     } : {
       displayName: '',
       defaultDiscountPct: 0,
       cashOnly: true,
-      commissionRate: 10
+      locationId: null
     }
   }
   isEditing.value = true

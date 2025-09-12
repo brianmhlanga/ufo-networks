@@ -59,10 +59,9 @@ model User {
   status       String   @default("ACTIVE") // ACTIVE, INACTIVE, BLACKLISTED
   agentProfile AgentProfile?
   orders       Order[]
+  agentOrders  Order[]        @relation("AgentOrders")
   auditLogs    AuditLog[]
   assignedVouchers Voucher[]
-  agentSales   AgentSale[]
-  agentPurchases AgentPurchase[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -78,7 +77,7 @@ model AgentProfile {
   defaultDiscountPct Decimal  @default(0.0) @db.Decimal(5,2)
   // optional cash-handling flags/limits
   cashOnly           Boolean  @default(true)
-
+  locationId         String?
   // Agent activity
   purchases          AgentPurchase[]   // bulk buys (e.g., "100 vouchers" entitlement)
   sales              AgentSale[]       // individual cash sales
@@ -89,6 +88,7 @@ model AgentProfile {
   updatedAt          DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  location Location? @relation(fields: [locationId], references: [id])
 }
 
 // ---------------------------
@@ -149,6 +149,7 @@ model Location {
   agentDiscounts AgentVoucherDiscount[]
   agentPurchases AgentPurchase[]
   orderItems     OrderItem[]
+  agentProfiles  AgentProfile[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -252,6 +253,10 @@ model AgentPurchase {
   locationId        String?
   batchId           String?
 
+  // voucher type specifications
+  hours             Int @default(1)     // number of hours for this voucher type
+  numberOfUsers     Int @default(1)      // number of users for this voucher type
+
   quantity          Int
   // pricing the agent pays (discounted from retail)
   unitCost          Decimal  @db.Decimal(10,2)
@@ -263,7 +268,6 @@ model AgentPurchase {
 
   // relations
   agent             AgentProfile @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  user              User         @relation(fields: [agentId], references: [id], onDelete: Cascade, map: "AgentPurchase_userId_fkey")
   location          Location?    @relation(fields: [locationId], references: [id])
   batch             VoucherBatch?@relation(fields: [batchId], references: [id])
   sales             AgentSale[]
@@ -288,7 +292,6 @@ model AgentSale {
 
   // relations
   agent             AgentProfile @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  user              User         @relation(fields: [agentId], references: [id], onDelete: Cascade, map: "AgentSale_userId_fkey")
   agentPurchase     AgentPurchase @relation(fields: [agentPurchaseId], references: [id], onDelete: Cascade)
   voucher           Voucher       @relation(fields: [voucherId], references: [id], onDelete: Cascade)
 
@@ -306,6 +309,7 @@ model AgentSale {
 model Order {
   id              String        @id @default(cuid())
   userId          String?
+  agentId         String?       // For agent orders
   // anonymous buyer contact
   buyerEmail      String?
   buyerPhone      String?
@@ -331,8 +335,10 @@ model Order {
   updatedAt       DateTime @updatedAt
 
   user            User?    @relation(fields: [userId], references: [id])
+  agent           User?    @relation("AgentOrders", fields: [agentId], references: [id])
 
   @@index([userId])
+  @@index([agentId])
   @@index([status])
 }
 
@@ -346,6 +352,9 @@ model OrderItem {
   quantity    Int
   unitPrice   Decimal  @db.Decimal(10,2)
   lineTotal   Decimal  @db.Decimal(12,2)
+  // voucher specifications for matching
+  hours       Int
+  numberOfUsers Int
 
   order       Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
   location    Location?    @relation(fields: [locationId], references: [id])

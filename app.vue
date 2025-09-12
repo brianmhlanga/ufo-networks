@@ -93,14 +93,12 @@ input, textarea, select {
 }
 
 /* Scale down section padding */
-section {
-  padding: 1.8rem 0; /* Instead of 2rem 0 */
-}
+/* section {
+  padding: 1.8rem 0;
+} */
 
 /* Scale down margins between sections */
-section + section {
-  margin-top: 1.8rem; /* Instead of 2rem */
-}
+
 
 html, body {
   margin: 0;

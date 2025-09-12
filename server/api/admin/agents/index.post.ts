@@ -98,7 +98,7 @@ export default defineEventHandler(async (event) => {
           displayName: agentProfile.displayName,
           defaultDiscountPct: agentProfile.defaultDiscountPct || 0,
           cashOnly: agentProfile.cashOnly !== false,
-          commissionRate: agentProfile.commissionRate || 10
+          locationId: agentProfile.locationId || null
         }
       })
 

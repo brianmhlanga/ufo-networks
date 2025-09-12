@@ -39,14 +39,20 @@ export default defineEventHandler(async (event) => {
     const existingUser = await prisma.user.findUnique({
       where: { id: userId },
       include: {
-        agentProfile: true,
+        agentProfile: {
+          include: {
+            _count: {
+              select: {
+                sales: true
+              }
+            }
+          }
+        },
         _count: {
           select: {
             orders: true,
-            reviews: true,
-            comments: true,
-            agentPurchases: true,
-            agentSales: true
+            auditLogs: true,
+            assignedVouchers: true
           }
         }
       }
@@ -62,15 +68,14 @@ export default defineEventHandler(async (event) => {
     // Check if user has associated data
     const hasAssociatedData = 
       existingUser._count.orders > 0 ||
-      existingUser._count.reviews > 0 ||
-      existingUser._count.comments > 0 ||
-      existingUser._count.agentPurchases > 0 ||
-      existingUser._count.agentSales > 0
+      existingUser._count.auditLogs > 0 ||
+      existingUser._count.assignedVouchers > 0 ||
+      (existingUser.agentProfile?._count?.sales || 0) > 0
 
     if (hasAssociatedData) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Cannot delete user with associated data (orders, reviews, comments, agent transactions). Please archive the user instead.'
+        statusMessage: 'Cannot delete user with associated data (orders, audit logs, assigned vouchers, agent transactions). Please archive the user instead.'
       })
     }
 

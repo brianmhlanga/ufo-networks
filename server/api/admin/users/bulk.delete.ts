@@ -50,13 +50,20 @@ export default defineEventHandler(async (event) => {
         id: { in: ids }
       },
       include: {
+        agentProfile: {
+          include: {
+            _count: {
+              select: {
+                sales: true
+              }
+            }
+          }
+        },
         _count: {
           select: {
             orders: true,
-            reviews: true,
-            comments: true,
-            agentPurchases: true,
-            agentSales: true
+            auditLogs: true,
+            assignedVouchers: true
           }
         }
       }
@@ -72,10 +79,9 @@ export default defineEventHandler(async (event) => {
     // Check for users with associated data
     const usersWithData = usersToDelete.filter(user => 
       user._count.orders > 0 ||
-      user._count.reviews > 0 ||
-      user._count.comments > 0 ||
-      user._count.agentPurchases > 0 ||
-      user._count.agentSales > 0
+      user._count.auditLogs > 0 ||
+      user._count.assignedVouchers > 0 ||
+      (user.agentProfile?._count?.sales || 0) > 0
     )
 
     if (usersWithData.length > 0) {

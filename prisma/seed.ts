@@ -209,7 +209,7 @@ async function main() {
       hours: 1,
       numberOfUsers: 1,
       startDate: new Date('2024-01-01'),
-      endDate: new Date('2024-12-31'),
+      endDate: new Date('2025-12-31'),
       active: true,
       notes: 'Standard 1-hour WiFi access'
     }
@@ -223,7 +223,7 @@ async function main() {
       hours: 5,
       numberOfUsers: 2,
       startDate: new Date('2024-01-01'),
-      endDate: new Date('2024-12-31'),
+      endDate: new Date('2025-12-31'),
       active: true,
       notes: 'Extended 5-hour WiFi access'
     }
@@ -237,7 +237,7 @@ async function main() {
       hours: 24,
       numberOfUsers: 3,
       startDate: new Date('2024-01-01'),
-      endDate: new Date('2024-12-31'),
+      endDate: new Date('2025-12-31'),
       active: true,
       notes: 'Full day WiFi access'
     }
@@ -251,7 +251,7 @@ async function main() {
       hours: 1,
       numberOfUsers: 1,
       startDate: new Date('2024-01-01'),
-      endDate: new Date('2024-12-31'),
+      endDate: new Date('2025-12-31'),
       active: true,
       notes: 'Standard 1-hour WiFi access'
     }
@@ -262,75 +262,42 @@ async function main() {
   // Create Vouchers
   console.log('🎫 Creating vouchers...')
   
-  const vouchers = []
+  const vouchers: any[] = []
   
-  // Generate 50 vouchers for Harare CBD
-  for (let i = 1; i <= 20; i++) {
-    vouchers.push({
-      batchId: batch1Hour.id,
-      locationId: harareCentral.id,
-      voucherNumber: `HARARE-1H-${i.toString().padStart(3, '0')}`,
-      pin: Math.random().toString(36).substring(2, 8).toUpperCase(),
-      retailPrice: 2.50,
-      hours: 1,
-      numberOfUsers: 1,
-      startDate: new Date('2024-01-01'),
-      endDate: new Date('2024-12-31'),
-      expiryDate: new Date('2024-12-31'),
-      status: 'AVAILABLE'
-    })
-  }
+  // Generate 50 vouchers for each location with December 2025 expiry
+  const locations = [harareCentral, bulawayoCentral, chitungwiza, mutare]
+  const voucherTypes = [
+    { hours: 1, numberOfUsers: 1, retailPrice: 2.50, batchId: batch1Hour.id },
+    { hours: 5, numberOfUsers: 2, retailPrice: 10.00, batchId: batch5Hours.id },
+    { hours: 24, numberOfUsers: 3, retailPrice: 25.00, batchId: batch24Hours.id }
+  ]
+  
+  // Create 50 vouchers for each location
+  locations.forEach((location, locationIndex) => {
+    const locationCode = location.code.split('_')[0] // Extract location code (HARARE, BULAWAYO, etc.)
+    
+    // Create 50 vouchers per location (mix of different types)
+    for (let i = 1; i <= 50; i++) {
+      const voucherType = voucherTypes[i % 3] // Cycle through voucher types
+      const voucherNumber = `${locationCode}-${voucherType.hours}H-${i.toString().padStart(3, '0')}`
+      
+      vouchers.push({
+        batchId: voucherType.batchId,
+        locationId: location.id,
+        voucherNumber: voucherNumber,
+        pin: Math.random().toString(36).substring(2, 8).toUpperCase(),
+        retailPrice: voucherType.retailPrice,
+        hours: voucherType.hours,
+        numberOfUsers: voucherType.numberOfUsers,
+        startDate: new Date('2024-01-01'),
+        endDate: new Date('2025-12-31'),
+        expiryDate: new Date('2025-12-31'),
+        status: 'AVAILABLE'
+      })
+    }
+  })
 
-  for (let i = 1; i <= 15; i++) {
-    vouchers.push({
-      batchId: batch5Hours.id,
-      locationId: harareCentral.id,
-      voucherNumber: `HARARE-5H-${i.toString().padStart(3, '0')}`,
-      pin: Math.random().toString(36).substring(2, 8).toUpperCase(),
-      retailPrice: 10.00,
-      hours: 5,
-      numberOfUsers: 2,
-      startDate: new Date('2024-01-01'),
-      endDate: new Date('2024-12-31'),
-      expiryDate: new Date('2024-12-31'),
-      status: 'AVAILABLE'
-    })
-  }
-
-  for (let i = 1; i <= 10; i++) {
-    vouchers.push({
-      batchId: batch24Hours.id,
-      locationId: harareCentral.id,
-      voucherNumber: `HARARE-24H-${i.toString().padStart(3, '0')}`,
-      pin: Math.random().toString(36).substring(2, 8).toUpperCase(),
-      retailPrice: 25.00,
-      hours: 24,
-      numberOfUsers: 3,
-      startDate: new Date('2024-01-01'),
-      endDate: new Date('2024-12-31'),
-      expiryDate: new Date('2024-12-31'),
-      status: 'AVAILABLE'
-    })
-  }
-
-  // Generate 20 vouchers for Bulawayo CBD
-  for (let i = 1; i <= 20; i++) {
-    vouchers.push({
-      batchId: batchBulawayo1Hour.id,
-      locationId: bulawayoCentral.id,
-      voucherNumber: `BULAWAYO-1H-${i.toString().padStart(3, '0')}`,
-      pin: Math.random().toString(36).substring(2, 8).toUpperCase(),
-      retailPrice: 2.50,
-      hours: 1,
-      numberOfUsers: 1,
-      startDate: new Date('2024-01-01'),
-      endDate: new Date('2024-12-31'),
-      expiryDate: new Date('2024-12-31'),
-      status: 'AVAILABLE'
-    })
-  }
-
-  // Create some sold vouchers
+  // Create some sold vouchers for testing
   const soldVouchers = [
     {
       batchId: batch1Hour.id,
@@ -341,8 +308,8 @@ async function main() {
       hours: 1,
       numberOfUsers: 1,
       startDate: new Date('2024-01-01'),
-      endDate: new Date('2024-12-31'),
-      expiryDate: new Date('2024-12-31'),
+      endDate: new Date('2025-12-31'),
+      expiryDate: new Date('2025-12-31'),
       status: 'SOLD',
       soldAt: new Date('2024-01-15'),
       assignedToUserId: customer1.id
@@ -356,8 +323,8 @@ async function main() {
       hours: 5,
       numberOfUsers: 2,
       startDate: new Date('2024-01-01'),
-      endDate: new Date('2024-12-31'),
-      expiryDate: new Date('2024-12-31'),
+      endDate: new Date('2025-12-31'),
+      expiryDate: new Date('2025-12-31'),
       status: 'REDEEMED',
       soldAt: new Date('2024-01-10'),
       assignedToUserId: customer2.id,
@@ -371,122 +338,9 @@ async function main() {
 
   console.log('✅ Vouchers created')
 
-  // Create Agent Purchases
-  console.log('🛒 Creating agent purchases...')
-  
-  const agentPurchase1 = await prisma.agentPurchase.create({
-    data: {
-      agentId: agentProfile1.id,
-      locationId: harareCentral.id,
-      quantity: 50,
-      unitCost: 2.00,
-      totalCost: 100.00,
-      claimedCount: 5,
-      notes: 'Bulk purchase for Harare CBD location'
-    }
-  })
 
-  const agentPurchase2 = await prisma.agentPurchase.create({
-    data: {
-      agentId: agentProfile2.id,
-      locationId: bulawayoCentral.id,
-      quantity: 30,
-      unitCost: 2.00,
-      totalCost: 60.00,
-      claimedCount: 2,
-      notes: 'Bulk purchase for Bulawayo CBD location'
-    }
-  })
 
-  console.log('✅ Agent purchases created')
 
-  // Create Agent Sales
-  console.log('💰 Creating agent sales...')
-  
-  // Get some vouchers to sell
-  const availableVouchers = await prisma.voucher.findMany({
-    where: { status: 'AVAILABLE' },
-    take: 7
-  })
-
-  if (availableVouchers.length >= 7) {
-    await prisma.agentSale.createMany({
-      data: [
-        {
-          agentId: agentProfile1.id,
-          agentPurchaseId: agentPurchase1.id,
-          voucherId: availableVouchers[0].id,
-          soldPrice: 2.50,
-          buyerPhone: '+263777123456',
-          buyerNote: 'Cash sale'
-        },
-        {
-          agentId: agentProfile1.id,
-          agentPurchaseId: agentPurchase1.id,
-          voucherId: availableVouchers[1].id,
-          soldPrice: 2.50,
-          buyerPhone: '+263777234567',
-          buyerNote: 'Cash sale'
-        },
-        {
-          agentId: agentProfile1.id,
-          agentPurchaseId: agentPurchase1.id,
-          voucherId: availableVouchers[2].id,
-          soldPrice: 2.50,
-          buyerPhone: '+263777345678',
-          buyerNote: 'Cash sale'
-        },
-        {
-          agentId: agentProfile1.id,
-          agentPurchaseId: agentPurchase1.id,
-          voucherId: availableVouchers[3].id,
-          soldPrice: 2.50,
-          buyerPhone: '+263777456789',
-          buyerNote: 'Cash sale'
-        },
-        {
-          agentId: agentProfile1.id,
-          agentPurchaseId: agentPurchase1.id,
-          voucherId: availableVouchers[4].id,
-          soldPrice: 2.50,
-          buyerPhone: '+263777567890',
-          buyerNote: 'Cash sale'
-        },
-        {
-          agentId: agentProfile2.id,
-          agentPurchaseId: agentPurchase2.id,
-          voucherId: availableVouchers[5].id,
-          soldPrice: 2.50,
-          buyerPhone: '+263777678901',
-          buyerNote: 'Cash sale'
-        },
-        {
-          agentId: agentProfile2.id,
-          agentPurchaseId: agentPurchase2.id,
-          voucherId: availableVouchers[6].id,
-          soldPrice: 2.50,
-          buyerPhone: '+263777789012',
-          buyerNote: 'Cash sale'
-        }
-      ]
-    })
-
-    // Update voucher status to SOLD
-    await prisma.voucher.updateMany({
-      where: {
-        id: {
-          in: availableVouchers.slice(0, 7).map(v => v.id)
-        }
-      },
-      data: {
-        status: 'SOLD',
-        soldAt: new Date(),
-        assignedToAgentId: agentProfile1.id
-      }
-    })
-  }
-
-  console.log('✅ Agent sales created')
 
   // Create Agent Voucher Discounts
   console.log('🎯 Creating agent voucher discounts...')
@@ -798,9 +652,7 @@ async function main() {
   console.log(`- Agent Profiles: 2`)
   console.log(`- Locations: 4`)
   console.log(`- Voucher Batches: 4`)
-  console.log(`- Vouchers: 65 (45 Available, 2 Sold, 7 Agent Sales)`)
-  console.log(`- Agent Purchases: 2`)
-  console.log(`- Agent Sales: 7`)
+      console.log(`- Vouchers: 202 (200 Available, 2 Sold)`)
   console.log(`- Orders: 2`)
   console.log(`- Ad Packages: 3`)
   console.log(`- Advertisers: 2`)

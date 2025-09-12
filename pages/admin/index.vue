@@ -114,8 +114,8 @@
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-blue-100 text-sm font-medium">Total Revenue</p>
-                <p class="text-2xl font-bold">${{ formatCurrency(metrics.totalRevenue) }}</p>
-                <p class="text-blue-200 text-xs">{{ metrics.revenueGrowth > 0 ? '+' : '' }}{{ metrics.revenueGrowth }}% vs last period</p>
+                <p class="text-2xl font-bold">${{ formatCurrency(metrics?.totalRevenue) }}</p>
+                <p class="text-blue-200 text-xs">{{ (metrics?.revenueGrowth || 0) > 0 ? '+' : '' }}{{ metrics?.revenueGrowth || 0 }}% vs last period</p>
               </div>
               <span class="material-icons text-3xl text-blue-200">trending_up</span>
             </div>
@@ -127,8 +127,8 @@
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-green-100 text-sm font-medium">Active Vouchers</p>
-                <p class="text-2xl font-bold">{{ metrics.activeVouchers.toLocaleString() }}</p>
-                <p class="text-green-200 text-xs">{{ metrics.voucherUtilization }}% utilization</p>
+                <p class="text-2xl font-bold">{{ (metrics?.activeVouchers || 0).toLocaleString() }}</p>
+                <p class="text-green-200 text-xs">{{ metrics?.voucherUtilization || 0 }}% utilization</p>
               </div>
               <span class="material-icons text-3xl text-green-200">redeem</span>
             </div>
@@ -140,8 +140,8 @@
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-purple-100 text-sm font-medium">Total Users</p>
-                <p class="text-2xl font-bold">{{ metrics.totalUsers.toLocaleString() }}</p>
-                <p class="text-purple-200 text-xs">{{ metrics.newUsers }} new this period</p>
+                <p class="text-2xl font-bold">{{ (metrics?.totalUsers || 0).toLocaleString() }}</p>
+                <p class="text-purple-200 text-xs">{{ metrics?.newUsers || 0 }} new this period</p>
               </div>
               <span class="material-icons text-3xl text-purple-200">people</span>
             </div>
@@ -153,8 +153,8 @@
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-orange-100 text-sm font-medium">Conversion Rate</p>
-                <p class="text-2xl font-bold">{{ metrics.conversionRate }}%</p>
-                <p class="text-orange-200 text-xs">{{ metrics.conversionGrowth > 0 ? '+' : '' }}{{ metrics.conversionGrowth }}% vs last period</p>
+                <p class="text-2xl font-bold">{{ metrics?.conversionRate || 0 }}%</p>
+                <p class="text-orange-200 text-xs">{{ (metrics?.conversionGrowth || 0) > 0 ? '+' : '' }}{{ metrics?.conversionGrowth || 0 }}% vs last period</p>
               </div>
               <span class="material-icons text-3xl text-orange-200">analytics</span>
             </div>
@@ -386,8 +386,8 @@
                   </div>
                 </div>
                 <div class="text-right">
-                  <p class="font-semibold text-gray-900">${{ formatCurrency(location.revenue) }}</p>
-                  <p class="text-sm text-gray-600">{{ location.vouchersSold }} vouchers sold</p>
+                  <p class="font-semibold text-gray-900">${{ formatCurrency(location?.revenue) }}</p>
+                  <p class="text-sm text-gray-600">{{ location?.vouchersSold || 0 }} vouchers sold</p>
                 </div>
               </div>
             </div>
@@ -848,7 +848,10 @@ const startRealTimeUpdates = () => {
   }, 30000)
 }
 
-const formatCurrency = (amount: number) => {
+const formatCurrency = (amount: number | null | undefined) => {
+  if (amount === null || amount === undefined || isNaN(amount)) {
+    return '0.00'
+  }
   return amount.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2

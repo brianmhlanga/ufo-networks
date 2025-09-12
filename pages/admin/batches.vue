@@ -20,6 +20,13 @@
             @click="openCreateDialog"
             class="custom-primary-button"
           />
+          <Button
+            label="Upload PDF Batch"
+            icon="upload_file"
+            @click="openUploadDialog"
+            class="custom-primary-button"
+            severity="success"
+          />
         </div>
       </div>
 
@@ -285,12 +292,412 @@
           </DataTable>
         </template>
       </Card>
+      
+                    <!-- Create Batch Dialog -->
+       <Dialog 
+         v-model:visible="showCreateDialog" 
+         modal 
+         header="Create New Batch" 
+         :style="{ width: '50rem' }"
+         :closable="false"
+       >
+         <div class="space-y-4">
+           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div>
+               <label class="block text-sm font-medium text-[#2d3040] mb-2">Batch Name *</label>
+               <InputText 
+                 v-model="batchForm.name" 
+                 placeholder="Enter batch name" 
+                 class="w-full"
+               />
+             </div>
+             
+             <div>
+               <label class="block text-sm font-medium text-[#2d3040] mb-2">Location *</label>
+               <Dropdown 
+                 v-model="batchForm.locationId" 
+                 :options="locationOptions" 
+                 optionLabel="name" 
+                 optionValue="id"
+                 placeholder="Select location" 
+                 :loading="loadingLocations"
+                 :disabled="locationOptions.length === 0"
+                 class="w-full"
+               >
+                 <template #option="{ option }">
+                   <div class="flex flex-col">
+                     <span class="font-medium">{{ option.name }}</span>
+                     <span class="text-sm text-gray-500">{{ option.code }} - {{ option.town }}</span>
+                   </div>
+                 </template>
+                 <template #empty>
+                   <div class="text-center py-2 text-gray-500">
+                     {{ loadingLocations ? 'Loading locations...' : 'No locations available' }}
+                   </div>
+                 </template>
+               </Dropdown>
+             </div>
+             
+             <div>
+               <label class="block text-sm font-medium text-[#2d3040] mb-2">Retail Price *</label>
+               <InputNumber 
+                 v-model="batchForm.retailPrice" 
+                 placeholder="0.00" 
+                 :minFractionDigits="2"
+                 :maxFractionDigits="2"
+                 class="w-full"
+               />
+             </div>
+             
+             <div>
+               <label class="block text-sm font-medium text-[#2d3040] mb-2">Currency *</label>
+               <Dropdown 
+                 v-model="batchForm.currency" 
+                 :options="[
+                   { label: 'USD', value: 'USD' },
+                   { label: 'ZWL', value: 'ZWL' },
+                   { label: 'EUR', value: 'EUR' }
+                 ]" 
+                 optionLabel="label" 
+                 optionValue="value"
+                 placeholder="Select currency" 
+                 class="w-full"
+               />
+             </div>
+             
+             <div>
+               <label class="block text-sm font-medium text-[#2d3040] mb-2">Hours *</label>
+               <InputNumber 
+                 v-model="batchForm.hours" 
+                 placeholder="1" 
+                 :min="1"
+                 class="w-full"
+               />
+             </div>
+             
+             <div>
+               <label class="block text-sm font-medium text-[#2d3040] mb-2">Number of Users *</label>
+               <InputNumber 
+                 v-model="batchForm.numberOfUsers" 
+                 placeholder="1" 
+                 :min="1"
+                 class="w-full"
+               />
+             </div>
+             
+                          <div>
+                <label class="block text-sm font-medium text-[#2d3040] mb-2">Validity Period (Days) *</label>
+                <InputNumber 
+                  v-model="batchForm.validityDays" 
+                  placeholder="60" 
+                  :min="1"
+                  :max="maxValidationPeriod"
+                  class="w-full"
+                  @input="calculateDates"
+                />
+                <small class="text-[#2d3040]/60">Maximum: {{ maxValidationPeriod }} days</small>
+              </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-[#2d3040] mb-2">Start Date *</label>
+              <Calendar 
+                v-model="batchForm.startDate" 
+                placeholder="Select start date" 
+                :minDate="new Date()"
+                class="w-full"
+                @date-select="onStartDateChange"
+              />
+            </div>
+            
+                         <div>
+               <label class="block text-sm font-medium text-[#2d3040] mb-2">End Date *</label>
+               <Calendar 
+                 v-model="batchForm.endDate" 
+                 placeholder="Select end date" 
+                 :minDate="batchForm.startDate || new Date()"
+                 :maxDate="(() => {
+                   if (batchForm.startDate) {
+                     const startDate = batchForm.startDate
+                     const maxEndDate = new Date(startDate)
+                     maxEndDate.setDate(startDate.getDate() + maxValidationPeriod - 1)
+                     return maxEndDate
+                   }
+                   const maxDate = new Date()
+                   maxDate.setDate(maxDate.getDate() + maxValidationPeriod - 1)
+                   return maxDate
+                 })()"
+                 class="w-full"
+                 @date-select="onEndDateChange"
+               />
+             </div>
+          </div>
+          
+                     <div>
+             <label class="block text-sm font-medium text-[#2d3040] mb-2">Notes</label>
+             <Textarea 
+               v-model="batchForm.notes" 
+               placeholder="Enter any additional notes" 
+               rows="3"
+               class="w-full"
+             />
+           </div>
+           
+           <div class="text-sm text-[#2d3040]/60">
+             <p>Date constraints:</p>
+             <ul class="list-disc list-inside mt-1 space-y-1">
+               <li>Start date: Today to {{ maxValidationPeriod }} days from today</li>
+               <li>End date: After start date, up to {{ maxValidationPeriod }} days from start date</li>
+             </ul>
+           </div>
+        </div>
+        
+        <template #footer>
+          <div class="flex justify-end space-x-2">
+            <Button 
+              label="Cancel" 
+              severity="secondary" 
+              @click="closeCreateDialog"
+              :disabled="creatingBatch"
+            />
+            <Button 
+              label="Create Batch" 
+              @click="createBatch"
+              :loading="creatingBatch"
+              class="custom-primary-button"
+            />
+          </div>
+        </template>
+      </Dialog>
+      
+                  <!-- Upload Batch with PDF Dialog -->
+      <Dialog 
+        v-model:visible="showUploadDialog" 
+        modal 
+        header="Upload Batch with PDF" 
+        :style="{ width: '60rem' }"
+        :closable="false"
+      >
+        <div class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div>
+               <label class="block text-sm font-medium text-[#2d3040] mb-2">Batch Name *</label>
+               <InputText 
+                 v-model="batchForm.name" 
+                 placeholder="Enter batch name" 
+                 class="w-full"
+               />
+             </div>
+             
+                         <div>
+               <label class="block text-sm font-medium text-[#2d3040] mb-2">Location *</label>
+               <Dropdown 
+                 v-model="batchForm.locationId" 
+                 :options="locationOptions" 
+                 optionLabel="name" 
+                 optionValue="id"
+                 placeholder="Select location" 
+                 :loading="loadingLocations"
+                 :disabled="locationOptions.length === 0"
+                 class="w-full"
+               >
+                 <template #option="{ option }">
+                   <div class="flex flex-col">
+                     <span class="font-medium">{{ option.name }}</span>
+                     <span class="text-sm text-gray-500">{{ option.code }} - {{ option.town }}</span>
+                   </div>
+                 </template>
+                 <template #empty>
+                   <div class="text-center py-2 text-gray-500">
+                     {{ loadingLocations ? 'Loading locations...' : 'No locations available' }}
+                   </div>
+                 </template>
+               </Dropdown>
+               <small class="text-[#2d3040]/60">
+                 {{ loadingLocations ? 'Loading locations...' : `${locationOptions.length} location(s) available` }}
+               </small>
+             </div>
+             
+             <div>
+               <label class="block text-sm font-medium text-[#2d3040] mb-2">Retail Price *</label>
+               <InputNumber 
+                 v-model="batchForm.retailPrice" 
+                 placeholder="0.00" 
+                 :minFractionDigits="2"
+                 :maxFractionDigits="2"
+                 class="w-full"
+               />
+             </div>
+             
+             <div>
+               <label class="block text-sm font-medium text-[#2d3040] mb-2">Currency *</label>
+               <Dropdown 
+                 v-model="batchForm.currency" 
+                 :options="[
+                   { label: 'USD', value: 'USD' },
+                   { label: 'ZWL', value: 'ZWL' },
+                   { label: 'EUR', value: 'EUR' }
+                 ]" 
+                 optionLabel="label" 
+                 optionValue="value"
+                 placeholder="Select currency" 
+                 class="w-full"
+               />
+             </div>
+             
+             <div>
+               <label class="block text-sm font-medium text-[#2d3040] mb-2">Hours *</label>
+               <InputNumber 
+                 v-model="batchForm.hours" 
+                 placeholder="1" 
+                 :min="1"
+                 class="w-full"
+               />
+             </div>
+             
+             <div>
+               <label class="block text-sm font-medium text-[#2d3040] mb-2">Number of Users *</label>
+               <InputNumber 
+                 v-model="batchForm.numberOfUsers" 
+                 placeholder="1" 
+                 :min="1"
+                 class="w-full"
+               />
+             </div>
+             
+                           <div>
+                <label class="block text-sm font-medium text-[#2d3040] mb-2">Validity Period (Days) *</label>
+                <InputNumber 
+                  v-model="batchForm.validityDays" 
+                  placeholder="60" 
+                  :min="1"
+                  :max="maxValidationPeriod"
+                  class="w-full"
+                  @input="calculateDates"
+                />
+                <small class="text-[#2d3040]/60">Maximum: {{ maxValidationPeriod }} days</small>
+              </div>
+             
+             <div>
+               <label class="block text-sm font-medium text-[#2d3040] mb-2">Start Date *</label>
+               <Calendar 
+                 v-model="batchForm.startDate" 
+                 placeholder="Select start date" 
+                 :minDate="new Date()"
+                 class="w-full"
+                 @date-select="onStartDateChange"
+               />
+             </div>
+             
+             <div>
+               <label class="block text-sm font-medium text-[#2d3040] mb-2">End Date *</label>
+               <Calendar 
+                 v-model="batchForm.endDate" 
+                 placeholder="Select end date" 
+                 :minDate="batchForm.startDate || new Date()"
+                 :maxDate="(() => {
+                   if (batchForm.startDate) {
+                     const startDate = batchForm.startDate
+                     const maxEndDate = new Date(startDate)
+                     maxEndDate.setDate(startDate.getDate() + maxValidationPeriod - 1)
+                     return maxEndDate
+                   }
+                   const maxDate = new Date()
+                   maxDate.setDate(maxDate.getDate() + maxValidationPeriod - 1)
+                   return maxDate
+                 })()"
+                 class="w-full"
+                 @date-select="onEndDateChange"
+               />
+             </div>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-[#2d3040] mb-2">Notes</label>
+            <Textarea 
+              v-model="batchForm.notes" 
+              placeholder="Enter any additional notes" 
+              rows="3"
+              class="w-full"
+            />
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-[#2d3040] mb-2">PDF File *</label>
+            <FileUpload 
+              mode="basic" 
+              :auto="true" 
+              accept="application/pdf"
+              :maxFileSize="10000000"
+              @select="handleFileUpload"
+              chooseLabel="Choose PDF"
+              class="w-full"
+            />
+            <small class="text-[#2d3040]/60">Upload a PDF containing batch numbers (max 10MB). Batch numbers will be extracted automatically.</small>
+          </div>
+          
+          <div v-if="extractedBatchNumbers.length > 0" class="bg-green-50 p-4 rounded-lg">
+            <h4 class="font-medium text-green-800 mb-2">✅ Extracted Batch Numbers</h4>
+            <div class="grid grid-cols-4 gap-4">
+              <div 
+                v-for="batchNumber in extractedBatchNumbers" 
+                :key="batchNumber"
+                class="bg-green-100 text-green-800 px-3 py-1 rounded text-sm font-mono"
+              >
+                {{ batchNumber }}
+              </div>
+            </div>
+            <p class="text-sm text-green-600 mt-2">
+              Found {{ extractedBatchNumbers.length }} valid batch numbers. You can now upload the batch.
+            </p>
+          </div>
+          
+          <div v-else-if="pdfFile && extractingPDF" class="bg-yellow-50 p-4 rounded-lg">
+            <h4 class="font-medium text-yellow-800 mb-2">⏳ Processing PDF</h4>
+            <p class="text-sm text-yellow-600">
+              PDF selected. Please wait for batch numbers to be extracted...
+            </p>
+          </div>
+          
+          <div v-else-if="pdfFile && !extractingPDF && extractedBatchNumbers.length === 0" class="bg-red-50 p-4 rounded-lg">
+            <h4 class="font-medium text-red-800 mb-2">❌ No Batch Numbers Found</h4>
+            <p class="text-sm text-red-600">
+              No valid batch numbers were found in the PDF. Please try a different file or check the content.
+            </p>
+          </div>
+          
+          <div class="text-sm text-[#2d3040]/60">
+            <p>Date constraints:</p>
+            <ul class="list-disc list-inside mt-1 space-y-1">
+              <li>Start date: Today to {{ maxValidationPeriod }} days from today</li>
+              <li>End date: After start date, up to {{ maxValidationPeriod }} days from start date</li>
+            </ul>
+          </div>
+        </div>
+        
+        <template #footer>
+          <div class="flex justify-end space-x-2">
+            <Button 
+              label="Cancel" 
+              severity="error"
+              @click="closeUploadDialog"
+              :disabled="uploadingBatch"
+            />
+            <Button 
+              label="Upload Batch" 
+              @click="uploadBatchWithPDF"
+              :loading="uploadingBatch"
+              class="custom-primary-button"
+            />
+          </div>
+        </template>
+      </Dialog>
     </div>
   </NuxtLayout>
 </template>
 
 <script lang="ts" setup>
 import { useToast } from 'primevue/usetoast'
+import { extractBatchNumbers, validateBatchNumbers } from '~/utils/pdf'
 
 // Toast instance
 const toast = useToast()
@@ -301,6 +708,12 @@ const batches = ref<any[]>([])
 const totalBatches = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(10)
+
+// Dialog states
+const showCreateDialog = ref(false)
+const showUploadDialog = ref(false)
+const creatingBatch = ref(false)
+const uploadingBatch = ref(false)
 
 // Batch stats
 const batchStats = ref({
@@ -318,12 +731,33 @@ const filters = ref({
 })
 
 // Options for dropdowns
-const locationOptions = ref([])
+const locationOptions = ref<any[]>([])
 const statusOptions = ref([
   { label: 'All', value: '' },
   { label: 'Active', value: true },
   { label: 'Inactive', value: false }
 ])
+
+// Batch form data
+const batchForm = ref({
+  name: '',
+  locationId: '',
+  retailPrice: '',
+  currency: 'USD',
+  hours: 1,
+  numberOfUsers: 1,
+  validityDays: 60,
+  startDate: null as Date | null,
+  endDate: null as Date | null,
+  notes: ''
+})
+
+// PDF upload data
+const pdfFile = ref<File | null>(null)
+const extractedBatchNumbers = ref<string[]>([])
+const maxValidationPeriod = ref(60)
+const extractingPDF = ref(false)
+const loadingLocations = ref(false)
 
 // Methods
 const getDurationSeverity = (hours: number) => {
@@ -354,6 +788,316 @@ const clearFilters = () => {
   }
 }
 
+const resetBatchForm = () => {
+  batchForm.value = {
+    name: '',
+    locationId: '',
+    retailPrice: '',
+    currency: 'USD',
+    hours: 1,
+    numberOfUsers: 1,
+    validityDays: 60,
+    startDate: null,
+    endDate: null,
+    notes: ''
+  }
+  pdfFile.value = null
+  extractedBatchNumbers.value = []
+  extractingPDF.value = false
+}
+
+const calculateDates = () => {
+  console.log('calculateDates called with validityDays:', batchForm.value.validityDays)
+  
+  if (batchForm.value.validityDays && batchForm.value.validityDays > 0) {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    // Set start date to today
+    batchForm.value.startDate = today
+    
+    // Calculate end date based on validity period
+    const endDate = new Date(today)
+    endDate.setDate(today.getDate() + batchForm.value.validityDays - 1)
+    batchForm.value.endDate = endDate
+    
+    console.log('Calculated dates:', {
+      validityDays: batchForm.value.validityDays,
+      startDate: batchForm.value.startDate,
+      endDate: batchForm.value.endDate
+    })
+  }
+}
+
+const onStartDateChange = () => {
+  if (batchForm.value.startDate && batchForm.value.validityDays) {
+    const startDate = new Date(batchForm.value.startDate)
+    const endDate = new Date(startDate)
+    endDate.setDate(startDate.getDate() + batchForm.value.validityDays - 1)
+    batchForm.value.endDate = endDate
+  }
+}
+
+const onEndDateChange = () => {
+  if (batchForm.value.startDate && batchForm.value.endDate) {
+    const startDate = new Date(batchForm.value.startDate)
+    const endDate = new Date(batchForm.value.endDate)
+    const diffTime = endDate.getTime() - startDate.getTime()
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
+    batchForm.value.validityDays = diffDays
+  }
+}
+
+const openUploadDialog = () => {
+  console.log('Opening upload dialog')
+  showUploadDialog.value = true
+  resetBatchForm()
+  // Set default validity days to 60
+  batchForm.value.validityDays = 60
+  // Auto-calculate dates when dialog opens
+  nextTick(() => {
+    console.log('Dialog opened, calculating dates...')
+    calculateDates()
+  })
+}
+
+const closeCreateDialog = () => {
+  showCreateDialog.value = false
+  resetBatchForm()
+}
+
+const closeUploadDialog = () => {
+  showUploadDialog.value = false
+  resetBatchForm()
+}
+
+const handleFileUpload = async (event: any) => {
+  console.log('File upload event:', event)
+  
+  // PrimeVue FileUpload component event
+  if (event.files && event.files.length > 0) {
+    const file = event.files[0]
+    pdfFile.value = file
+    extractingPDF.value = true
+    extractedBatchNumbers.value = []
+    
+    try {
+      // Extract batch numbers from PDF
+      const { extractBatchNumbers } = await import('~/utils/pdf')
+      const batchNumbers = await extractBatchNumbers(file)
+      extractedBatchNumbers.value = batchNumbers
+      
+      if (batchNumbers.length > 0) {
+        toast.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: `Extracted ${batchNumbers.length} batch numbers from PDF`,
+          life: 3000
+        })
+      } else {
+        toast.add({
+          severity: 'warning',
+          summary: 'Warning',
+          detail: 'No batch numbers found in PDF. Please check the file content.',
+          life: 3000
+        })
+      }
+    } catch (error) {
+      console.error('Error extracting PDF:', error)
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Failed to extract batch numbers from PDF. Please try again.',
+        life: 3000
+      })
+      // Clear the file and extracted numbers on error
+      pdfFile.value = null
+      extractedBatchNumbers.value = []
+    } finally {
+      extractingPDF.value = false
+    }
+  }
+}
+
+const createBatch = async () => {
+  try {
+    console.log('Creating batch with form data:', batchForm.value)
+    creatingBatch.value = true
+    
+    // Convert dates to ISO strings for API
+    const requestBody = {
+      ...batchForm.value,
+      startDate: batchForm.value.startDate?.toISOString(),
+      endDate: batchForm.value.endDate?.toISOString()
+    }
+    
+    console.log('Request body being sent:', requestBody)
+    
+    const response = await $fetch('/api/admin/batches', {
+      method: 'POST',
+      body: requestBody
+    })
+    
+         if (response.success) {
+       toast.add({
+         severity: 'success',
+         summary: 'Success',
+         detail: 'Batch created successfully',
+         life: 3000
+       })
+       
+       closeCreateDialog()
+       // Refresh the batches list and wait for it to complete
+       await fetchBatches()
+     }
+  } catch (error: any) {
+    console.error('Error creating batch:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: error.data?.message || 'Failed to create batch',
+      life: 3000
+    })
+  } finally {
+    creatingBatch.value = false
+  }
+}
+
+const uploadBatchWithPDF = async () => {
+  try {
+    console.log('Uploading batch with form data:', batchForm.value)
+    
+    if (!pdfFile.value) {
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Please select a PDF file',
+        life: 3000
+      })
+      return
+    }
+    
+    if (extractedBatchNumbers.value.length === 0) {
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Please extract batch numbers from PDF first',
+        life: 3000
+      })
+      return
+    }
+    
+    uploadingBatch.value = true
+    
+    const formData = new FormData()
+    formData.append('pdfFile', pdfFile.value)
+    
+    // Add form fields
+    Object.entries(batchForm.value).forEach(([key, value]) => {
+      if (value !== null && value !== undefined) {
+        if (key === 'startDate' || key === 'endDate') {
+          formData.append(key, value.toISOString())
+        } else {
+          formData.append(key, value.toString())
+        }
+      }
+    })
+    
+    // Add extracted batch numbers
+    formData.append('extractedBatchNumbers', JSON.stringify(extractedBatchNumbers.value))
+    
+    console.log('Form data being sent:', Object.fromEntries(formData.entries()))
+    
+    const response = await $fetch('/api/admin/batches/upload', {
+      method: 'POST',
+      body: formData
+    })
+    
+         if (response.success) {
+       toast.add({
+         severity: 'success',
+         summary: 'Success',
+         detail: `Batch uploaded successfully with ${response.extractedData.totalFound} batch numbers`,
+         life: 3000
+       })
+       
+       closeUploadDialog()
+       // Refresh the batches list and wait for it to complete
+       await fetchBatches()
+     }
+  } catch (error: any) {
+    console.error('Error uploading batch:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: error.data?.message || 'Failed to upload batch',
+      life: 3000
+    })
+  } finally {
+    uploadingBatch.value = false
+  }
+}
+
+const fetchMaxValidationPeriod = async () => {
+  try {
+    const response = await $fetch('/api/admin/config/max-validation-period')
+    if (response.success) {
+      maxValidationPeriod.value = response.maxValidationPeriod
+    }
+  } catch (error) {
+    console.error('Error fetching max validation period:', error)
+  }
+}
+
+const fetchLocations = async () => {
+  loadingLocations.value = true
+  try {
+    const response = await $fetch('/api/admin/locations/all')
+    if (response.success) {
+      locationOptions.value = response.locations
+    }
+  } catch (error) {
+    console.error('Error fetching locations:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Failed to fetch locations',
+      life: 3000
+    })
+  } finally {
+    loadingLocations.value = false
+  }
+}
+
+const fetchBatches = async () => {
+  try {
+    loading.value = true
+    const response = await $fetch('/api/admin/batches')
+    if (response.success) {
+      batches.value = response.batches
+      totalBatches.value = response.total
+      
+      // Update batch stats
+      batchStats.value = {
+        totalBatches: response.total,
+        activeBatches: batches.value.filter(b => b.active).length,
+        totalVouchers: batches.value.reduce((sum, b) => sum + (b._count?.vouchers || 0), 0),
+        availableVouchers: batches.value.reduce((sum, b) => sum + getAvailableVouchers(b), 0)
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching batches:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Failed to fetch batches',
+      life: 3000
+    })
+  } finally {
+    loading.value = false
+  }
+}
+
 const onPageChange = (event: any) => {
   currentPage.value = event.page + 1
   pageSize.value = event.rows
@@ -365,7 +1109,14 @@ const openGenerateDialog = () => {
 }
 
 const openCreateDialog = () => {
-  toast.add({ severity: 'info', summary: 'Info', detail: 'Create batch dialog will be implemented', life: 3000 })
+  showCreateDialog.value = true
+  resetBatchForm()
+  // Set default validity days to 60
+  batchForm.value.validityDays = 60
+  // Auto-calculate dates when dialog opens
+  nextTick(() => {
+    calculateDates()
+  })
 }
 
 const viewBatch = (batch: any) => {
@@ -390,49 +1141,20 @@ const confirmDelete = (batch: any) => {
   }
 }
 
-// Mock data for now
+// Initialize data on mount
 onMounted(() => {
-  // Mock data
-  batches.value = [
-    {
-      id: '1',
-      name: '24 Hour WiFi - Harare CBD',
-      location: { name: 'Harare CBD' },
-      retailPrice: 5.00,
-      hours: 24,
-      numberOfUsers: 1,
-      startDate: '2024-01-01',
-      endDate: '2024-12-31',
-      active: true,
-      _count: { vouchers: 100 }
-    },
-    {
-      id: '2',
-      name: '1 Hour WiFi - Bulawayo Mall',
-      location: { name: 'Bulawayo Mall' },
-      retailPrice: 2.50,
-      hours: 1,
-      numberOfUsers: 2,
-      startDate: '2024-01-01',
-      endDate: '2024-12-31',
-      active: true,
-      _count: { vouchers: 50 }
-    }
-  ]
-  
-  totalBatches.value = batches.value.length
-  batchStats.value = {
-    totalBatches: 2,
-    activeBatches: 2,
-    totalVouchers: 150,
-    availableVouchers: 120
-  }
-  
-  locationOptions.value = [
-    { id: '1', name: 'Harare CBD' },
-    { id: '2', name: 'Bulawayo Mall' }
-  ]
+  fetchMaxValidationPeriod()
+  fetchLocations()
+  fetchBatches()
 })
+
+// Watch for changes in validityDays to auto-calculate dates
+watch(() => batchForm.value.validityDays, (newValidityDays) => {
+  if (newValidityDays && newValidityDays > 0) {
+    console.log('validityDays changed to:', newValidityDays)
+    calculateDates()
+  }
+}, { immediate: true })
 
 // Meta tags
 useHead({

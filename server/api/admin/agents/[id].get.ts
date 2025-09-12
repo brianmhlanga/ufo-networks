@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: (session.user as any).id },
       select: { role: true }
     })
 
@@ -42,11 +42,13 @@ export default defineEventHandler(async (event) => {
         role: 'AGENT'
       },
       include: {
-        agentProfile: true,
-        _count: {
-          select: {
-            agentSales: true,
-            agentPurchases: true
+        agentProfile: {
+          include: {
+            _count: {
+              select: {
+                sales: true
+              }
+            }
           }
         }
       }
@@ -61,7 +63,7 @@ export default defineEventHandler(async (event) => {
 
     // Calculate stats
     const totalSales = Math.random() * 10000 // Placeholder
-    const totalVouchers = agent._count.agentSales || 0
+    const totalVouchers = agent.agentProfile?._count?.sales || 0
     const totalCommission = totalSales * 0.1 // 10% commission placeholder
 
     // Get recent activity (placeholder - in real app this would come from actual activity logs)

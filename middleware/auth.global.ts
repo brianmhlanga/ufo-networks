@@ -17,7 +17,6 @@ export default defineNuxtRouteMiddleware((to) => {
     
     // Define protected routes for different user types
     const userRoutes = ['/user']
-    
     const adminRoutes = ['/admin']
     const agentRoutes = ['/agent']
     const companyDashboardRoutes = ['/company/dashboard', '/company/analytics', '/company/reports', '/company/responses', '/company/edit', '/company/subscription', '/company/abuse-reports']
@@ -30,9 +29,17 @@ export default defineNuxtRouteMiddleware((to) => {
     const isCompanyDashboardRoute = companyDashboardRoutes.some(route => to.path.startsWith(route))
     const isAuthRoute = authRoutes.some(route => to.path === route)
     
+    // Any route not in admin, agent, or user folders is public
+    const isPublicRoute = !isUserRoute && !isAdminRoute && !isAgentRoute && !isCompanyDashboardRoute
+    
     // Add comprehensive null checks for SSR safety
     const isLoggedIn = loggedIn && loggedIn.value === true
     const currentUser = user && user.value ? user.value : null
+    
+    // Skip authentication for public routes
+    if (isPublicRoute) {
+      return
+    }
     
     // If user is not logged in and trying to access protected routes
     if (!isLoggedIn && (isUserRoute  || isAdminRoute || isAgentRoute || isCompanyDashboardRoute)) {

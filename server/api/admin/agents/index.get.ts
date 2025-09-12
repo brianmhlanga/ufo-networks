@@ -71,11 +71,14 @@ export default defineEventHandler(async (event) => {
     const agents = await prisma.user.findMany({
       where,
       include: {
-        agentProfile: true,
-        _count: {
-          select: {
-            agentSales: true,
-            agentPurchases: true
+        agentProfile: {
+          include: {
+            location: true,
+            _count: {
+              select: {
+                sales: true
+              }
+            }
           }
         }
       },
@@ -88,7 +91,7 @@ export default defineEventHandler(async (event) => {
     const agentsWithStats = agents.map(agent => {
       // Calculate basic stats (in a real app, these would come from actual sales data)
       const totalSales = Math.random() * 10000 // Placeholder
-      const totalVouchers = agent._count.agentSales || 0
+      const totalVouchers = agent.agentProfile?._count?.sales || 0
       const totalCommission = totalSales * 0.1 // 10% commission placeholder
 
       return {

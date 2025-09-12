@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: (session.user as any).id },
       select: { role: true }
     })
 
@@ -42,9 +42,15 @@ export default defineEventHandler(async (event) => {
         role: 'AGENT'
       },
       include: {
-        agentProfile: true,
-        agentSales: true,
-        agentPurchases: true
+        agentProfile: {
+          include: {
+            _count: {
+              select: {
+                sales: true
+              }
+            }
+          }
+        }
       }
     })
 
@@ -56,22 +62,15 @@ export default defineEventHandler(async (event) => {
     }
 
     // Check for associated data
-    if (agent.agentSales.length > 0) {
+    if ((agent.agentProfile?._count?.sales || 0) > 0) {
       throw createError({
         statusCode: 400,
         statusMessage: 'Cannot delete agent with existing sales records'
       })
     }
 
-    if (agent.agentPurchases.length > 0) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Cannot delete agent with existing purchase records'
-      })
-    }
-
     // Prevent deleting the currently logged-in user
-    if (agentId === session.user.id) {
+    if (agentId === (session.user as any).id) {
       throw createError({
         statusCode: 400,
         statusMessage: 'Cannot delete your own account'

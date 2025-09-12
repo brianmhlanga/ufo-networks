@@ -32,7 +32,6 @@ export default defineEventHandler(async (event) => {
             batches: true,
             adLinks: true,
             agentDiscounts: true,
-            agentPurchases: true,
             orderItems: true
           }
         }
@@ -52,7 +51,6 @@ export default defineEventHandler(async (event) => {
       existingLocation._count.batches > 0 ||
       existingLocation._count.adLinks > 0 ||
       existingLocation._count.agentDiscounts > 0 ||
-      existingLocation._count.agentPurchases > 0 ||
       existingLocation._count.orderItems > 0
 
     if (hasAssociatedData) {
