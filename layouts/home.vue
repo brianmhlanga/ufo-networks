@@ -1,59 +1,122 @@
 <template>
   <div id="home-layout" class="min-h-screen bg-white">
     <!-- Header Navigation -->
-    <header class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100 shadow-sm">
-      <div class="container mx-auto px-6">
+    <header class="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-b border-gray-100 shadow-sm">
+      
+      <div class="container mx-auto px-6 relative">
         <div class="flex items-center justify-between h-20">
           <!-- Logo -->
           <div class="flex items-center">
             <NuxtLink to="/" class="flex items-center space-x-3 group">
-              <img src="/logo.png" alt="UFO Networks" class="w-10 h-10 group-hover:scale-105 transition-transform" />
-             
+              <!-- <div class="relative">
+                <img src="/logo.png" alt="UFO Networks" class="w-12 h-12 group-hover:scale-110 transition-all duration-300" />
+       
+                <div class="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-black/10 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </div> -->
+                <div class="hidden sm:block">
+                  <h1 class="text-xl font-bold text-gray-800 group-hover:text-blue-600 transition-all duration-300">
+                    UFO Networks
+                  </h1>
+                  <div class="inline-flex items-center px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-full shadow-sm">
+                    <i class="pi pi-wifi mr-1.5 text-xs"></i>
+                    Fast WiFi Anywhere
+                  </div>
+                </div>
             </NuxtLink>
           </div>
 
           <!-- Desktop Navigation -->
-          <nav class="hidden lg:flex items-center space-x-1">
-            <NuxtLink to="/" class="px-4 py-2 text-secondary hover:text-primary hover:bg-gray-50 rounded-xl transition-all font-medium">Home</NuxtLink>
-            <NuxtLink to="/vouchers" class="px-4 py-2 text-secondary hover:text-primary hover:bg-gray-50 rounded-xl transition-all font-medium">Vouchers</NuxtLink>
-            <NuxtLink to="/locations" class="px-4 py-2 text-secondary hover:text-primary hover:bg-gray-50 rounded-xl transition-all font-medium">Locations</NuxtLink>
-            <NuxtLink to="/profiles" class="px-4 py-2 text-secondary hover:text-primary hover:bg-gray-50 rounded-xl transition-all font-medium">Agents</NuxtLink>
-            <NuxtLink to="/contact" class="px-4 py-2 text-secondary hover:text-primary hover:bg-gray-50 rounded-xl transition-all font-medium">Contact</NuxtLink>
+          <nav class="hidden lg:flex items-center space-x-2">
+            <NuxtLink to="/" class="group relative px-4 py-2.5 text-gray-700 hover:text-blue-600 rounded-xl transition-all duration-300 font-medium overflow-hidden">
+              <span class="relative z-10">Home</span>
+              <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </NuxtLink>
+            <NuxtLink to="/vouchers" class="group relative px-4 py-2.5 text-gray-700 hover:text-blue-600 rounded-xl transition-all duration-300 font-medium overflow-hidden">
+              <span class="relative z-10">Vouchers</span>
+              <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </NuxtLink>
+            <NuxtLink to="/locations" class="group relative px-4 py-2.5 text-gray-700 hover:text-blue-600 rounded-xl transition-all duration-300 font-medium overflow-hidden">
+              <span class="relative z-10">Locations</span>
+              <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </NuxtLink>
+            <NuxtLink to="/profiles" class="group relative px-4 py-2.5 text-gray-700 hover:text-blue-600 rounded-xl transition-all duration-300 font-medium overflow-hidden">
+              <span class="relative z-10">Agents</span>
+              <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </NuxtLink>
+            <NuxtLink to="/contact" class="group relative px-4 py-2.5 text-gray-700 hover:text-blue-600 rounded-xl transition-all duration-300 font-medium overflow-hidden">
+              <span class="relative z-10">Contact</span>
+              <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </NuxtLink>
           </nav>
 
           <!-- CTA Buttons -->
           <div class="hidden lg:flex items-center space-x-3">
             <NuxtLink to="/login">
-              <Button label="Sign In" class="px-6 py-2.5 text-secondary hover:text-primary hover:bg-gray-50 rounded-xl font-medium transition-all" text />
+              <Button class="group relative px-6 py-2.5 text-gray-700 hover:text-blue-600 rounded-xl font-medium transition-all duration-300 overflow-hidden" text>
+                <span class="relative z-10">Sign In</span>
+                <div class="absolute inset-0 bg-gradient-to-r from-gray-100/50 to-gray-200/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </Button>
             </NuxtLink>
             <NuxtLink to="/signup">
-              <Button label="Get Started" class="px-6 py-2.5 bg-primary text-white rounded-xl hover:bg-primary-900 font-medium shadow-lg hover:shadow-xl transition-all" />
+              <Button class="group relative px-8 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 overflow-hidden">
+                <span class="relative z-10 flex items-center">
+                  Get Started
+                  <i class="pi pi-arrow-right ml-2 group-hover:translate-x-1 transition-transform duration-300"></i>
+                </span>
+                <div class="absolute inset-0 bg-gradient-to-r from-blue-500 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </Button>
             </NuxtLink>
           </div>
 
           <!-- Mobile Menu Button -->
           <div class="lg:hidden">
-            <Button @click="toggleMobileMenu" class="p-3 text-secondary hover:bg-gray-50 rounded-xl transition-all" text>
-              <i :class="mobileMenuOpen ? 'pi pi-times' : 'pi pi-bars'" class="text-xl"></i>
+            <Button @click="toggleMobileMenu" class="group relative p-3 text-gray-700 hover:bg-gray-100 rounded-xl transition-all duration-300 overflow-hidden" text>
+              <i :class="mobileMenuOpen ? 'pi pi-times' : 'pi pi-bars'" class="text-xl relative z-10 group-hover:scale-110 transition-transform duration-300"></i>
+              <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </Button>
           </div>
         </div>
 
         <!-- Mobile Navigation Overlay -->
         <div v-if="mobileMenuOpen" class="lg:hidden fixed inset-0 top-20 bg-white/95 backdrop-blur-xl z-40">
-          <nav class="container mx-auto px-6 py-8 space-y-1">
-            <NuxtLink to="/" class="block px-6 py-4 text-secondary hover:text-primary hover:bg-gray-50 rounded-xl transition-all font-medium text-lg" @click="mobileMenuOpen = false">Home</NuxtLink>
-            <NuxtLink to="/vouchers" class="block px-6 py-4 text-secondary hover:text-primary hover:bg-gray-50 rounded-xl transition-all font-medium text-lg" @click="mobileMenuOpen = false">Vouchers</NuxtLink>
-            <NuxtLink to="/locations" class="block px-6 py-4 text-secondary hover:text-primary hover:bg-gray-50 rounded-xl transition-all font-medium text-lg" @click="mobileMenuOpen = false">Locations</NuxtLink>
-            <NuxtLink to="/profiles" class="block px-6 py-4 text-secondary hover:text-primary hover:bg-gray-50 rounded-xl transition-all font-medium text-lg" @click="mobileMenuOpen = false">Agents</NuxtLink>
-            <NuxtLink to="/contact" class="block px-6 py-4 text-secondary hover:text-primary hover:bg-gray-50 rounded-xl transition-all font-medium text-lg" @click="mobileMenuOpen = false">Contact</NuxtLink>
+          
+          <nav class="container mx-auto px-6 py-8 space-y-2 relative">
+            <NuxtLink to="/" class="group block px-6 py-4 text-gray-700 hover:text-blue-600 rounded-xl transition-all font-medium text-lg overflow-hidden" @click="mobileMenuOpen = false">
+              <span class="relative z-10">Home</span>
+              <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </NuxtLink>
+            <NuxtLink to="/vouchers" class="group block px-6 py-4 text-gray-700 hover:text-blue-600 rounded-xl transition-all font-medium text-lg overflow-hidden" @click="mobileMenuOpen = false">
+              <span class="relative z-10">Vouchers</span>
+              <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </NuxtLink>
+            <NuxtLink to="/locations" class="group block px-6 py-4 text-gray-700 hover:text-blue-600 rounded-xl transition-all font-medium text-lg overflow-hidden" @click="mobileMenuOpen = false">
+              <span class="relative z-10">Locations</span>
+              <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </NuxtLink>
+            <NuxtLink to="/profiles" class="group block px-6 py-4 text-gray-700 hover:text-blue-600 rounded-xl transition-all font-medium text-lg overflow-hidden" @click="mobileMenuOpen = false">
+              <span class="relative z-10">Agents</span>
+              <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </NuxtLink>
+            <NuxtLink to="/contact" class="group block px-6 py-4 text-gray-700 hover:text-blue-600 rounded-xl transition-all font-medium text-lg overflow-hidden" @click="mobileMenuOpen = false">
+              <span class="relative z-10">Contact</span>
+              <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </NuxtLink>
             
             <div class="pt-6 space-y-3">
               <NuxtLink to="/login" class="w-full block" @click="mobileMenuOpen = false">
-                <Button label="Sign In" class="w-full px-6 py-3 text-secondary border border-gray-200 rounded-xl hover:bg-gray-50 font-medium text-lg transition-all" text />
+                <Button class="group relative w-full px-6 py-3 text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 font-medium text-lg transition-all duration-300 overflow-hidden" text>
+                  <span class="relative z-10">Sign In</span>
+                  <div class="absolute inset-0 bg-gradient-to-r from-gray-100/50 to-gray-200/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </Button>
               </NuxtLink>
               <NuxtLink to="/signup" class="w-full block" @click="mobileMenuOpen = false">
-                <Button label="Get Started" class="w-full px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary-900 font-medium text-lg shadow-lg transition-all" />
+                <Button class="group relative w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 overflow-hidden">
+                  <span class="relative z-10 flex items-center justify-center">
+                    Get Started
+                    <i class="pi pi-arrow-right ml-2 group-hover:translate-x-1 transition-transform duration-300"></i>
+                  </span>
+                  <div class="absolute inset-0 bg-gradient-to-r from-blue-500 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </Button>
               </NuxtLink>
             </div>
           </nav>
@@ -213,9 +276,148 @@ const toggleMobileMenu = () => {
   --secondary: v-bind(secondaryColor);
   font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
 }
-img.w-10.h-10.group-hover\:scale-105.transition-transform {
-    height: auto;
-    width: 120px;
+
+/* Enhanced Header Styles */
+header {
+  transition: all 0.3s ease;
+}
+
+/* Corporate Colors */
+:root {
+  --corporate-blue: #1d5caa;
+  --corporate-black: #000000;
+}
+
+/* Logo glow effect */
+header .group:hover .group-hover\:scale-110 {
+  transform: scale(1.1);
+}
+
+header .group:hover .group-hover\:opacity-100 {
+  opacity: 1;
+}
+
+/* Navigation hover effects */
+header .group:hover .group-hover\:translate-x-1 {
+  transform: translateX(0.25rem);
+}
+
+/* Button hover effects */
+header .group:hover .group-hover\:scale-105 {
+  transform: scale(1.05);
+}
+
+/* Gradient text animation */
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.bg-gradient-to-r {
+  background-size: 200% 200%;
+  animation: gradient-shift 3s ease infinite;
+}
+
+/* Enhanced backdrop blur */
+.backdrop-blur-2xl {
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+}
+
+/* Mobile menu animation */
+.lg\:hidden.fixed {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Enhanced shadow effects */
+.shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.hover\:shadow-xl:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+/* Logo sizing fix */
+header img {
+  width: 3rem;
+  height: 3rem;
+}
+
+/* Corporate color overrides */
+.corporate-blue {
+  background-color: var(--corporate-blue) !important;
+}
+
+.corporate-blue-text {
+  color: var(--corporate-blue) !important;
+}
+
+.corporate-black {
+  background-color: var(--corporate-black) !important;
+}
+
+.corporate-black-text {
+  color: var(--corporate-black) !important;
+}
+
+/* Gradient with corporate colors */
+.corporate-gradient {
+  background: linear-gradient(to right, var(--corporate-blue), var(--corporate-black)) !important;
+}
+
+.corporate-gradient-text {
+  background: linear-gradient(to right, var(--corporate-blue), var(--corporate-black));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Clean header background */
+header {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Ensure text visibility */
+header .text-gray-700 {
+  color: #374151 !important;
+}
+
+header .text-gray-800 {
+  color: #1f2937 !important;
+}
+
+header .text-gray-600 {
+  color: #4b5563 !important;
+}
+
+/* Enhanced button visibility */
+header .bg-gradient-to-r {
+  background-image: linear-gradient(to right, #1d5caa, #1e40af) !important;
+}
+
+/* Tagline pill styling */
+header .bg-blue-600 {
+  background-color: #1d5caa !important;
+  transition: all 0.3s ease;
+}
+
+header .bg-blue-600:hover {
+  background-color: #1a4a8a !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(29, 92, 170, 0.3);
 }
 
 /* Apply Poppins to all elements */

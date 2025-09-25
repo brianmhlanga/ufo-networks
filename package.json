@@ -24,6 +24,7 @@
     "nuxt": "^3.6.2",
     "nuxt-qrcode": "^0.4.6",
     "nuxt-scheduler": "^0.1.9",
+    "nuxt-swiper": "^2.0.1",
     "postcss": "^8.5.6",
     "prisma": "^5.0.0",
     "tailwindcss": "^3.4.17"
@@ -63,6 +64,7 @@
     "qrcode": "^1.5.4",
     "quill": "^2.0.3",
     "sweetalert2": "^11.22.0",
+    "swiper": "^12.0.2",
     "tsx": "^4.20.5",
     "typewriter-effect": "^2.22.0",
     "uuid": "^11.1.0",

@@ -10,7 +10,8 @@ export default defineNuxtConfig({
     'nuxt-auth-utils',
     'nuxt-scheduler',
     '@nuxtjs/tailwindcss',
-    'nuxt-qrcode'
+    'nuxt-qrcode',
+    'nuxt-swiper'
   ],
   primevue: {
     options: {
@@ -40,4 +41,4 @@ export default defineNuxtConfig({
       ]
     }
   }
-}) 
+})
