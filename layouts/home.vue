@@ -1,131 +1,59 @@
 <template>
   <div id="home-layout" class="min-h-screen bg-white">
     <!-- Header Navigation -->
-    <header class="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-b border-gray-100 shadow-sm">
-      
-      <div class="container mx-auto px-6 relative">
-        <div class="flex items-center justify-between h-20">
-          <!-- Logo -->
-          <div class="flex items-center">
+    <header class="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-b border-gray-100 shadow-sm h-28">
+      <div class="container mx-auto px-6 h-full">
+        <Menubar :model="menuItems" class="border-none bg-transparent h-full">
+          <template #start>
             <NuxtLink to="/" class="flex items-center space-x-3 group">
-              <!-- <div class="relative">
-                <img src="/logo.png" alt="UFO Networks" class="w-12 h-12 group-hover:scale-110 transition-all duration-300" />
-       
-                <div class="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-black/10 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </div> -->
-                <div class="hidden sm:block">
-                  <h1 class="text-xl font-bold text-gray-800 group-hover:text-blue-600 transition-all duration-300">
-                    UFO Networks
-                  </h1>
-                  <div class="inline-flex items-center px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-full shadow-sm">
-                    <i class="pi pi-wifi mr-1.5 text-xs"></i>
-                    Fast WiFi Anywhere
-                  </div>
+              
+              <div>
+                <h1 class="text-lg sm:text-xl font-bold text-gray-800 group-hover:text-blue-600 transition-all duration-300">UFO Networks</h1>
+                <div class="inline-flex items-center px-2 sm:px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded-full shadow-sm">
+                  <i class="pi pi-wifi mr-1 sm:mr-1.5 text-xs"></i>
+                  <span class="hidden xs:inline">Fast WiFi Anywhere</span>
+                  <span class="xs:hidden">Fast WiFi Anywhere</span>
                 </div>
+              </div>
             </NuxtLink>
-          </div>
-
-          <!-- Desktop Navigation -->
-          <nav class="hidden lg:flex items-center space-x-2">
-            <NuxtLink to="/" class="group relative px-4 py-2.5 text-gray-700 hover:text-blue-600 rounded-xl transition-all duration-300 font-medium overflow-hidden">
-              <span class="relative z-10">Home</span>
-              <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </NuxtLink>
-            <NuxtLink to="/vouchers" class="group relative px-4 py-2.5 text-gray-700 hover:text-blue-600 rounded-xl transition-all duration-300 font-medium overflow-hidden">
-              <span class="relative z-10">Vouchers</span>
-              <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </NuxtLink>
-            <NuxtLink to="/locations" class="group relative px-4 py-2.5 text-gray-700 hover:text-blue-600 rounded-xl transition-all duration-300 font-medium overflow-hidden">
-              <span class="relative z-10">Locations</span>
-              <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </NuxtLink>
-            <NuxtLink to="/profiles" class="group relative px-4 py-2.5 text-gray-700 hover:text-blue-600 rounded-xl transition-all duration-300 font-medium overflow-hidden">
-              <span class="relative z-10">Agents</span>
-              <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </NuxtLink>
-            <NuxtLink to="/contact" class="group relative px-4 py-2.5 text-gray-700 hover:text-blue-600 rounded-xl transition-all duration-300 font-medium overflow-hidden">
-              <span class="relative z-10">Contact</span>
-              <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </NuxtLink>
-          </nav>
-
-          <!-- CTA Buttons -->
-          <div class="hidden lg:flex items-center space-x-3">
-            <NuxtLink to="/login">
-              <Button class="group relative px-6 py-2.5 text-gray-700 hover:text-blue-600 rounded-xl font-medium transition-all duration-300 overflow-hidden" text>
-                <span class="relative z-10">Sign In</span>
-                <div class="absolute inset-0 bg-gradient-to-r from-gray-100/50 to-gray-200/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </Button>
-            </NuxtLink>
-            <NuxtLink to="/signup">
-              <Button class="group relative px-8 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 overflow-hidden">
-                <span class="relative z-10 flex items-center">
-                  Get Started
-                  <i class="pi pi-arrow-right ml-2 group-hover:translate-x-1 transition-transform duration-300"></i>
-                </span>
-                <div class="absolute inset-0 bg-gradient-to-r from-blue-500 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </Button>
-            </NuxtLink>
-          </div>
-
-          <!-- Mobile Menu Button -->
-          <div class="lg:hidden">
-            <Button @click="toggleMobileMenu" class="group relative p-3 text-gray-700 hover:bg-gray-100 rounded-xl transition-all duration-300 overflow-hidden" text>
-              <i :class="mobileMenuOpen ? 'pi pi-times' : 'pi pi-bars'" class="text-xl relative z-10 group-hover:scale-110 transition-transform duration-300"></i>
-              <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </Button>
-          </div>
-        </div>
-
-        <!-- Mobile Navigation Overlay -->
-        <div v-if="mobileMenuOpen" class="lg:hidden fixed inset-0 top-20 bg-white/95 backdrop-blur-xl z-40">
+          </template>
           
-          <nav class="container mx-auto px-6 py-8 space-y-2 relative">
-            <NuxtLink to="/" class="group block px-6 py-4 text-gray-700 hover:text-blue-600 rounded-xl transition-all font-medium text-lg overflow-hidden" @click="mobileMenuOpen = false">
-              <span class="relative z-10">Home</span>
-              <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <template #item="{ item, props, hasSubmenu, root }">
+            <NuxtLink v-if="item.route" :to="item.route" class="flex items-center px-4 py-2.5 text-gray-700 hover:text-blue-600 rounded-xl transition-all duration-300 font-medium" v-bind="props.action">
+              <i v-if="item.icon" :class="item.icon" class="mr-2"></i>
+              <span>{{ item.label }}</span>
+              <i v-if="hasSubmenu" class="pi pi-angle-down ml-auto"></i>
             </NuxtLink>
-            <NuxtLink to="/vouchers" class="group block px-6 py-4 text-gray-700 hover:text-blue-600 rounded-xl transition-all font-medium text-lg overflow-hidden" @click="mobileMenuOpen = false">
-              <span class="relative z-10">Vouchers</span>
-              <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </NuxtLink>
-            <NuxtLink to="/locations" class="group block px-6 py-4 text-gray-700 hover:text-blue-600 rounded-xl transition-all font-medium text-lg overflow-hidden" @click="mobileMenuOpen = false">
-              <span class="relative z-10">Locations</span>
-              <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </NuxtLink>
-            <NuxtLink to="/profiles" class="group block px-6 py-4 text-gray-700 hover:text-blue-600 rounded-xl transition-all font-medium text-lg overflow-hidden" @click="mobileMenuOpen = false">
-              <span class="relative z-10">Agents</span>
-              <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </NuxtLink>
-            <NuxtLink to="/contact" class="group block px-6 py-4 text-gray-700 hover:text-blue-600 rounded-xl transition-all font-medium text-lg overflow-hidden" @click="mobileMenuOpen = false">
-              <span class="relative z-10">Contact</span>
-              <div class="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </NuxtLink>
-            
-            <div class="pt-6 space-y-3">
-              <NuxtLink to="/login" class="w-full block" @click="mobileMenuOpen = false">
-                <Button class="group relative w-full px-6 py-3 text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 font-medium text-lg transition-all duration-300 overflow-hidden" text>
-                  <span class="relative z-10">Sign In</span>
-                  <div class="absolute inset-0 bg-gradient-to-r from-gray-100/50 to-gray-200/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <a v-else class="flex items-center px-4 py-2.5 text-gray-700 hover:text-blue-600 rounded-xl transition-all duration-300 font-medium" v-bind="props.action">
+              <i v-if="item.icon" :class="item.icon" class="mr-2"></i>
+              <span>{{ item.label }}</span>
+              <i v-if="hasSubmenu" class="pi pi-angle-down ml-auto"></i>
+            </a>
+          </template>
+          
+          <template #end>
+            <div class="hidden lg:flex items-center space-x-3">
+              <NuxtLink to="/login">
+                <Button class="px-6 py-2.5 text-gray-700 hover:text-blue-600 rounded-xl font-medium transition-all duration-300" text>
+                  Sign In
                 </Button>
               </NuxtLink>
-              <NuxtLink to="/signup" class="w-full block" @click="mobileMenuOpen = false">
-                <Button class="group relative w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 overflow-hidden">
-                  <span class="relative z-10 flex items-center justify-center">
+              <NuxtLink to="/signup">
+                <Button class="px-8 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                  <span class="flex items-center">
                     Get Started
-                    <i class="pi pi-arrow-right ml-2 group-hover:translate-x-1 transition-transform duration-300"></i>
+                    <i class="pi pi-arrow-right ml-2"></i>
                   </span>
-                  <div class="absolute inset-0 bg-gradient-to-r from-blue-500 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </Button>
               </NuxtLink>
             </div>
-          </nav>
-        </div>
+          </template>
+        </Menubar>
       </div>
     </header>
 
     <!-- Main Content -->
-    <main class="pt-20">
+    <main class="pt-28">
       <slot />
     </main>
 
@@ -259,12 +187,49 @@
 <script setup>
 import { primaryColor, secondaryColor } from '~/configs/colors'
 
-// Mobile menu state
-const mobileMenuOpen = ref(false)
-
-const toggleMobileMenu = () => {
-  mobileMenuOpen.value = !mobileMenuOpen.value
-}
+// Menu items for PrimeVue Menubar
+const menuItems = ref([
+  {
+    label: 'Home',
+    icon: 'pi pi-home',
+    route: '/'
+  },
+  {
+    label: 'Vouchers',
+    icon: 'pi pi-ticket',
+    route: '/vouchers'
+  },
+  {
+    label: 'Locations',
+    icon: 'pi pi-map-marker',
+    route: '/locations'
+  },
+  {
+    label: 'Agents',
+    icon: 'pi pi-users',
+    route: '/profiles'
+  },
+  {
+    label: 'Contact',
+    icon: 'pi pi-envelope',
+    route: '/contact'
+  },
+  {
+    separator: true
+  },
+  {
+    label: 'Sign In',
+    icon: 'pi pi-sign-in',
+    route: '/login',
+    class: 'mobile-only'
+  },
+  {
+    label: 'Get Started',
+    icon: 'pi pi-arrow-right',
+    route: '/signup',
+    class: 'mobile-only primary'
+  }
+])
 </script>
 
 <style scoped>
@@ -325,9 +290,86 @@ header .group:hover .group-hover\:scale-105 {
   -webkit-backdrop-filter: blur(40px);
 }
 
-/* Mobile menu animation */
-.lg\:hidden.fixed {
-  animation: slideDown 0.3s ease-out;
+/* PrimeVue Menubar customizations */
+.p-menubar {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.p-menubar .p-menubar-root-list {
+  background: transparent !important;
+}
+
+.p-menubar .p-menuitem-link {
+  border-radius: 0.75rem !important;
+  transition: all 0.3s ease !important;
+}
+
+.p-menubar .p-menuitem-link:hover {
+  background: rgba(29, 92, 170, 0.1) !important;
+}
+
+/* Mobile menu styling */
+.p-menubar .p-menubar-button {
+  background: transparent !important;
+  border: none !important;
+  color: rgb(31 41 55) !important;
+  margin-left: auto !important;
+  order: 999 !important;
+}
+
+.p-menubar .p-menubar-button:hover {
+  background: rgba(156, 163, 175, 0.1) !important;
+}
+
+/* Ensure mobile menu button is on the far right */
+@media (max-width: 1023px) {
+  .p-menubar .p-menubar-root-list {
+    margin-left: auto !important;
+  }
+  
+  .p-menubar .p-menubar-button {
+    margin-left: auto !important;
+    order: 999 !important;
+  }
+}
+
+/* Hide mobile-only items on desktop */
+@media (min-width: 1024px) {
+  .p-menubar .p-menuitem[data-pc-section="menuitem"].mobile-only {
+    display: none !important;
+  }
+}
+
+/* Style mobile-only buttons */
+.p-menubar .p-menuitem.mobile-only .p-menuitem-link {
+  background: transparent !important;
+  border: none !important;
+  padding: 0.75rem 1rem !important;
+  margin: 0.25rem 0 !important;
+  border-radius: 0.75rem !important;
+}
+
+.p-menubar .p-menuitem.mobile-only.primary .p-menuitem-link {
+  background: linear-gradient(to right, #1d5caa, #1a4a8a) !important;
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.p-menubar .p-menuitem.mobile-only.primary .p-menuitem-link:hover {
+  background: linear-gradient(to right, #1a4a8a, #164080) !important;
+  transform: scale(1.02) !important;
+}
+
+.p-menubar .p-menuitem.mobile-only:not(.primary) .p-menuitem-link {
+  color: #374151 !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+.p-menubar .p-menuitem.mobile-only:not(.primary) .p-menuitem-link:hover {
+  background: #f9fafb !important;
+  color: #1d5caa !important;
 }
 
 @keyframes slideDown {
