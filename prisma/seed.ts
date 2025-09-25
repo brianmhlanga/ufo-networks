@@ -415,7 +415,9 @@ async function main() {
         batchId: batch1Hour.id,
         quantity: 2,
         unitPrice: 2.50,
-        lineTotal: 5.00
+        lineTotal: 5.00,
+        hours: 1,
+        numberOfUsers: 1
       },
       {
         orderId: order2.id,
@@ -423,7 +425,9 @@ async function main() {
         batchId: batch5Hours.id,
         quantity: 1,
         unitPrice: 10.00,
-        lineTotal: 10.00
+        lineTotal: 10.00,
+        hours: 5,
+        numberOfUsers: 2
       }
     ]
   })
