@@ -1,45 +1,47 @@
 <template>
   <NuxtLayout name="home">
-    <div class="min-h-screen bg-gradient-to-br from-[#eff4ff] to-white">
+    <div class="min-h-screen">
       <!-- Success Header -->
-      <section class="relative overflow-hidden py-20">
-        <div class="container mx-auto px-6">
+      <section class="relative overflow-hidden py-20 bg-cover bg-center bg-no-repeat" style="background-image: url('/images/ladies.jpg');">
+        <!-- Dark overlay for better text contrast -->
+        <div class="absolute inset-0 bg-black/40"></div>
+        <div class="container mx-auto px-6 relative z-10">
           <div class="max-w-4xl mx-auto text-center">
             <!-- Success Badge -->
-            <div class="inline-flex items-center px-4 py-2 bg-green-100 backdrop-blur-sm rounded-full shadow-lg border border-green-200 mb-6">
-              <span class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-              <span class="text-sm font-medium text-green-700">Successfully Connected</span>
+            <div class="inline-flex items-center px-4 py-2 bg-green-500/90 backdrop-blur-sm rounded-full shadow-lg border border-green-400 mb-6">
+              <span class="w-2 h-2 bg-white rounded-full mr-2 animate-pulse"></span>
+              <span class="text-sm font-medium text-white">Successfully Connected</span>
             </div>
 
             <!-- Success Icon -->
-            <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-8 shadow-lg">
+            <div class="w-24 h-24 bg-white/90 rounded-full flex items-center justify-center mx-auto mb-8 shadow-lg">
               <svg class="w-12 h-12 text-green-600" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
               </svg>
             </div>
 
             <!-- Main heading -->
-            <h1 class="text-4xl md:text-6xl font-bold text-secondary leading-tight mb-6">
+            <h1 class="text-4xl md:text-6xl font-bold text-white leading-tight mb-6">
               <span class="block">Welcome to</span>
-              <span class="block bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              <span class="block bg-gradient-to-r from-yellow-300 to-yellow-100 bg-clip-text text-transparent">
                 {{ location?.name || 'UFO Networks' }}
               </span>
             </h1>
 
             <!-- Subtitle -->
-            <p class="text-lg md:text-xl text-secondary/80 font-medium max-w-3xl mx-auto leading-relaxed mb-8">
+            <p class="text-lg md:text-xl text-white/90 font-medium max-w-3xl mx-auto leading-relaxed mb-8">
               You're now connected to our high-speed WiFi network. Enjoy your browsing experience!
             </p>
 
             <!-- Location Info -->
-            <div v-if="location" class="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 max-w-md mx-auto">
+            <div v-if="location" class="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/30 max-w-md mx-auto">
               <div class="flex items-center justify-center space-x-3 mb-3">
-                <svg class="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                 </svg>
-                <span class="text-lg font-semibold text-secondary">{{ location.town }}, {{ location.province }}</span>
+                <span class="text-lg font-semibold text-gray-800">{{ location.town }}, {{ location.province }}</span>
               </div>
-              <p class="text-sm text-secondary/70">{{ location.area }}</p>
+              <p class="text-sm text-gray-600">{{ location.area }}</p>
             </div>
           </div>
         </div>
@@ -65,9 +67,10 @@
                 <!-- Ad Image -->
                 <div v-if="ad.mediaUrl" class="relative h-48 overflow-hidden">
                   <img 
-                    :src="ad.mediaUrl" 
+                    :src="`/api/uploads/${ad.mediaUrl}`" 
                     :alt="ad.title"
                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    @error="handleImageError"
                   />
                   <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                 </div>
@@ -249,6 +252,13 @@ const trackAdClick = async (adId) => {
   } catch (error) {
     console.error('Error tracking ad click:', error)
   }
+}
+
+// Handle image loading errors
+const handleImageError = (event) => {
+  console.error('Failed to load ad image:', event.target.src)
+  // Hide the image container if image fails to load
+  event.target.style.display = 'none'
 }
 
 // Lifecycle

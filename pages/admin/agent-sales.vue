@@ -204,36 +204,6 @@
               </template>
             </Column>
             
-            <Column header="Actions" style="width: 120px">
-              <template #body="{ data }">
-                <div class="flex space-x-2">
-                  <Button 
-                    @click="viewSale(data)" 
-                    icon="visibility" 
-                    size="small" 
-                    text 
-                    severity="info"
-                    v-tooltip.top="'View Details'"
-                  />
-                  <Button 
-                    @click="editSale(data)" 
-                    icon="edit" 
-                    size="small" 
-                    text 
-                    severity="warning"
-                    v-tooltip.top="'Edit Sale'"
-                  />
-                  <Button 
-                    @click="confirmDeleteSale(data)" 
-                    icon="delete" 
-                    size="small" 
-                    text 
-                    severity="danger"
-                    v-tooltip.top="'Delete Sale'"
-                  />
-                </div>
-              </template>
-            </Column>
           </DataTable>
         </template>
       </Card>

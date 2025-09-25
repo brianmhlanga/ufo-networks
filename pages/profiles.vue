@@ -2,23 +2,25 @@
   <NuxtLayout name="home">
     <div id="agents-page" class="min-h-screen bg-white">
       <!-- Hero Section -->
-      <section class="relative overflow-hidden py-20 bg-gradient-to-br from-[#eff4ff] to-white">
-        <div class="container mx-auto px-6">
+      <section class="relative overflow-hidden py-20 bg-cover bg-center bg-no-repeat" style="background-image: url('/images/hat.jpg');">
+        <!-- Dark overlay for better text contrast -->
+        <div class="absolute inset-0 bg-black/50"></div>
+        <div class="container mx-auto px-6 relative z-10">
           <div class="max-w-4xl mx-auto text-center">
             <!-- Badge -->
-            <div class="inline-flex items-center px-4 py-2 bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-gray-100 mb-6">
+            <div class="inline-flex items-center px-4 py-2 bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-white/30 mb-6">
               <span class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-              <span class="text-sm font-medium text-secondary">{{ totalAgents }} Active Agents</span>
+              <span class="text-sm font-medium text-gray-800">{{ totalAgents }} Active Agents</span>
             </div>
 
             <!-- Main heading -->
-            <h1 class="text-4xl md:text-6xl font-bold text-secondary leading-tight mb-6">
+            <h1 class="text-4xl md:text-6xl font-bold text-white leading-tight mb-6">
               <span class="block">Find a</span>
-              <span class="block bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Trusted Agent</span>
+              <span class="block bg-gradient-to-r from-blue-300 to-blue-100 bg-clip-text text-transparent">Trusted Agent</span>
             </h1>
 
             <!-- Subtitle -->
-            <p class="text-lg md:text-xl text-secondary/80 font-medium max-w-3xl mx-auto leading-relaxed mb-8">
+            <p class="text-lg md:text-xl text-white/90 font-medium max-w-3xl mx-auto leading-relaxed mb-8">
               Connect with our verified agents across Zimbabwe. Buy vouchers in person with cash or get instant digital vouchers.
             </p>
 
@@ -29,15 +31,15 @@
                   v-model="searchQuery" 
                   type="text"
                   placeholder="Search agents by name, location, or phone..." 
-                  class="w-full pl-12 pr-4 py-4 text-lg rounded-2xl border-2 border-gray-200 focus:border-primary transition-colors outline-none"
+                  class="w-full pl-12 pr-4 py-4 text-lg rounded-2xl border-2 border-white/30 focus:border-white/60 transition-colors outline-none bg-white/90 backdrop-blur-sm text-gray-800 placeholder-gray-600"
                 />
-                <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg">🔍</span>
+                <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-600 text-lg">🔍</span>
               </div>
             </div>
 
             <!-- Filter Buttons -->
             <div class="mb-4">
-              <p class="text-sm text-secondary/70 mb-3">Select Province:</p>
+              <p class="text-sm text-white/80 mb-3">Select Province:</p>
               <div class="flex flex-wrap items-center justify-center gap-3">
                 <Button 
                   v-for="province in provinces" 
@@ -72,86 +74,118 @@
           </div>
 
           <!-- Agents Grid -->
-          <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-stretch">
-            <Card 
+          <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 items-stretch">
+            <div 
               v-for="agent in filteredAgents" 
               :key="`${agent.id}-${agent.agentProfile?.location?.id || 'no-location'}`"
-              class="group border border-gray-200 rounded-3xl overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] flex flex-col h-full min-h-[320px] bg-gradient-to-br from-white to-gray-50/30"
+              class="group bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] flex flex-col h-full min-h-[320px] relative"
             >
-              <template #content>
-                <div class="p-6 flex flex-col h-full">
-                  <!-- Agent Header -->
-                  <div class="text-center mb-6">
-                    <h3 class="text-xl font-bold text-secondary mb-2 group-hover:text-primary transition-colors">
-                      {{ agent.agentProfile.displayName }}
-                    </h3>
-                    <div class="flex items-center justify-center text-sm text-secondary/70 mb-3">
-                      <span class="mr-1">📍</span>
-                      <span v-if="agent.agentProfile?.location">
-                        {{ agent.agentProfile.location.town }}, {{ agent.agentProfile.location.province }}
-                      </span>
-                      <span v-else>Location not set</span>
-                    </div>
+              <!-- Card Header with Gradient -->
+              <div class="bg-gradient-to-br from-green-500 to-green-600 p-4 text-white relative overflow-hidden h-24 flex items-center">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
+                <div class="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
+                
+                <div class="relative z-10 w-full">
+                  <h3 class="text-lg font-bold mb-1 group-hover:text-green-100 transition-colors truncate">
+                    {{ agent.agentProfile.displayName }}
+                  </h3>
+                  <div class="flex items-center text-sm text-green-100">
+                    <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                    </svg>
+                    <span class="truncate" v-if="agent.agentProfile?.location">
+                      {{ agent.agentProfile.location.town }}, {{ agent.agentProfile.location.province }}
+                    </span>
+                    <span class="truncate" v-else>Location not set</span>
                   </div>
+                </div>
+              </div>
 
-                  <!-- Contact Info -->
-                  <div class="mb-6 flex-1">
-                    <div class="space-y-3">
-                      <div class="flex items-center text-sm text-secondary/80">
-                        <span class="mr-2">📧</span>
-                        <span class="truncate">{{ agent.email }}</span>
-                      </div>
-                      <div class="flex items-center text-sm text-secondary/80">
-                        <span class="mr-2">📱</span>
-                        <span>{{ agent.phone }}</span>
-                      </div>
-                      <div v-if="agent.agentProfile?.location" class="flex items-center text-sm text-secondary/80">
-                        <span class="mr-2">📍</span>
-                        <span>{{ agent.agentProfile.location.name }}, {{ agent.agentProfile.location.town }}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Contact Buttons -->
-                  <div class="mt-auto">
-                    <div class="grid grid-cols-3 gap-2">
-                      <!-- WhatsApp Button -->
-                      <Button 
-                        class="bg-green-500 hover:bg-green-600 text-white rounded-xl font-semibold py-3 transition-all flex items-center justify-center"
-                        @click="openWhatsApp(agent)"
-                        v-tooltip.top="'WhatsApp'"
-                      >
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
-                        </svg>
-                      </Button>
-                      
-                      <!-- Email Button -->
-                      <Button 
-                        class="bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold py-3 transition-all flex items-center justify-center"
-                        @click="sendEmail(agent)"
-                        v-tooltip.top="'Email'"
-                      >
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+              <!-- Card Content -->
+              <div class="p-4 flex flex-col h-full">
+                <!-- Contact Info -->
+                <div class="mb-6 flex-1">
+                  <div class="space-y-4">
+                    <!-- Email -->
+                    <div class="flex items-center bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-3 border border-gray-200">
+                      <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center mr-3">
+                        <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
                         </svg>
-                      </Button>
-                      
-                      <!-- Call Button -->
-                      <Button 
-                        class="bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-semibold py-3 transition-all flex items-center justify-center"
-                        @click="makeCall(agent)"
-                        v-tooltip.top="'Call'"
-                      >
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <div class="text-xs text-gray-500 mb-1">Email</div>
+                        <div class="text-sm font-medium text-gray-800 truncate">{{ agent.email }}</div>
+                      </div>
+                    </div>
+
+                    <!-- Phone -->
+                    <div class="flex items-center bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-3 border border-gray-200">
+                      <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center mr-3">
+                        <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
                         </svg>
-                      </Button>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <div class="text-xs text-gray-500 mb-1">Phone</div>
+                        <div class="text-sm font-medium text-gray-800">{{ agent.phone }}</div>
+                      </div>
+                    </div>
+
+                    <!-- Location -->
+                    <div v-if="agent.agentProfile?.location" class="flex items-center bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-3 border border-gray-200">
+                      <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center mr-3">
+                        <svg class="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                        </svg>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <div class="text-xs text-gray-500 mb-1">Location</div>
+                        <div class="text-sm font-medium text-gray-800 truncate">{{ agent.agentProfile.location.name }}, {{ agent.agentProfile.location.town }}</div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </template>
-            </Card>
+
+                <!-- Contact Buttons -->
+                <div class="mt-auto">
+                  <div class="grid grid-cols-3 gap-2">
+                    <!-- WhatsApp Button -->
+                    <button 
+                      class="bg-green-500 hover:bg-green-600 text-white rounded-xl font-semibold py-3 transition-all flex items-center justify-center transform hover:scale-105"
+                      @click="openWhatsApp(agent)"
+                      v-tooltip.top="'WhatsApp'"
+                    >
+                      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
+                      </svg>
+                    </button>
+                    
+                    <!-- Email Button -->
+                    <button 
+                      class="bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold py-3 transition-all flex items-center justify-center transform hover:scale-105"
+                      @click="sendEmail(agent)"
+                      v-tooltip.top="'Email'"
+                    >
+                      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                      </svg>
+                    </button>
+                    
+                    <!-- Call Button -->
+                    <button 
+                      class="bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-semibold py-3 transition-all flex items-center justify-center transform hover:scale-105"
+                      @click="makeCall(agent)"
+                      v-tooltip.top="'Call'"
+                    >
+                      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Results Summary -->
@@ -281,9 +315,9 @@ const getProvinceButtonClass = (province) => {
   const isSelected = selectedProvince.value === province
   
   if (isSelected) {
-    return `${baseClasses} bg-primary text-white shadow-lg`
+    return `${baseClasses} bg-blue-600 text-white shadow-lg`
   } else {
-    return `${baseClasses} bg-white/80 text-secondary hover:bg-gray-50 border border-gray-200`
+    return `${baseClasses} bg-white/90 text-gray-800 hover:bg-white border border-white/30 backdrop-blur-sm`
   }
 }
 

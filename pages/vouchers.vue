@@ -1,26 +1,71 @@
 <template>
   <NuxtLayout name="home">
-    <div class="min-h-screen bg-gray-50">
-      <!-- Page Header -->
-      <!-- <div class="bg-white shadow-sm border-b">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="flex justify-between items-center py-6">
-            <h1 class="text-2xl font-bold text-[#2d3040]">Order WiFi Vouchers</h1>
-            <NuxtLink to="/" class="text-primary hover:text-primary-900 font-medium">
-              ← Back to Home
-            </NuxtLink>
+    <div class="min-h-screen">
+      <!-- Hero Section -->
+      <section class="relative overflow-hidden py-20 bg-cover bg-center bg-no-repeat" style="background-image: url('/images/people.jpg');">
+        <!-- Dark overlay for better text contrast -->
+        <div class="absolute inset-0 bg-black/50"></div>
+        <div class="container mx-auto px-6 relative z-10">
+          <div class="max-w-4xl mx-auto text-center">
+            <!-- Back to Home Link -->
+            <div class="mb-6">
+              <NuxtLink to="/" class="inline-flex items-center text-white/90 hover:text-white transition-colors">
+                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                </svg>
+                Back to Home
+              </NuxtLink>
+            </div>
+
+            <!-- Main heading -->
+            <h1 class="text-4xl md:text-6xl font-bold text-white leading-tight mb-6">
+              <span class="block">Order WiFi</span>
+              <span class="block bg-gradient-to-r from-blue-300 to-blue-100 bg-clip-text text-transparent">
+                Vouchers
+              </span>
+            </h1>
+
+            <!-- Subtitle -->
+            <p class="text-lg md:text-xl text-white/90 font-medium max-w-3xl mx-auto leading-relaxed mb-8">
+              Get fast, reliable internet access at any UFO Networks location. Choose your location, select vouchers, and pay securely with Paynow.
+            </p>
+
+            <!-- Features -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
+              <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+                <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                  </svg>
+                </div>
+                <h3 class="text-white font-semibold mb-2">Fast & Reliable</h3>
+                <p class="text-white/80 text-sm">High-speed internet connection</p>
+              </div>
+              <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+                <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                  </svg>
+                </div>
+                <h3 class="text-white font-semibold mb-2">Multiple Locations</h3>
+                <p class="text-white/80 text-sm">Available nationwide</p>
+              </div>
+              <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
+                <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                  </svg>
+                </div>
+                <h3 class="text-white font-semibold mb-2">Secure Payment</h3>
+                <p class="text-white/80 text-sm">Paynow integration</p>
+              </div>
+            </div>
           </div>
         </div>
-      </div> -->
+      </section>
 
-    <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div class="text-center mb-8">
-        <h2 class="text-3xl font-bold text-[#2d3040] mb-4">Order WiFi Vouchers</h2>
-        <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-          Get fast, reliable internet access at any UFO Networks location. Choose your location, select vouchers, and pay securely with Paynow.
-        </p>
-      </div>
+      <!-- Main Content -->
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-gray-50">
 
       <!-- Order Form -->
       <div class="max-w-4xl mx-auto">

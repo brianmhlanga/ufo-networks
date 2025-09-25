@@ -70,12 +70,6 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    if (startsAt && new Date(startsAt) < new Date()) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Start date cannot be in the past'
-      })
-    }
 
     if (endsAt && startsAt && new Date(endsAt) <= new Date(startsAt)) {
       throw createError({

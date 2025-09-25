@@ -305,14 +305,17 @@
             </div>
             
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Advertiser</label>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Advertiser <span class="text-gray-400 text-sm">(Optional)</span></label>
               <Select 
                 v-model="form.advertiserId" 
                 :options="advertiserOptions" 
                 optionLabel="label" 
                 optionValue="id"
-                placeholder="Select Advertiser" 
+                placeholder="Select Advertiser (Optional)" 
                 class="w-full"
+                :showClear="true"
+                :filter="true"
+                filterPlaceholder="Search advertisers..."
               />
             </div>
             
@@ -701,7 +704,7 @@ const selectedAd: any = ref(null)
 
 // Form data
 const form = ref({
-  advertiserId: '',
+  advertiserId: null, // Use null instead of empty string for optional field
   title: '',
   mediaUrl: '',
   targetUrl: '',
@@ -746,12 +749,23 @@ const fetchAds = async () => {
     const response: any = await $fetch(`/api/admin/ads?${params}`)
     ads.value = response.ads
     pagination.value = response.pagination
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching ads:', error)
+    
+    // Extract error message from API response
+    let errorMessage = 'Failed to fetch ads'
+    if (error.data?.statusMessage) {
+      errorMessage = error.data.statusMessage
+    } else if (error.statusMessage) {
+      errorMessage = error.statusMessage
+    } else if (error.message) {
+      errorMessage = error.message
+    }
+    
     toast.add({
       severity: 'error',
       summary: 'Error',
-      detail: 'Failed to fetch ads',
+      detail: errorMessage,
       life: 3000
     })
   } finally {
@@ -806,7 +820,7 @@ const editAd = (ad: any) => {
   dialogMode.value = 'edit'
   selectedAd.value = ad
   form.value = {
-    advertiserId: ad.advertiserId || '',
+    advertiserId: ad.advertiserId || null, // Use null instead of empty string
     title: ad.title,
     mediaUrl: ad.mediaUrl || '',
     targetUrl: ad.targetUrl || '',
@@ -849,12 +863,23 @@ const deleteAd = async (adId: any) => {
     
     fetchAds()
     fetchAdStats()
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting ad:', error)
+    
+    // Extract error message from API response
+    let errorMessage = 'Failed to delete ad'
+    if (error.data?.statusMessage) {
+      errorMessage = error.data.statusMessage
+    } else if (error.statusMessage) {
+      errorMessage = error.statusMessage
+    } else if (error.message) {
+      errorMessage = error.message
+    }
+    
     toast.add({
       severity: 'error',
       summary: 'Error',
-      detail: 'Failed to delete ad',
+      detail: errorMessage,
       life: 3000
     })
   }
@@ -864,8 +889,40 @@ const saveAd = async () => {
   try {
     saving.value = true
     
+    // Client-side validation
+    if (!form.value.title?.trim()) {
+      toast.add({
+        severity: 'error',
+        summary: 'Validation Error',
+        detail: 'Title is required',
+        life: 3000
+      })
+      return
+    }
+    
+    if (!form.value.placementPage) {
+      toast.add({
+        severity: 'error',
+        summary: 'Validation Error',
+        detail: 'Placement page is required',
+        life: 3000
+      })
+      return
+    }
+    
+    if (!form.value.startsAt) {
+      toast.add({
+        severity: 'error',
+        summary: 'Validation Error',
+        detail: 'Start date is required',
+        life: 3000
+      })
+      return
+    }
+    
     const payload = {
       ...form.value,
+      advertiserId: form.value.advertiserId || null, // Convert empty string to null
       startsAt: form.value.startsAt?.toISOString(),
       endsAt: form.value.endsAt?.toISOString()
     }
@@ -899,12 +956,23 @@ const saveAd = async () => {
     showDialog.value = false
     fetchAds()
     fetchAdStats()
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error saving ad:', error)
+    
+    // Extract error message from API response
+    let errorMessage = 'Failed to save ad'
+    if (error.data?.statusMessage) {
+      errorMessage = error.data.statusMessage
+    } else if (error.statusMessage) {
+      errorMessage = error.statusMessage
+    } else if (error.message) {
+      errorMessage = error.message
+    }
+    
     toast.add({
       severity: 'error',
       summary: 'Error',
-      detail: 'Failed to save ad',
+      detail: errorMessage,
       life: 3000
     })
   } finally {
@@ -914,7 +982,7 @@ const saveAd = async () => {
 
 const resetForm = () => {
   form.value = {
-    advertiserId: '',
+    advertiserId: null, // Use null instead of empty string
     title: '',
     mediaUrl: '',
     targetUrl: '',
@@ -1020,15 +1088,25 @@ const uploadFile = async (file: File) => {
       uploadProgress.value = 0
     }, 1000)
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error uploading file:', error)
     uploading.value = false
     uploadProgress.value = 0
     
+    // Extract error message from API response
+    let errorMessage = 'Failed to upload file'
+    if (error.data?.statusMessage) {
+      errorMessage = error.data.statusMessage
+    } else if (error.statusMessage) {
+      errorMessage = error.statusMessage
+    } else if (error.message) {
+      errorMessage = error.message
+    }
+    
     toast.add({
       severity: 'error',
       summary: 'Error',
-      detail: 'Failed to upload file',
+      detail: errorMessage,
       life: 3000
     })
   }
