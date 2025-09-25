@@ -1,3 +1,0 @@
--- AlterTable
-ALTER TABLE `agentpurchase` ADD COLUMN `hours` INTEGER NOT NULL DEFAULT 1,
-    ADD COLUMN `numberOfUsers` INTEGER NOT NULL DEFAULT 1;
