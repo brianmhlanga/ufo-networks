@@ -32,11 +32,11 @@
                {{ section.title }}
              </h3>
              <div class="space-y-1">
-               <NuxtLink
+               <a
                  v-for="item in section.items"
                  :key="item.path"
-                 :to="item.path"
-                 class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group"
+                 @click="handleNavigationClick(item) ? navigateTo(item.path) : null"
+                 class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group cursor-pointer"
                  :class="[
                    $route.path.startsWith(item.path) 
                      ? 'bg-white/20 text-white border-r-2 border-white shadow-lg backdrop-blur-sm' 
@@ -47,8 +47,10 @@
                    {{ item.icon }}
                  </span>
                  <span>{{ item.label }}</span>
-
-               </NuxtLink>
+                 <span v-if="item.comingSoon" class="ml-auto text-xs bg-yellow-500/20 text-yellow-200 px-2 py-1 rounded-full">
+                   Soon
+                 </span>
+               </a>
              </div>
            </div>
          </nav>
@@ -188,11 +190,18 @@
       @click="sidebarOpen = false"
       class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
     ></div>
+    
+    <!-- Toast Component -->
+    <Toast />
   </div>
 </template>
 
 <script lang="ts" setup>
 import { primaryColor, secondaryColor } from '~/configs/colors'
+import { useToast } from 'primevue/usetoast'
+
+// Toast instance
+const toast = useToast()
 
 // Sidebar state
 const sidebarOpen = ref(false)
@@ -314,8 +323,8 @@ const navigationSections = ref([
   {
     title: 'Advertising',
     items: [
-      { label: 'Packages', icon: 'shopping_cart', path: '/admin/ad-packages' },
-      { label: 'Advertisers', icon: 'business', path: '/admin/advertisers' },
+      { label: 'Packages', icon: 'shopping_cart', path: '/admin/ad-packages', comingSoon: true },
+      { label: 'Advertisers', icon: 'business', path: '/admin/advertisers', comingSoon: true },
       { label: 'Ads', icon: 'campaign', path: '/admin/ads' }
     ]
   },
@@ -323,8 +332,13 @@ const navigationSections = ref([
     title: 'User Management',
     items: [
       { label: 'Users', icon: 'people', path: '/admin/users' },
-      { label: 'Agents', icon: 'store', path: '/admin/agents' },
-      { label: 'Roles & Permissions', icon: 'security', path: '/admin/roles' }
+      { label: 'Agents', icon: 'store', path: '/admin/agents' }
+    ]
+  },
+  {
+    title: 'Account',
+    items: [
+      { label: 'Profile', icon: 'person', path: '/admin/profile' }
     ]
   }
 ])
@@ -343,6 +357,20 @@ const currentPageTitle = computed(() => {
   }
   return 'Dashboard'
 })
+
+ // Handle navigation clicks
+ const handleNavigationClick = (item: any) => {
+   if (item.comingSoon) {
+     toast.add({
+       severity: 'info',
+       summary: 'Coming Soon',
+       detail: `${item.label} feature is coming soon!`,
+       life: 3000
+     })
+     return false // Prevent navigation
+   }
+   return true // Allow navigation
+ }
 
  // Handle logout
  const handleLogout = async () => {

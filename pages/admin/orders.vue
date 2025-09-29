@@ -7,12 +7,12 @@
         <h1 class="text-2xl font-bold text-gray-900">Orders Management</h1>
         <p class="text-gray-600">Manage customer orders and track sales</p>
       </div>
-      <Button 
+      <!-- <Button 
         @click="openCreateDialog" 
         icon="add" 
         label="Create Order" 
         class="bg-[#185ff9] hover:bg-[#185ff9]/90"
-      />
+      /> -->
     </div>
 
     <!-- Statistics Cards -->

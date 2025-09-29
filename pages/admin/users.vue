@@ -399,6 +399,12 @@
       </template>
          </Dialog>
    </div>
+   
+   <!-- Toast Component -->
+   <Toast />
+   
+   <!-- Confirm Dialog -->
+   <ConfirmDialog />
   </NuxtLayout>
   
  </template>
@@ -406,11 +412,13 @@
 <script lang="ts" setup>
 import { primaryColor, secondaryColor } from '~/configs/colors'
 import { useToast } from 'primevue/usetoast'
-
-
+import { useConfirm } from 'primevue/useconfirm'
 
 // Toast instance
 const toast = useToast()
+
+// Confirm dialog instance
+const confirm = useConfirm()
 
 // Reactive data
 const loading = ref(false)
@@ -650,11 +658,25 @@ const editFromView = () => {
 }
 
 const confirmDelete = (user: any) => {
-  if (confirm(`Are you sure you want to delete "${user.name || user.email}"?`)) {
-    deleteUser(user)
-  } else {
-    toast.add({ severity: 'info', summary: 'Cancelled', detail: 'Delete operation cancelled', life: 3000 })
-  }
+  confirm.require({
+    message: `Are you sure you want to delete "${user.name || user.email}"?`,
+    header: 'Confirm Delete',
+    icon: 'pi pi-exclamation-triangle',
+    rejectClass: 'p-button-secondary p-button-outlined',
+    rejectLabel: 'Cancel',
+    acceptLabel: 'Delete',
+    accept: () => {
+      deleteUser(user)
+    },
+    reject: () => {
+      toast.add({ 
+        severity: 'info', 
+        summary: 'Cancelled', 
+        detail: 'Delete operation cancelled', 
+        life: 3000 
+      })
+    }
+  })
 }
 
 const deleteUser = async (user: any) => {
@@ -673,11 +695,25 @@ const deleteUser = async (user: any) => {
 }
 
 const confirmBulkDelete = () => {
-  if (confirm(`Are you sure you want to delete ${selectedUsers.value.length} selected user(s)?`)) {
-    bulkDelete()
-  } else {
-    toast.add({ severity: 'info', summary: 'Cancelled', detail: 'Bulk delete operation cancelled', life: 3000 })
-  }
+  confirm.require({
+    message: `Are you sure you want to delete ${selectedUsers.value.length} selected user(s)?`,
+    header: 'Confirm Bulk Delete',
+    icon: 'pi pi-exclamation-triangle',
+    rejectClass: 'p-button-secondary p-button-outlined',
+    rejectLabel: 'Cancel',
+    acceptLabel: 'Delete All',
+    accept: () => {
+      bulkDelete()
+    },
+    reject: () => {
+      toast.add({ 
+        severity: 'info', 
+        summary: 'Cancelled', 
+        detail: 'Bulk delete operation cancelled', 
+        life: 3000 
+      })
+    }
+  })
 }
 
 const bulkDelete = async () => {

@@ -136,7 +136,7 @@
             </Column>
 
             <!-- Actions -->
-            <Column header="Actions" :exportable="false" style="min-width: 8rem">
+            <Column header="Actions" :exportable="false" style="min-width: 12rem">
               <template #body="{ data }">
                 <div class="flex items-center space-x-2">
                   <Button
@@ -161,6 +161,32 @@
                   >
                     <template #icon>
                       <span class="material-icons text-sm">edit</span>
+                    </template>
+                  </Button>
+                  <Button
+                    v-if="data.status === 'ACTIVE'"
+                    icon="pause"
+                    text
+                    size="small"
+                    @click="toggleLocationStatus(data, 'INACTIVE')"
+                    class="text-orange-600 hover:text-orange-800"
+                    v-tooltip.top="'Deactivate Location'"
+                  >
+                    <template #icon>
+                      <span class="material-icons text-sm">pause</span>
+                    </template>
+                  </Button>
+                  <Button
+                    v-else
+                    icon="play_arrow"
+                    text
+                    size="small"
+                    @click="toggleLocationStatus(data, 'ACTIVE')"
+                    class="text-green-600 hover:text-green-800"
+                    v-tooltip.top="'Activate Location'"
+                  >
+                    <template #icon>
+                      <span class="material-icons text-sm">play_arrow</span>
                     </template>
                   </Button>
                   <Button
@@ -343,6 +369,21 @@
             </div>
           </div>
 
+          <!-- Status -->
+          <div>
+            <label for="status" class="font-medium text-[#2d3040] mb-2 block">Status *</label>
+            <Dropdown
+              id="status"
+              v-model="locationForm.status"
+              :options="statusOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select status"
+              :class="{ 'p-invalid': submitted && !locationForm.status }"
+            />
+            <small v-if="submitted && !locationForm.status" class="p-error">Status is required.</small>
+          </div>
+
           <!-- Notes -->
           <div class="md:col-span-2">
             <label for="notes" class="font-medium text-[#2d3040] mb-2 block">Notes</label>
@@ -498,6 +539,7 @@ const locationForm = ref({
   ssid: '',
   latitude: null,
   longitude: null,
+  status: 'ACTIVE',
   notes: ''
 })
 
@@ -591,6 +633,7 @@ const resetForm = () => {
     ssid: '',
     latitude: null,
     longitude: null,
+    status: 'ACTIVE',
     notes: ''
   }
   submitted.value = false
@@ -610,7 +653,7 @@ const closeDialog = () => {
 const saveLocation = async () => {
   submitted.value = true
 
-  if (!locationForm.value.name || !locationForm.value.code || !locationForm.value.town || !locationForm.value.province) {
+  if (!locationForm.value.name || !locationForm.value.code || !locationForm.value.town || !locationForm.value.province || !locationForm.value.status) {
     return
   }
 
@@ -627,6 +670,7 @@ const saveLocation = async () => {
       ssid: locationForm.value.ssid,
       latitude: locationForm.value.latitude,
       longitude: locationForm.value.longitude,
+      status: locationForm.value.status,
       notes: locationForm.value.notes
     }
 
@@ -687,6 +731,7 @@ const editLocation = (location: any) => {
     ssid: location.ssid || '',
     latitude: location.coordinates?.lat || null,
     longitude: location.coordinates?.lng || null,
+    status: location.status || 'ACTIVE',
     notes: location.notes || ''
   }
   
@@ -792,6 +837,35 @@ const exportSelected = () => {
     detail: 'Export functionality will be implemented',
     life: 3000
   })
+}
+
+// Toggle location status
+const toggleLocationStatus = async (location: any, newStatus: string) => {
+  try {
+    await $fetch(`/api/admin/locations/${location.id}/status`, {
+      method: 'PUT',
+      body: {
+        status: newStatus
+      }
+    } as any)
+    
+    toast.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: `Location ${newStatus === 'ACTIVE' ? 'activated' : 'deactivated'} successfully`,
+      life: 3000
+    })
+    
+    fetchLocations() // Refresh the list
+  } catch (error) {
+    console.error('Error toggling location status:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: 'Failed to update location status',
+      life: 3000
+    })
+  }
 }
 
 // Meta tags

@@ -564,12 +564,19 @@
       </template>
     </Dialog>
   </div>
+  
+  <!-- Toast Component -->
+  <Toast />
+  
+  <!-- Confirm Dialog -->
+  <ConfirmDialog />
   </NuxtLayout>
 </template>
 
 <script lang="ts" setup>
 import { primaryColor, secondaryColor } from '~/configs/colors'
 import { useToast } from 'primevue/usetoast'
+import { useConfirm } from 'primevue/useconfirm'
 
 // Set layout
 definePageMeta({
@@ -578,6 +585,9 @@ definePageMeta({
 
 // Toast instance
 const toast = useToast()
+
+// Confirm dialog instance
+const confirm = useConfirm()
 
 // Reactive data
 const loading = ref(false)
@@ -861,37 +871,69 @@ const editFromView = () => {
 }
 
 const blacklistAgent = async (agent: any) => {
-  if (confirm(`Are you sure you want to blacklist "${agent.name || agent.email}"?`)) {
-    try {
-      await $fetch(`/api/admin/agents/${agent.id}/blacklist`, {
-        method: 'POST'
-      } as any)
-      
-      toast.add({ severity: 'success', summary: 'Success', detail: 'Agent blacklisted successfully', life: 3000 })
-      fetchAgents() // Refresh the list
-      fetchAgentStats() // Refresh stats
-    } catch (error) {
-      console.error('Error blacklisting agent:', error)
-      toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to blacklist agent', life: 3000 })
+  confirm.require({
+    message: `Are you sure you want to blacklist "${agent.name || agent.email}"?`,
+    header: 'Confirm Blacklist',
+    icon: 'pi pi-exclamation-triangle',
+    rejectClass: 'p-button-secondary p-button-outlined',
+    rejectLabel: 'Cancel',
+    acceptLabel: 'Blacklist',
+    accept: async () => {
+      try {
+        await $fetch(`/api/admin/agents/${agent.id}/blacklist`, {
+          method: 'POST'
+        } as any)
+        
+        toast.add({ severity: 'success', summary: 'Success', detail: 'Agent blacklisted successfully', life: 3000 })
+        fetchAgents() // Refresh the list
+        fetchAgentStats() // Refresh stats
+      } catch (error) {
+        console.error('Error blacklisting agent:', error)
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to blacklist agent', life: 3000 })
+      }
+    },
+    reject: () => {
+      toast.add({ 
+        severity: 'info', 
+        summary: 'Cancelled', 
+        detail: 'Blacklist operation cancelled', 
+        life: 3000 
+      })
     }
-  }
+  })
 }
 
 const unblacklistAgent = async (agent: any) => {
-  if (confirm(`Are you sure you want to remove "${agent.name || agent.email}" from blacklist?`)) {
-    try {
-      await $fetch(`/api/admin/agents/${agent.id}/unblacklist`, {
-        method: 'POST'
-      } as any)
-      
-      toast.add({ severity: 'success', summary: 'Success', detail: 'Agent removed from blacklist successfully', life: 3000 })
-      fetchAgents() // Refresh the list
-      fetchAgentStats() // Refresh stats
-    } catch (error) {
-      console.error('Error unblacklisting agent:', error)
-      toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to remove agent from blacklist', life: 3000 })
+  confirm.require({
+    message: `Are you sure you want to remove "${agent.name || agent.email}" from blacklist?`,
+    header: 'Confirm Unblacklist',
+    icon: 'pi pi-check-circle',
+    rejectClass: 'p-button-secondary p-button-outlined',
+    rejectLabel: 'Cancel',
+    acceptLabel: 'Unblacklist',
+    accept: async () => {
+      try {
+        await $fetch(`/api/admin/agents/${agent.id}/unblacklist`, {
+          method: 'POST'
+        } as any)
+        
+        toast.add({ severity: 'success', summary: 'Success', detail: 'Agent removed from blacklist successfully', life: 3000 })
+        fetchAgents() // Refresh the list
+        fetchAgentStats() // Refresh stats
+      } catch (error) {
+        console.error('Error unblacklisting agent:', error)
+        toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to remove agent from blacklist', life: 3000 })
+      }
+    },
+    reject: () => {
+      toast.add({ 
+        severity: 'info', 
+        summary: 'Cancelled', 
+        detail: 'Unblacklist operation cancelled', 
+        life: 3000 
+      })
     }
-  }
+  })
 }
 
 const blacklistFromView = () => {
@@ -905,11 +947,25 @@ const unblacklistFromView = () => {
 }
 
 const confirmDelete = (agent: any) => {
-  if (confirm(`Are you sure you want to delete "${agent.name || agent.email}"?`)) {
-    deleteAgent(agent)
-  } else {
-    toast.add({ severity: 'info', summary: 'Cancelled', detail: 'Delete operation cancelled', life: 3000 })
-  }
+  confirm.require({
+    message: `Are you sure you want to delete "${agent.name || agent.email}"?`,
+    header: 'Confirm Delete',
+    icon: 'pi pi-exclamation-triangle',
+    rejectClass: 'p-button-secondary p-button-outlined',
+    rejectLabel: 'Cancel',
+    acceptLabel: 'Delete',
+    accept: () => {
+      deleteAgent(agent)
+    },
+    reject: () => {
+      toast.add({ 
+        severity: 'info', 
+        summary: 'Cancelled', 
+        detail: 'Delete operation cancelled', 
+        life: 3000 
+      })
+    }
+  })
 }
 
 const deleteAgent = async (agent: any) => {

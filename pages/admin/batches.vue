@@ -8,7 +8,7 @@
           <p class="text-[#2d3040]/60 mt-1">Manage voucher batches, pricing, and availability</p>
         </div>
         <div class="flex items-center space-x-3 mt-4 sm:mt-0">
-          <Button
+          <!-- <Button
             label="Generate Vouchers"
             icon="add_card"
             @click="openGenerateDialog"
@@ -19,7 +19,7 @@
             icon="add"
             @click="openCreateDialog"
             class="custom-primary-button"
-          />
+          /> -->
           <Button
             label="Upload PDF Batch"
             icon="upload_file"
@@ -1027,11 +1027,23 @@ const uploadBatchWithPDF = async () => {
      }
   } catch (error: any) {
     console.error('Error uploading batch:', error)
+    
+    // Handle different types of errors
+    let errorMessage = 'Failed to upload batch'
+    
+    if (error.data?.message) {
+      errorMessage = error.data.message
+    } else if (error.statusMessage) {
+      errorMessage = error.statusMessage
+    } else if (error.message) {
+      errorMessage = error.message
+    }
+    
     toast.add({
       severity: 'error',
       summary: 'Error',
-      detail: error.data?.message || 'Failed to upload batch',
-      life: 3000
+      detail: errorMessage,
+      life: 5000
     })
   } finally {
     uploadingBatch.value = false

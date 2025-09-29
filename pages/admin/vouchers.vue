@@ -8,12 +8,12 @@
           <p class="text-[#2d3040]/60 mt-1">Manage individual vouchers, status, and assignments</p>
         </div>
         <div class="flex items-center space-x-3 mt-4 sm:mt-0">
-          <Button
+          <!-- <Button
             label="Bulk Actions"
             icon="settings"
             severity="secondary"
             @click="openBulkActions"
-          />
+          /> -->
           <Button
             label="Add Voucher"
             icon="add"

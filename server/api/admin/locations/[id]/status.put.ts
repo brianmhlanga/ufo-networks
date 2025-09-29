@@ -24,25 +24,13 @@ export default defineEventHandler(async (event) => {
 
     // Get request body
     const body = await readBody(event)
-    const {
-      name,
-      code,
-      town,
-      area,
-      province,
-      routerModel,
-      ssid,
-      latitude,
-      longitude,
-      status,
-      notes
-    } = body
+    const { status } = body
 
-    // Validate required fields
-    if (!name || !code || !town || !province) {
+    // Validate status
+    if (!status || !['ACTIVE', 'INACTIVE', 'MAINTENANCE'].includes(status)) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Name, code, town, and province are required'
+        statusMessage: 'Valid status is required (ACTIVE, INACTIVE, or MAINTENANCE)'
       })
     }
 
@@ -58,39 +46,18 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Check if location code already exists (excluding current location)
-    if (code !== existingLocation.code) {
-      const codeExists = await prisma.location.findUnique({
-        where: { code }
-      })
-
-      if (codeExists) {
-        throw createError({
-          statusCode: 400,
-          statusMessage: 'Location code already exists'
-        })
-      }
+    // Update location status in meta
+    const currentMeta = existingLocation.meta as any || {}
+    const updatedMeta = {
+      ...currentMeta,
+      status: status
     }
-
-    // Prepare meta data
-    const meta: any = {}
-    if (routerModel) meta.routerModel = routerModel
-    if (ssid) meta.ssid = ssid
-    if (notes) meta.notes = notes
-    if (status) meta.status = status
 
     // Update location
     const location = await prisma.location.update({
       where: { id },
       data: {
-        name,
-        code,
-        town,
-        area,
-        province,
-        latitude: latitude ? parseFloat(latitude) : null,
-        longitude: longitude ? parseFloat(longitude) : null,
-        meta: Object.keys(meta).length > 0 ? meta : null
+        meta: updatedMeta
       },
       include: {
         _count: {
@@ -113,7 +80,7 @@ export default defineEventHandler(async (event) => {
       town: location.town || '',
       area: location.area || '',
       province: location.province || '',
-      status: location.meta?.status || (location._count.vouchers > 0 ? 'ACTIVE' : 'INACTIVE'),
+      status: status, // Use the new status
       voucherCount: location._count.vouchers,
       routerModel: location.meta?.routerModel || '',
       ssid: location.meta?.ssid || '',
@@ -126,12 +93,12 @@ export default defineEventHandler(async (event) => {
     }
 
     return {
-      message: 'Location updated successfully',
+      message: 'Location status updated successfully',
       location: transformedLocation
     }
 
   } catch (error) {
-    console.error('Error updating location:', error)
+    console.error('Error updating location status:', error)
     
     if (error.statusCode) {
       throw error
@@ -139,7 +106,7 @@ export default defineEventHandler(async (event) => {
     
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to update location'
+      statusMessage: 'Failed to update location status'
     })
   }
 })

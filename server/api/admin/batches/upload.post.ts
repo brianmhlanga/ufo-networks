@@ -205,7 +205,8 @@ export default defineEventHandler(async (event) => {
 
      // Create vouchers for each batch number
      const voucherData = validBatchNumbers.map(batchNumber => ({
-       batchNumber,
+       voucherNumber: batchNumber,
+       pin: batchNumber, // Using batch number as PIN for now
        batchId: batch.id,
        locationId: batch.locationId,
        retailPrice: batch.retailPrice,
@@ -213,8 +214,8 @@ export default defineEventHandler(async (event) => {
        numberOfUsers: batch.numberOfUsers,
        startDate: batch.startDate,
        endDate: batch.endDate,
-       status: 'AVAILABLE',
-       active: true
+       expiryDate: batch.endDate, // Set expiry date same as end date
+       status: 'AVAILABLE'
      }))
 
      await prisma.voucher.createMany({

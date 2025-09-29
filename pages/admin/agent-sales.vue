@@ -7,12 +7,12 @@
           <h1 class="text-2xl font-bold text-gray-900">Agent Sales Management</h1>
           <p class="text-gray-600">Track and manage agent voucher sales and performance</p>
         </div>
-        <Button 
+        <!-- <Button 
           @click="openCreateDialog" 
           icon="add" 
           label="Create Sale" 
           class="bg-[#185ff9] hover:bg-[#185ff9]/90"
-        />
+        /> -->
       </div>
 
       <!-- Statistics Cards -->

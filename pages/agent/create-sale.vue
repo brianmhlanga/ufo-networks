@@ -551,55 +551,353 @@ const printAllVouchers = async () => {
   }
 }
 
+// Generate voucher HTML content
+const generateVoucherHTML = (voucher: any) => {
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UFO Networks Voucher - ${voucher.voucherNumber}</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1d5caa 0%, #2d3040 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .voucher {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .voucher::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #1d5caa, #2d3040);
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1d5caa;
+            margin-bottom: 10px;
+        }
+        .tagline {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        .voucher-number {
+            background: #f8f9fa;
+            border: 2px dashed #1d5caa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .voucher-number h2 {
+            margin: 0;
+            color: #1d5caa;
+            font-size: 28px;
+            letter-spacing: 2px;
+        }
+        .pin-section {
+            background: #1d5caa;
+            color: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .pin-label {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        .pin-code {
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 3px;
+        }
+        .details {
+            text-align: left;
+            margin: 20px 0;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .detail-label {
+            font-weight: 600;
+            color: #333;
+        }
+        .detail-value {
+            color: #666;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            font-size: 12px;
+            color: #999;
+        }
+        .qr-placeholder {
+            width: 80px;
+            height: 80px;
+            background: #f0f0f0;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 10px;
+        }
+        @media print {
+            body { background: white; }
+            .voucher { box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="voucher">
+        <div class="logo">UFO Networks</div>
+        <div class="tagline">Fast WiFi Anywhere</div>
+        
+        <div class="voucher-number">
+            <h2>${voucher.voucherNumber}</h2>
+        </div>
+        
+        <div class="pin-section">
+            <div class="pin-label">ACCESS PIN</div>
+            <div class="pin-code">${voucher.pin}</div>
+        </div>
+        
+        <div class="qr-placeholder">
+            QR Code<br>${voucher.voucherNumber}
+        </div>
+        
+        <div class="details">
+            <div class="detail-row">
+                <span class="detail-label">Location:</span>
+                <span class="detail-value">${voucher.location.name}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Duration:</span>
+                <span class="detail-value">${voucher.hours} hours</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Users:</span>
+                <span class="detail-value">${voucher.numberOfUsers} devices</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Expires:</span>
+                <span class="detail-value">${formatDate(voucher.endDate)}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Customer:</span>
+                <span class="detail-value">${customerName.value || 'N/A'}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Phone:</span>
+                <span class="detail-value">${customerPhone.value || 'N/A'}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Price:</span>
+                <span class="detail-value">$${salePrice.value}</span>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Valid until ${formatDate(voucher.endDate)}</p>
+            <p>Present this voucher at ${voucher.location.name}</p>
+        </div>
+    </div>
+</body>
+</html>
+  `
+}
+
 // Download individual voucher
 const downloadVoucher = (voucher: any) => {
-  const voucherData = {
-    voucherNumber: voucher.voucherNumber,
-    pin: voucher.pin,
-    hours: voucher.hours,
-    numberOfUsers: voucher.numberOfUsers,
-    location: voucher.location.name,
-    expiry: formatDate(voucher.endDate),
-    customerName: customerName.value || 'N/A',
-    customerPhone: customerPhone.value || 'N/A',
-    salePrice: salePrice.value
-  }
-
-  const blob = new Blob([JSON.stringify(voucherData, null, 2)], { type: 'application/json' })
+  const htmlContent = generateVoucherHTML(voucher)
+  const blob = new Blob([htmlContent], { type: 'text/html' })
   const url = window.URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `voucher-${voucher.voucherNumber}.json`
+  a.download = `voucher-${voucher.voucherNumber}.html`
   a.click()
   window.URL.revokeObjectURL(url)
 
   toast.add({
     severity: 'success',
     summary: 'Download Success',
-    detail: 'Voucher downloaded',
+    detail: 'Voucher downloaded successfully',
     life: 3000
   })
 }
 
+// Generate multiple vouchers HTML content
+const generateAllVouchersHTML = () => {
+  const vouchersHTML = createdVouchers.value.map(voucher => generateVoucherHTML(voucher)).join('<div style="page-break-before: always;"></div>')
+  
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UFO Networks Vouchers - ${new Date().toISOString().split('T')[0]}</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1d5caa 0%, #2d3040 100%);
+            min-height: 100vh;
+        }
+        .voucher {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            margin: 20px auto;
+        }
+        .voucher::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #1d5caa, #2d3040);
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1d5caa;
+            margin-bottom: 10px;
+        }
+        .tagline {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        .voucher-number {
+            background: #f8f9fa;
+            border: 2px dashed #1d5caa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .voucher-number h2 {
+            margin: 0;
+            color: #1d5caa;
+            font-size: 28px;
+            letter-spacing: 2px;
+        }
+        .pin-section {
+            background: #1d5caa;
+            color: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .pin-label {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        .pin-code {
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 3px;
+        }
+        .details {
+            text-align: left;
+            margin: 20px 0;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .detail-label {
+            font-weight: 600;
+            color: #333;
+        }
+        .detail-value {
+            color: #666;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            font-size: 12px;
+            color: #999;
+        }
+        .qr-placeholder {
+            width: 80px;
+            height: 80px;
+            background: #f0f0f0;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 10px;
+        }
+        @media print {
+            body { background: white; }
+            .voucher { box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+    ${vouchersHTML}
+</body>
+</html>
+  `
+}
+
 // Download all vouchers
 const downloadAllVouchers = () => {
-  const allVouchers = createdVouchers.value.map(voucher => ({
-    voucherNumber: voucher.voucherNumber,
-    pin: voucher.pin,
-    hours: voucher.hours,
-    numberOfUsers: voucher.numberOfUsers,
-    location: voucher.location.name,
-    expiry: formatDate(voucher.endDate),
-    customerName: customerName.value || 'N/A',
-    customerPhone: customerPhone.value || 'N/A',
-    salePrice: salePrice.value
-  }))
-
-  const blob = new Blob([JSON.stringify(allVouchers, null, 2)], { type: 'application/json' })
+  const htmlContent = generateAllVouchersHTML()
+  const blob = new Blob([htmlContent], { type: 'text/html' })
   const url = window.URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `vouchers-${new Date().toISOString().split('T')[0]}.json`
+  a.download = `vouchers-${new Date().toISOString().split('T')[0]}.html`
   a.click()
   window.URL.revokeObjectURL(url)
 

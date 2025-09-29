@@ -42,19 +42,22 @@ export default defineEventHandler(async (event) => {
       where.province = province
     }
 
-    // Note: Location model doesn't have a status field, so we'll filter by active vouchers
+    // Filter by status from meta field
     if (status) {
       if (status === 'ACTIVE') {
-        where.vouchers = {
-          some: {
-            status: 'AVAILABLE'
-          }
+        where.meta = {
+          path: ['status'],
+          equals: 'ACTIVE'
         }
       } else if (status === 'INACTIVE') {
-        where.vouchers = {
-          none: {
-            status: 'AVAILABLE'
-          }
+        where.meta = {
+          path: ['status'],
+          equals: 'INACTIVE'
+        }
+      } else if (status === 'MAINTENANCE') {
+        where.meta = {
+          path: ['status'],
+          equals: 'MAINTENANCE'
         }
       }
     }
@@ -93,7 +96,7 @@ export default defineEventHandler(async (event) => {
       town: location.town || '',
       area: location.area || '',
       province: location.province || '',
-      status: location._count.vouchers > 0 ? 'ACTIVE' : 'INACTIVE',
+      status: location.meta?.status || (location._count.vouchers > 0 ? 'ACTIVE' : 'INACTIVE'),
       voucherCount: location._count.vouchers,
       routerModel: location.meta?.routerModel || '',
       ssid: location.meta?.ssid || '',

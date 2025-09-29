@@ -5,24 +5,12 @@ const prisma = new PrismaClient()
 
 export default defineEventHandler(async (event) => {
   try {
-    // Check admin authentication
-    const session = await getServerSession(event)
-    if (!session?.user) {
+    // Check if user is admin
+    const session = await getUserSession(event)
+    if (!session?.user || !['SUPER_ADMIN', 'ADMIN'].includes(session.user.role)) {
       throw createError({
         statusCode: 401,
-        statusMessage: 'Unauthorized'
-      })
-    }
-
-    // Check if user is admin
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id }
-    })
-
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
-      throw createError({
-        statusCode: 403,
-        statusMessage: 'Forbidden: Admin access required'
+        statusMessage: 'Admin access required'
       })
     }
 

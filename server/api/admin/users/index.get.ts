@@ -4,6 +4,14 @@ const prisma = new PrismaClient()
 
 export default defineEventHandler(async (event) => {
   try {
+    // Check if user is admin
+    const session = await getUserSession(event)
+    if (!session?.user || !['SUPER_ADMIN', 'ADMIN'].includes(session.user.role)) {
+      throw createError({
+        statusCode: 401,
+        statusMessage: 'Admin access required'
+      })
+    }
 
     // Get query parameters
     const query = getQuery(event)

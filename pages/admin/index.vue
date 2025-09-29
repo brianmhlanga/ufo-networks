@@ -8,20 +8,7 @@
           <p class="text-gray-600">Comprehensive insights into your network performance, sales, and user behavior</p>
         </div>
         <div class="flex items-center space-x-3">
-          <Button 
-            @click="generateSampleData" 
-            icon="add_chart" 
-            label="Generate Sample Data" 
-            severity="success"
-            class="bg-green-600 hover:bg-green-700"
-          />
-          <Button 
-            @click="exportData" 
-            icon="download" 
-            label="Export Data" 
-            severity="secondary"
-            class="bg-[#185ff9] hover:bg-[#185ff9]/90"
-          />
+         
           <Button 
             @click="refreshAnalytics" 
             icon="refresh" 
