@@ -1,20 +1,76 @@
 <template>
   <NuxtLayout name="agent">
     <div class="space-y-6">
-      <!-- Page Header -->
-      <div class="flex justify-between items-center">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900">My Sales</h1>
-          <p class="text-gray-600">View and manage your voucher sales history</p>
+      <!-- Page Header (stacks on mobile) -->
+      <div class="flex flex-col sm:flex-row sm:flex-wrap sm:justify-between sm:items-center gap-4">
+        <div class="min-w-0">
+          <h1 class="text-xl sm:text-2xl font-bold text-gray-900">My Sales</h1>
+          <p class="text-gray-600 text-sm sm:text-base">View and manage your voucher sales history</p>
         </div>
-        <Button 
-          class="bg-green-600 hover:bg-green-700 flex items-center"
-          @click="navigateTo('/agent/create-sale')"
-        >
-          <span class="material-icons mr-2">add_shopping_cart</span>
-          Create New Sale
-        </Button>
+        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+          <!-- Bluetooth thermal printer - always show so user sees Connect / status -->
+          <div class="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 min-h-[44px] flex-wrap">
+            <template v-if="!bluetoothSupported">
+              <span class="material-icons text-lg text-amber-500">bluetooth_disabled</span>
+              <span class="text-sm text-gray-600">Use Chrome or Edge to print via Bluetooth</span>
+            </template>
+            <template v-else-if="bluetoothConnected">
+              <span class="material-icons text-lg text-green-600">bluetooth_connected</span>
+              <span class="max-w-[120px] truncate text-sm text-green-700" :title="bluetoothDevice?.name">{{ bluetoothDevice?.name || 'Printer' }}</span>
+              <span class="text-sm text-green-600 font-medium">Connected</span>
+              <Button
+                size="small"
+                severity="secondary"
+                text
+                class="min-w-0 p-1"
+                v-tooltip.top="'Printer settings'"
+                @click="showPrinterSetupDialog = true"
+              >
+                <span class="material-icons text-base">settings</span>
+              </Button>
+            </template>
+            <template v-else>
+              <span class="material-icons text-lg text-gray-400">bluetooth</span>
+              <span class="text-sm text-gray-500">Printer not connected</span>
+              <Button
+                size="small"
+                label="Connect printer"
+                class="bg-blue-600 hover:bg-blue-700"
+                :loading="bluetoothConnecting"
+                @click="connectBluetoothPrinter"
+              >
+                <span class="material-icons text-sm mr-1">bluetooth</span>
+                Connect
+              </Button>
+            </template>
+          </div>
+          <Button 
+            class="bg-green-600 hover:bg-green-700 flex items-center min-h-[44px] touch-manipulation"
+            @click="navigateTo('/agent/create-sale')"
+          >
+            <span class="material-icons mr-2">add_shopping_cart</span>
+            Create New Sale
+          </Button>
+        </div>
       </div>
+
+      <!-- Printer setup dialog -->
+      <Dialog v-model:visible="showPrinterSetupDialog" modal header="Bluetooth thermal printer" :style="{ width: '90vw', maxWidth: '480px' }" dismissableMask>
+        <p class="text-gray-600 mb-3">Use a Bluetooth thermal (ESC/POS) printer to print vouchers from the Print button on each sale.</p>
+        <ol class="list-decimal pl-5 space-y-2 text-sm text-gray-700 mb-4">
+          <li>Turn on Bluetooth on your printer and make it discoverable.</li>
+          <li>Turn on Bluetooth on this device and pair with the printer if needed.</li>
+          <li>Click <strong>Connect</strong> above and select your printer from the list.</li>
+          <li>Choose the receipt paper width below to match your printer.</li>
+        </ol>
+        <div class="mb-2 text-sm font-medium text-gray-700">Paper width</div>
+        <Select v-model="printerPaperWidth" :options="printerPaperWidthOptions" optionLabel="label" optionValue="value" class="w-full" @change="savePrinterPaperWidth" />
+        <p class="text-xs text-gray-500 mt-2">Match your receipt roll width so text aligns correctly.</p>
+        <template #footer>
+          <Button label="Disconnect printer" severity="secondary" @click="disconnectBluetoothPrinter" />
+          <Button label="Close" @click="showPrinterSetupDialog = false" />
+        </template>
+      </Dialog>
 
       <!-- Stats Cards -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -189,6 +245,7 @@
           </div>
         </template>
         <template #content>
+          <div class="overflow-x-auto -mx-2 sm:mx-0">
           <DataTable 
             :value="sales" 
             :loading="loading"
@@ -198,7 +255,7 @@
             paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
             currentPageReportTemplate="Showing {first} to {last} of {totalRecords} sales"
             responsiveLayout="scroll"
-            class="w-full"
+            class="w-full min-w-[700px]"
           >
             <!-- Sale ID -->
             <Column field="id" header="Sale ID" sortable style="width: 120px">
@@ -286,8 +343,10 @@
                     size="small"
                     severity="secondary"
                     class="min-w-[40px] h-8 px-2 hover:bg-green-100 hover:text-green-700 transition-colors"
-                    @click="printVoucher(data)"
-                    v-tooltip.top="'Print Voucher'"
+                    :loading="printingSaleIds.has(data.id)"
+                    :disabled="bluetoothPrinting"
+                    @click="printVoucherOnBluetooth(data)"
+                    v-tooltip.top="bluetoothConnected ? 'Print voucher to Bluetooth printer' : 'Connect a Bluetooth printer first'"
                   >
                     <span class="material-icons text-base">print</span>
                   </Button>
@@ -295,6 +354,7 @@
               </template>
             </Column>
           </DataTable>
+          </div>
         </template>
       </Card>
 
@@ -512,49 +572,100 @@ const viewSaleDetails = (sale: any) => {
   showSaleDetails.value = true
 }
 
-// Print voucher
-const printVoucher = (sale: any) => {
-  // Open print window with voucher details
-  const printWindow = window.open('', '_blank')
-  if (printWindow) {
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Voucher - ${sale.voucher.voucherNumber}</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            .voucher { border: 2px solid #000; padding: 20px; max-width: 400px; }
-            .header { text-align: center; margin-bottom: 20px; }
-            .details { margin-bottom: 20px; }
-            .pin { font-size: 24px; font-weight: bold; text-align: center; margin: 20px 0; }
-            .footer { text-align: center; font-size: 12px; color: #666; }
-          </style>
-        </head>
-        <body>
-          <div class="voucher">
-            <div class="header">
-              <h2>WiFi Voucher</h2>
-              <h3>${sale.voucher.location.name}</h3>
-            </div>
-            <div class="details">
-              <p><strong>Voucher Number:</strong> ${sale.voucher.voucherNumber}</p>
-              <p><strong>Type:</strong> ${sale.voucher.hours} Hours, ${sale.voucher.numberOfUsers} Users</p>
-              <p><strong>Location:</strong> ${sale.voucher.location.name}</p>
-              <p><strong>Expiry:</strong> ${formatDate(sale.voucher.endDate)}</p>
-            </div>
-            <div class="pin">
-              PIN: ${sale.voucher.pin}
-            </div>
-            <div class="footer">
-              <p>Valid until ${formatDate(sale.voucher.endDate)}</p>
-              <p>Generated on ${formatDate(sale.createdAt)}</p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `)
-    printWindow.document.close()
-    printWindow.print()
+// Bluetooth thermal printer
+const PRINTER_PAPER_WIDTH_KEY = 'ufo-printer-paper-width'
+const printer = useBluetoothPrinter()
+const bluetoothSupported = printer.isSupported
+const bluetoothDevice = printer.device
+const bluetoothConnected = printer.isConnected
+const bluetoothPrinting = printer.isPrinting
+const bluetoothConnecting = ref(false)
+const showPrinterSetupDialog = ref(false)
+const printingSaleIds = ref<Set<string>>(new Set())
+
+const printerPaperWidthOptions = [
+  { label: '57mm (2.25") - 32 columns', value: 32 },
+  { label: '80mm (3.15") - 42 columns', value: 42 }
+]
+const printerPaperWidth = ref(32)
+if (import.meta.client) {
+  const saved = localStorage.getItem(PRINTER_PAPER_WIDTH_KEY)
+  if (saved) {
+    const n = parseInt(saved, 10)
+    if (n === 32 || n === 42) printerPaperWidth.value = n
+  }
+}
+function savePrinterPaperWidth() {
+  if (import.meta.client) localStorage.setItem(PRINTER_PAPER_WIDTH_KEY, String(printerPaperWidth.value))
+}
+
+async function connectBluetoothPrinter() {
+  bluetoothConnecting.value = true
+  try {
+    await printer.requestDevice()
+    if (printer.error.value) {
+      const msg = String(printer.error.value)
+      if (!msg.includes('cancelled') && !msg.includes('User cancelled')) {
+        toast.add({ severity: 'warn', summary: 'Printer', detail: msg, life: 5000 })
+      }
+    }
+  } finally {
+    bluetoothConnecting.value = false
+  }
+}
+function disconnectBluetoothPrinter() {
+  printer.disconnect()
+  showPrinterSetupDialog.value = false
+  toast.add({ severity: 'info', summary: 'Printer', detail: 'Printer disconnected', life: 3000 })
+}
+
+// Print voucher to Bluetooth thermal printer (ESC/POS)
+async function printVoucherOnBluetooth(sale: any) {
+  if (!bluetoothSupported.value) {
+    toast.add({
+      severity: 'warn',
+      summary: 'Print',
+      detail: 'Bluetooth printing needs Chrome or Edge. Open this page in Chrome/Edge (use localhost or HTTPS).',
+      life: 6000
+    })
+    return
+  }
+  if (!bluetoothConnected.value) {
+    toast.add({
+      severity: 'warn',
+      summary: 'Print',
+      detail: 'Connect your printer first: click the blue "Connect printer" button above.',
+      life: 5000
+    })
+    return
+  }
+  printingSaleIds.value = new Set([...printingSaleIds.value, sale.id])
+  try {
+    const { encodeVoucherReceipt } = await import('~/utils/escpos-voucher')
+    const data = encodeVoucherReceipt(sale, printerPaperWidth.value)
+    await printer.printRaw(data)
+    toast.add({
+      severity: 'success',
+      summary: 'Printed',
+      detail: `Voucher ${sale.voucher.voucherNumber} sent to printer`,
+      life: 3000
+    })
+  } catch (e) {
+    console.error('Bluetooth print error:', e)
+    const msg = e instanceof Error ? e.message : 'Could not print voucher'
+    const hint = /GATT|unknown reason/i.test(msg)
+      ? ' Try: disconnect the printer above, then Connect again and print.'
+      : ''
+    toast.add({
+      severity: 'error',
+      summary: 'Print failed',
+      detail: msg + hint,
+      life: 7000
+    })
+  } finally {
+    const next = new Set(printingSaleIds.value)
+    next.delete(sale.id)
+    printingSaleIds.value = next
   }
 }
 

@@ -77,8 +77,8 @@
        </div>
     </div>
 
-    <!-- Main Content Area -->
-    <div class="flex-1 lg:ml-64 min-h-screen">
+    <!-- Main Content Area: flex column so footer stays at bottom, min-w-0 to prevent skew/overflow -->
+    <div class="flex-1 flex flex-col min-w-0 lg:ml-64 min-h-screen">
              <!-- Header -->
        <header class="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-40">
          <div class="flex items-center justify-between px-6 py-4">
@@ -178,10 +178,28 @@
          </div>
        </header>
 
-      <!-- Page Content -->
-      <main class="p-6 flex-1">
+      <!-- Page Content: flex-1 so it takes space above footer -->
+      <main class="p-6 flex-1 min-h-0 min-w-0 overflow-auto">
         <slot />
       </main>
+
+      <!-- Footer -->
+      <footer class="flex-shrink-0 border-t border-gray-200 bg-white py-4 px-6">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-gray-500">
+          <span class="font-medium text-[#2d3040]">UFO Networks</span>
+          <span>
+            Powered by
+            <a
+              href="https://webdev.co.zw"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-[#185ff9] hover:text-[#185ff9]/80 font-medium transition-colors"
+            >
+              webdev
+            </a>
+          </span>
+        </div>
+      </footer>
     </div>
 
     <!-- Mobile Overlay -->
@@ -378,13 +396,12 @@ const currentPageTitle = computed(() => {
      await $fetch('/api/auth/logout', {
        method: 'POST'
      })
-     
-     // Redirect to login page
-     await navigateTo('/login')
    } catch (error) {
      console.error('Logout error:', error)
-     // Even if logout fails, redirect to login
-     await navigateTo('/login')
+   }
+   // Always full-page redirect to landing so session is cleared and UI updates (works on mobile)
+   if (typeof location !== 'undefined') {
+     location.replace('/')
    }
  }
 

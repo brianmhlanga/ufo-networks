@@ -198,6 +198,14 @@ async function main() {
 
   console.log('✅ Locations created')
 
+  // Future dates so agents can purchase (endDate/expiryDate must be >= today)
+  const now = new Date()
+  const oneYearFromNow = new Date(now)
+  oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1)
+  const batchStart = new Date(now)
+  batchStart.setDate(1)
+  batchStart.setMonth(0) // Jan 1 this year
+
   // Create Voucher Batches
   console.log('🎫 Creating voucher batches...')
   
@@ -208,8 +216,8 @@ async function main() {
       retailPrice: 2.50,
       hours: 1,
       numberOfUsers: 1,
-      startDate: new Date('2024-01-01'),
-      endDate: new Date('2025-12-31'),
+      startDate: batchStart,
+      endDate: oneYearFromNow,
       active: true,
       notes: 'Standard 1-hour WiFi access'
     }
@@ -222,8 +230,8 @@ async function main() {
       retailPrice: 10.00,
       hours: 5,
       numberOfUsers: 2,
-      startDate: new Date('2024-01-01'),
-      endDate: new Date('2025-12-31'),
+      startDate: batchStart,
+      endDate: oneYearFromNow,
       active: true,
       notes: 'Extended 5-hour WiFi access'
     }
@@ -236,8 +244,8 @@ async function main() {
       retailPrice: 25.00,
       hours: 24,
       numberOfUsers: 3,
-      startDate: new Date('2024-01-01'),
-      endDate: new Date('2025-12-31'),
+      startDate: batchStart,
+      endDate: oneYearFromNow,
       active: true,
       notes: 'Full day WiFi access'
     }
@@ -250,8 +258,8 @@ async function main() {
       retailPrice: 2.50,
       hours: 1,
       numberOfUsers: 1,
-      startDate: new Date('2024-01-01'),
-      endDate: new Date('2025-12-31'),
+      startDate: batchStart,
+      endDate: oneYearFromNow,
       active: true,
       notes: 'Standard 1-hour WiFi access'
     }
@@ -259,12 +267,20 @@ async function main() {
 
   console.log('✅ Voucher batches created')
 
-  // Create Vouchers
+  // Create Vouchers (endDate/expiryDate in future so agents can purchase)
   console.log('🎫 Creating vouchers...')
   
   const vouchers: any[] = []
+  const usedPins = new Set<string>()
+  const genPin = () => {
+    let pin: string
+    do {
+      pin = Math.random().toString(36).substring(2, 10).toUpperCase()
+    } while (usedPins.has(pin))
+    usedPins.add(pin)
+    return pin
+  }
   
-  // Generate 50 vouchers for each location with December 2025 expiry
   const locations = [harareCentral, bulawayoCentral, chitungwiza, mutare]
   const voucherTypes = [
     { hours: 1, numberOfUsers: 1, retailPrice: 2.50, batchId: batch1Hour.id },
@@ -273,25 +289,22 @@ async function main() {
   ]
   
   // Create 50 vouchers for each location
-  locations.forEach((location, locationIndex) => {
-    const locationCode = location.code.split('_')[0] // Extract location code (HARARE, BULAWAYO, etc.)
-    
-    // Create 50 vouchers per location (mix of different types)
+  locations.forEach((location) => {
+    const locationCode = location.code.split('_')[0]
     for (let i = 1; i <= 50; i++) {
-      const voucherType = voucherTypes[i % 3] // Cycle through voucher types
+      const voucherType = voucherTypes[i % 3]
       const voucherNumber = `${locationCode}-${voucherType.hours}H-${i.toString().padStart(3, '0')}`
-      
       vouchers.push({
         batchId: voucherType.batchId,
         locationId: location.id,
-        voucherNumber: voucherNumber,
-        pin: Math.random().toString(36).substring(2, 8).toUpperCase(),
+        voucherNumber,
+        pin: genPin(),
         retailPrice: voucherType.retailPrice,
         hours: voucherType.hours,
         numberOfUsers: voucherType.numberOfUsers,
-        startDate: new Date('2024-01-01'),
-        endDate: new Date('2025-12-31'),
-        expiryDate: new Date('2025-12-31'),
+        startDate: batchStart,
+        endDate: oneYearFromNow,
+        expiryDate: oneYearFromNow,
         status: 'AVAILABLE'
       })
     }
@@ -303,13 +316,13 @@ async function main() {
       batchId: batch1Hour.id,
       locationId: harareCentral.id,
       voucherNumber: 'HARARE-1H-SOLD-001',
-      pin: 'SOLD01',
+      pin: genPin(),
       retailPrice: 2.50,
       hours: 1,
       numberOfUsers: 1,
-      startDate: new Date('2024-01-01'),
-      endDate: new Date('2025-12-31'),
-      expiryDate: new Date('2025-12-31'),
+      startDate: batchStart,
+      endDate: oneYearFromNow,
+      expiryDate: oneYearFromNow,
       status: 'SOLD',
       soldAt: new Date('2024-01-15'),
       assignedToUserId: customer1.id
@@ -318,13 +331,13 @@ async function main() {
       batchId: batch5Hours.id,
       locationId: harareCentral.id,
       voucherNumber: 'HARARE-5H-SOLD-001',
-      pin: 'SOLD02',
+      pin: genPin(),
       retailPrice: 10.00,
       hours: 5,
       numberOfUsers: 2,
-      startDate: new Date('2024-01-01'),
-      endDate: new Date('2025-12-31'),
-      expiryDate: new Date('2025-12-31'),
+      startDate: batchStart,
+      endDate: oneYearFromNow,
+      expiryDate: oneYearFromNow,
       status: 'REDEEMED',
       soldAt: new Date('2024-01-10'),
       assignedToUserId: customer2.id,

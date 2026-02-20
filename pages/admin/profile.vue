@@ -1,6 +1,5 @@
 <template>
-  <NuxtLayout name="admin">
-    <div class="space-y-6">
+  <div class="space-y-6">
       <!-- Page Header -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -272,7 +271,6 @@
     
     <!-- Confirm Dialog -->
     <ConfirmDialog />
-  </NuxtLayout>
 </template>
 
 <script lang="ts" setup>

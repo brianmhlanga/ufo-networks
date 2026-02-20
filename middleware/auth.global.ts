@@ -8,12 +8,25 @@ export default defineNuxtRouteMiddleware((to) => {
       return
     }
     
-    // Skip middleware for login page to avoid conflicts with login redirect
+    const { loggedIn, user }: any = session
+
+    // If user has a session and hits /login, force redirect to their dashboard
     if (to.path === '/login') {
+      const isLoggedIn = loggedIn && loggedIn.value === true
+      const currentUser = user && user.value ? user.value : null
+      if (isLoggedIn && currentUser?.role) {
+        const dashboard =
+          currentUser.role === 'AGENT' ? '/agent'
+          : ['SUPER_ADMIN', 'ADMIN'].includes(currentUser.role) ? '/admin'
+          : '/user'
+        if (import.meta.server) {
+          console.log('[auth/middleware] Logged-in user on /login, redirecting to', dashboard, 'role:', currentUser.role)
+        }
+        return navigateTo(dashboard, { replace: true })
+      }
       return
     }
-    
-    const { loggedIn, user }: any = session
+
     
     // Define protected routes for different user types
     const userRoutes = ['/user']

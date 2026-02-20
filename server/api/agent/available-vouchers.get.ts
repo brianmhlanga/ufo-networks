@@ -21,12 +21,14 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Get all locations with available vouchers
+    const now = new Date()
+    // Get all locations with available vouchers (only non-expired)
     const locations = await prisma.location.findMany({
       where: {
         vouchers: {
           some: {
-            status: 'AVAILABLE'
+            status: 'AVAILABLE',
+            endDate: { gte: now }
           }
         }
       },
@@ -38,7 +40,8 @@ export default defineEventHandler(async (event) => {
         area: true,
         vouchers: {
           where: {
-            status: 'AVAILABLE'
+            status: 'AVAILABLE',
+            endDate: { gte: now }
           },
           select: {
             hours: true,

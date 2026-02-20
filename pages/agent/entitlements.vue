@@ -1,16 +1,16 @@
 <template>
   <NuxtLayout name="agent">
     <div class="space-y-6">
-      <!-- Page Header -->
-      <div class="flex justify-between items-center">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900">My Voucher Entitlements</h1>
-          <p class="text-gray-600">View and manage your voucher inventory</p>
+      <!-- Page Header (stacks on mobile) -->
+      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div class="min-w-0">
+          <h1 class="text-xl sm:text-2xl font-bold text-gray-900">My Voucher Entitlements</h1>
+          <p class="text-gray-600 text-sm sm:text-base">View and manage your voucher inventory</p>
         </div>
         <Button 
           label="Buy More Vouchers" 
           icon="add_shopping_cart"
-          class="bg-green-600 hover:bg-green-700"
+          class="bg-green-600 hover:bg-green-700 min-h-[44px] touch-manipulation flex-shrink-0"
           @click="navigateToBuyVouchers"
         />
       </div>

@@ -1,19 +1,19 @@
 <template>
   <NuxtLayout name="agent">
     <div class="space-y-6">
-      <!-- Page Header -->
-      <div class="flex justify-between items-center">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900">Agent Reports & Analytics</h1>
-          <p class="text-gray-600">Comprehensive insights into your sales performance, entitlements, and business metrics</p>
+      <!-- Page Header (mobile-friendly) -->
+      <div class="flex flex-col sm:flex-row sm:flex-wrap sm:justify-between sm:items-center gap-4">
+        <div class="min-w-0">
+          <h1 class="text-xl sm:text-2xl font-bold text-gray-900">Agent Reports & Analytics</h1>
+          <p class="text-gray-600 text-sm sm:text-base">Comprehensive insights into your sales performance, entitlements, and business metrics</p>
         </div>
-        <div class="flex items-center space-x-3">
+        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
           <Button 
             @click="exportReports" 
             icon="download" 
             label="Export Reports" 
             severity="secondary"
-            class="bg-blue-600 hover:bg-blue-700"
+            class="bg-blue-600 hover:bg-blue-700 min-h-[44px] touch-manipulation"
           />
           <Button 
             @click="refreshReports" 
@@ -21,6 +21,7 @@
             label="Refresh" 
             :loading="loading"
             severity="info"
+            class="min-h-[44px] touch-manipulation"
           />
         </div>
       </div>

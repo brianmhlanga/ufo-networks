@@ -1,6 +1,5 @@
 <template>
-  <NuxtLayout name="admin">
-    <div class="space-y-6">
+  <div class="space-y-6">
       <!-- Page Header -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -603,10 +602,10 @@
      
      <!-- Toast Component -->
      <Toast />
-   </NuxtLayout>
  </template>
 
 <script lang="ts" setup>
+definePageMeta({ layout: 'admin' })
 import { useToast } from 'primevue/usetoast'
 
 // Toast instance

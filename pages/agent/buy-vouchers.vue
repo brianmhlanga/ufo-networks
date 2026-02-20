@@ -1,16 +1,38 @@
 <template>
     <NuxtLayout name="agent">
         <div class="space-y-6">
-    <!-- Page Header -->
-    <div class="flex justify-between items-center">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">Buy Vouchers</h1>
-        <p class="text-gray-600">Purchase voucher entitlements by type and location</p>
+    <!-- Page Header (mobile-friendly) -->
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+      <div class="min-w-0">
+        <h1 class="text-xl sm:text-2xl font-bold text-gray-900">Buy Vouchers</h1>
+        <p class="text-gray-600 text-sm sm:text-base">Purchase voucher entitlements by type and location</p>
       </div>
     </div>
 
+    <!-- Loading -->
+    <div v-if="loading" class="flex flex-col items-center justify-center py-16 text-gray-500">
+      <div class="animate-spin w-10 h-10 border-4 border-green-600 border-t-transparent rounded-full mb-4"></div>
+      <p class="mt-2">Loading voucher types...</p>
+    </div>
+
+    <!-- No vouchers available -->
+    <div v-else-if="availableVoucherTypes.length === 0" 
+         class="flex flex-col items-center justify-center py-16 px-6 bg-gray-50 rounded-xl border border-gray-200 text-center">
+      <div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4">
+        <span class="material-icons text-gray-500 text-4xl">inventory_2</span>
+      </div>
+      <h3 class="text-lg font-semibold text-gray-900 mb-2">No vouchers available</h3>
+      <p class="text-gray-600 max-w-md mb-2">
+        There are no voucher entitlements available to purchase right now. 
+        This may be because current batches have expired or stock has been allocated.
+      </p>
+      <p class="text-sm text-gray-500">
+        Check back later or contact your administrator to add new voucher batches.
+      </p>
+    </div>
+
     <!-- Voucher Types Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <div v-for="voucherType in availableVoucherTypes" :key="`${voucherType.hours}-${voucherType.numberOfUsers}`" 
            class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
         <!-- Voucher Type Header -->
@@ -259,6 +281,7 @@ const session = useUserSession()
 const toast = useToast()
 
 // State
+const loading = ref(true)
 const availableVoucherTypes = ref<any[]>([])
 const showPurchaseModal = ref(false)
 const selectedPurchase = ref<any>(null)
@@ -287,6 +310,7 @@ const mobileProviderOptions = ref([
 
 // Fetch available voucher types
 const fetchAvailableVoucherTypes = async () => {
+  loading.value = true
   try {
     const response = await $fetch('/api/agent/available-vouchers')
     
@@ -325,6 +349,8 @@ const fetchAvailableVoucherTypes = async () => {
       detail: 'Failed to load available vouchers',
       life: 3000
     })
+  } finally {
+    loading.value = false
   }
 }
 

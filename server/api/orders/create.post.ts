@@ -53,12 +53,24 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Validate agent order requirements
-    if (isAgentOrder && !agentId) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Missing required field: agentId for agent orders'
-      })
+    // For agent orders: resolve agent from session so agentId always references a valid User (avoids FK violation after reseed/stale client id)
+    let resolvedAgentId: string | null = null
+    if (isAgentOrder) {
+      const session = await getUserSession(event)
+      if (!session?.user) {
+        throw createError({
+          statusCode: 401,
+          statusMessage: 'You must be logged in to place an agent order'
+        })
+      }
+      const user = session.user as { id: string; role?: string }
+      if (user.role !== 'AGENT') {
+        throw createError({
+          statusCode: 403,
+          statusMessage: 'Only agents can place agent orders'
+        })
+      }
+      resolvedAgentId = user.id
     }
 
     if (paymentMethod === 'mobile' && (!mobilePhone || !mobileProvider)) {
@@ -199,13 +211,9 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // Add agent information if it's an agent order
-    console.log('Order creation: isAgentOrder:', isAgentOrder, 'agentId:', agentId)
-    if (isAgentOrder && agentId) {
-      orderData.agentId = agentId
-      console.log('Order creation: Added agentId to orderData:', orderData.agentId)
-    } else {
-      console.log('Order creation: Not adding agentId - isAgentOrder:', isAgentOrder, 'agentId:', agentId)
+    // Add agent information if it's an agent order (use session-resolved id so FK is valid)
+    if (isAgentOrder && resolvedAgentId) {
+      orderData.agentId = resolvedAgentId
     }
 
     console.log('Order creation: Final orderData:', orderData)

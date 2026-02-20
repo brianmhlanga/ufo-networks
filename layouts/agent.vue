@@ -1,51 +1,49 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex">
+  <div class="min-h-screen bg-slate-50 flex">
     <!-- Sidebar -->
-    <div 
-      class="fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-[#10b981] via-[#059669] to-[#10b981]/90 shadow-2xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 flex flex-col"
+    <aside
+      class="fixed inset-y-0 left-0 z-50 w-64 flex flex-col bg-white border-r border-slate-200 shadow-xl transition-transform duration-300 ease-in-out lg:translate-x-0"
       :class="{ '-translate-x-full': !sidebarOpen, 'translate-x-0': sidebarOpen }"
     >
       <!-- Logo Section -->
-      <div class="flex items-center justify-between p-6 border-b border-white/20 bg-white/10 backdrop-blur-sm">
-        <div class="flex items-center space-x-3">
-          <div class="w-12 h-12 bg-gradient-to-br from-white/20 to-white/10 rounded-2xl flex items-center justify-center shadow-lg border border-white/30 backdrop-blur-sm">
+      <div class="flex items-center justify-between p-5 border-b border-slate-100">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-emerald-500 flex items-center justify-center shadow-md">
             <span class="material-icons text-white text-xl">store</span>
           </div>
           <div>
-            <h1 class="text-xl font-bold text-white">UFO Networks</h1>
-            <p class="text-xs text-white/80">Agent Dashboard</p>
+            <h1 class="text-lg font-bold text-slate-800">UFO Networks</h1>
+            <p class="text-xs text-slate-500">Agent Dashboard</p>
           </div>
         </div>
-        <!-- Close button for mobile -->
-        <button 
+        <button
           @click="sidebarOpen = false"
-          class="lg:hidden p-2 rounded-lg hover:bg-white/20 transition-colors"
+          class="lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-500 transition-colors touch-manipulation"
+          aria-label="Close menu"
         >
-          <span class="material-icons text-white/80">close</span>
+          <span class="material-icons">close</span>
         </button>
       </div>
 
       <!-- Navigation Menu -->
-      <nav class="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
-        <div v-for="section in navigationSections" :key="section.title" class="mb-6">
-          <h3 class="text-xs font-semibold text-white/60 uppercase tracking-wider mb-3 px-3">
+      <nav class="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar">
+        <div v-for="section in navigationSections" :key="section.title" class="mb-5">
+          <h3 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 px-3">
             {{ section.title }}
           </h3>
-          <div class="space-y-1">
+          <div class="space-y-0.5">
             <NuxtLink
               v-for="item in section.items"
               :key="item.path"
               :to="item.path"
-              class="flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group"
+              class="flex items-center gap-3 px-3 py-3 min-h-[44px] rounded-xl text-sm font-medium transition-all duration-200 touch-manipulation"
               :class="[
-                $route.path.startsWith(item.path) 
-                  ? 'bg-white/20 text-white border-r-2 border-white shadow-lg backdrop-blur-sm' 
-                  : 'text-white/80 hover:bg-white/10 hover:text-white hover:shadow-md backdrop-blur-sm'
+                (item.path === '/agent' ? $route.path === '/agent' : $route.path.startsWith(item.path))
+                  ? 'bg-emerald-50 text-emerald-700 shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               ]"
             >
-              <span class="material-icons text-lg group-hover:scale-110 transition-transform">
-                {{ item.icon }}
-              </span>
+              <span class="material-icons text-[22px]" :class="(item.path === '/agent' ? $route.path === '/agent' : $route.path.startsWith(item.path)) ? 'text-emerald-600' : ''">{{ item.icon }}</span>
               <span>{{ item.label }}</span>
             </NuxtLink>
           </div>
@@ -53,97 +51,92 @@
       </nav>
 
       <!-- User Profile Section -->
-      <div class="flex-shrink-0 p-4 border-t border-white/20 bg-white/10 backdrop-blur-sm">
-        <div class="flex items-center space-x-3">
-          <div class="w-10 h-10 bg-gradient-to-br from-white/20 to-white/10 rounded-full flex items-center justify-center border border-white/30">
+      <div class="flex-shrink-0 p-4 border-t border-slate-100 bg-slate-50/50">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center shadow-sm">
             <span class="material-icons text-white text-sm">person</span>
           </div>
           <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium text-white truncate">{{ currentUser.name }}</p>
-            <p class="text-xs text-white/80">{{ currentUser.role }}</p>
+            <p class="text-sm font-medium text-slate-800 truncate">{{ currentUser.name }}</p>
+            <p class="text-xs text-slate-500">{{ currentUser.role }}</p>
           </div>
-                     <Button
-             @click="showLogoutConfirm"
-             icon="logout"
-             text
-             severity="secondary"
-             size="small"
-             class="p-2 text-white/80 hover:text-white hover:bg-white/10"
-           />
+          <Button
+            @click="showLogoutConfirm"
+            icon="logout"
+            text
+            severity="secondary"
+            size="small"
+            class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-200"
+          />
         </div>
       </div>
-    </div>
+    </aside>
 
     <!-- Main Content Area -->
-    <div class="flex-1 lg:ml-64 min-h-screen">
-      <!-- Header -->
-      <header class="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-40">
-        <div class="flex items-center justify-between px-6 py-4">
-          <!-- Left side - Menu button and breadcrumb -->
-          <div class="flex items-center space-x-4">
-            <button 
+    <div class="flex-1 lg:ml-64 min-h-screen flex flex-col">
+      <!-- Header: mobile-first, touch-friendly -->
+      <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-slate-200/80 shadow-sm safe-area-inset-top">
+        <div class="flex items-center justify-between gap-2 px-4 py-3 sm:px-6 sm:py-4">
+          <!-- Left - Menu (mobile) + Breadcrumb or page title -->
+          <div class="flex items-center gap-2 min-w-0 flex-1">
+            <button
               @click="sidebarOpen = true"
-              class="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              class="lg:hidden flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-slate-100 text-slate-600 transition-colors touch-manipulation"
+              aria-label="Open menu"
             >
-              <span class="material-icons text-[#059669]">menu</span>
+              <span class="material-icons">menu</span>
             </button>
-            
-            <!-- Breadcrumb -->
-            <nav class="hidden sm:flex items-center space-x-2 text-sm">
-              <span class="text-[#059669]/40">Agent</span>
-              <span class="material-icons text-[#059669]/30 text-xs">chevron_right</span>
-              <span class="text-[#059669] font-medium">{{ currentPageTitle }}</span>
+            <!-- Page title on mobile (truncated); full breadcrumb on sm+ -->
+            <nav class="flex items-center gap-2 text-sm min-w-0">
+              <span class="font-semibold text-slate-800 truncate sm:hidden">{{ currentPageTitle }}</span>
+              <span class="hidden sm:flex items-center gap-2 text-slate-400 min-w-0">
+                <span class="text-slate-400 flex-shrink-0">Agent</span>
+                <span class="material-icons text-slate-300 text-xs flex-shrink-0">chevron_right</span>
+                <span class="font-semibold text-slate-800 truncate">{{ currentPageTitle }}</span>
+              </span>
             </nav>
           </div>
 
-          <!-- Center - Date and Time -->
-          <div class="hidden lg:flex items-center space-x-6">
-            <!-- Current Date -->
+          <!-- Center - Date & Time (desktop only) -->
+          <div class="hidden lg:flex items-center gap-6 flex-shrink-0">
             <div class="text-center">
-              <div class="text-sm font-medium text-[#059669]">{{ currentDate }}</div>
-              <div class="text-xs text-[#059669]/60">{{ currentDay }}</div>
+              <div class="text-sm font-medium text-slate-700">{{ currentDate }}</div>
+              <div class="text-xs text-slate-500">{{ currentDay }}</div>
             </div>
-            
-            <!-- Current Time -->
+            <div class="w-px h-8 bg-slate-200" />
             <div class="text-center">
-              <div class="text-lg font-bold text-[#10b981]">{{ currentTime }}</div>
-              <div class="text-xs text-[#059669]/60">Local Time</div>
+              <div class="text-lg font-bold text-emerald-600">{{ currentTime }}</div>
+              <div class="text-xs text-slate-500">Local</div>
             </div>
           </div>
 
-          <!-- Right side - Search, notifications, user, and actions -->
-          <div class="flex items-center space-x-4">
-            <!-- Search -->
-           
-
-            <!-- Notifications -->
-           
-        
-
-            <!-- Current User -->
-            <div class="flex items-center space-x-3 px-3 py-2 bg-gray-50 rounded-lg">
-              <div class="w-8 h-8 bg-gradient-to-br from-[#10b981] to-[#059669] rounded-full flex items-center justify-center">
+          <!-- Right - User + Actions (touch-sized) -->
+          <div class="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+            <div class="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 sm:py-2.5 bg-white rounded-xl border border-slate-200 shadow-sm min-h-[44px]">
+              <div class="w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
                 <span class="material-icons text-white text-sm">person</span>
               </div>
               <div class="hidden sm:block">
-                <div class="text-sm font-medium text-[#059669]">{{ currentUser.name }}</div>
-                <div class="text-xs text-[#059669]/60">{{ currentUser.role }}</div>
+                <div class="text-sm font-semibold text-slate-800">{{ currentUser.name }}</div>
+                <div class="text-xs text-slate-500">{{ currentUser.role }}</div>
               </div>
             </div>
 
-            <!-- User Actions Dropdown -->
             <Dropdown
               v-model="selectedUserAction"
               :options="userActions"
               optionLabel="label"
               placeholder="Actions"
-              class="w-48"
+              class="w-full min-w-[120px] sm:w-48"
             >
               <template #value="slotProps">
                 <div v-if="slotProps.value" class="flex items-center space-x-2">
                   <span class="material-icons text-sm">{{ slotProps.value.icon }}</span>
-                  <span>{{ slotProps.value.label }}</span>
+                  <span class="hidden sm:inline">{{ slotProps.value.label }}</span>
                 </div>
+                <span v-else class="flex items-center">
+                  <span class="material-icons text-sm text-slate-500">more_vert</span>
+                </span>
               </template>
               <template #option="slotProps">
                 <div class="flex items-center space-x-2">
@@ -156,10 +149,28 @@
         </div>
       </header>
 
-      <!-- Page Content -->
-      <main class="p-6 flex-1">
+      <!-- Page Content: mobile-friendly padding and safe area -->
+      <main class="p-4 sm:p-6 md:p-8 flex-1 overflow-x-hidden pb-safe">
         <slot />
       </main>
+
+      <!-- Footer -->
+      <footer class="flex-shrink-0 border-t border-slate-200 bg-white/80 py-4 px-4 sm:px-6 md:px-8">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-slate-500">
+          <span class="font-medium text-slate-700">UFO Networks</span>
+          <span>
+            Powered by
+            <a
+              href="https://webdev.co.zw"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
+            >
+              webdev
+            </a>
+          </span>
+        </div>
+      </footer>
     </div>
 
     <!-- Mobile Overlay -->
@@ -306,13 +317,12 @@ const handleLogout = async () => {
     await $fetch('/api/auth/logout', {
       method: 'POST'
     })
-    
-    // Redirect to login page
-    await navigateTo('/login')
   } catch (error) {
     console.error('Logout error:', error)
-    // Even if logout fails, redirect to login
-    await navigateTo('/login')
+  }
+  // Always full-page redirect to landing so session is cleared and UI updates (works on mobile)
+  if (typeof location !== 'undefined') {
+    location.replace('/')
   }
 }
 
@@ -353,29 +363,35 @@ watch(() => useRoute().path, () => {
 </script>
 
 <style scoped>
-/* Custom scrollbar styling */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
-
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
+  background: #f1f5f9;
   border-radius: 3px;
 }
-
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
+  background: #cbd5e1;
   border-radius: 3px;
-  transition: background 0.2s ease;
 }
-
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
+  background: #94a3b8;
 }
-
-/* Firefox scrollbar styling */
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+/* Safe area for notched devices (e.g. iPhone) */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.safe-area-inset-top {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+/* Touch-friendly dropdown trigger in header */
+:deep(header .p-dropdown) {
+  min-height: 44px;
 }
 </style>

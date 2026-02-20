@@ -1,16 +1,38 @@
 <template>
   <NuxtLayout name="agent">
     <div class="space-y-6">
-      <!-- Page Header -->
-      <div class="flex justify-between items-center">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900">Create Sale</h1>
-          <p class="text-gray-600">Record a voucher sale to a customer</p>
+      <!-- Page Header (stacks on mobile) -->
+      <div class="bg-white rounded-xl shadow-md border border-gray-100 p-4 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:flex-wrap sm:justify-between sm:items-center gap-4">
+          <div class="min-w-0">
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Create Sale</h1>
+            <p class="text-gray-500 mt-1 text-sm sm:text-base">Record a voucher sale to a customer</p>
+          </div>
+          <!-- Bluetooth thermal printer (auto-print after sale) -->
+          <div class="flex items-center gap-2 bg-white rounded-lg border border-gray-200 shadow-sm px-3 py-2.5 min-h-[44px] flex-shrink-0">
+          <template v-if="!bluetoothSupported">
+            <span class="material-icons text-lg text-amber-500">bluetooth_disabled</span>
+            <span class="text-sm text-gray-600">Use Chrome/Edge to auto-print</span>
+          </template>
+          <template v-else-if="bluetoothConnected">
+            <span class="material-icons text-lg text-green-600">bluetooth_connected</span>
+            <span class="max-w-[120px] truncate text-sm text-green-700">{{ bluetoothDevice?.name || 'Printer' }}</span>
+            <span class="text-sm text-green-600 font-medium">Connected</span>
+          </template>
+          <template v-else>
+            <span class="material-icons text-lg text-gray-400">bluetooth</span>
+            <span class="text-sm text-gray-500">Connect to auto-print after sale</span>
+            <Button size="small" label="Connect printer" class="bg-blue-600 hover:bg-blue-700" :loading="bluetoothConnecting" @click="connectBluetoothPrinter">
+              <span class="material-icons text-sm mr-1">bluetooth</span>
+              Connect
+            </Button>
+          </template>
         </div>
+      </div>
       </div>
 
       <!-- Sale Form -->
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div class="bg-white rounded-xl shadow-md border border-gray-100 p-4 sm:p-6 md:p-8">
         <form @submit.prevent="createSale" class="space-y-6">
           <!-- Location Selection -->
           <div>
@@ -96,17 +118,17 @@
           </div>
 
           <!-- Total Amount Display -->
-          <div class="bg-gray-50 rounded-lg p-4">
+          <div class="bg-white rounded-xl shadow-md border border-gray-100 p-5">
             <div class="flex justify-between items-center">
-              <span class="text-lg font-medium text-gray-700">Total Amount:</span>
-              <span class="text-2xl font-bold text-green-600">${{ totalAmount.toFixed(2) }}</span>
+              <span class="text-lg font-medium text-gray-700">Total Amount</span>
+              <span class="text-2xl font-bold text-emerald-600">${{ totalAmount.toFixed(2) }}</span>
             </div>
           </div>
 
           <!-- Availability Check Results -->
-          <div v-if="availabilityCheck" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h4 class="font-medium text-blue-900 mb-2">Availability Check</h4>
-            <div class="space-y-2 text-sm text-blue-800">
+          <div v-if="availabilityCheck" class="bg-white rounded-xl shadow-md border border-gray-100 p-5 border-l-4 border-l-emerald-500">
+            <h4 class="font-semibold text-gray-900 mb-3">Availability Check</h4>
+            <div class="space-y-2 text-sm text-gray-700">
               <div class="flex justify-between">
                 <span>Vouchers in stock:</span>
                 <span class="font-medium">{{ availabilityCheck.vouchersInStock }}</span>
@@ -119,20 +141,20 @@
                 <span>Already sold:</span>
                 <span class="font-medium">{{ availabilityCheck.alreadySold }}</span>
               </div>
-              <div class="flex justify-between border-t pt-2">
-                <span class="font-medium">Available for sale:</span>
-                <span class="font-bold">{{ availabilityCheck.availableForSale }}</span>
+              <div class="flex justify-between border-t border-gray-200 pt-3 mt-2">
+                <span class="font-medium text-gray-900">Available for sale</span>
+                <span class="font-bold text-emerald-600">{{ availabilityCheck.availableForSale }}</span>
               </div>
             </div>
           </div>
 
-          <!-- Submit Button -->
+          <!-- Submit Button (touch-friendly on mobile) -->
           <div class="flex justify-end">
             <Button 
               type="submit"
               label="Create Sale" 
               icon="add_shopping_cart"
-              class="bg-green-600 hover:bg-green-700"
+              class="bg-green-600 hover:bg-green-700 min-h-[44px] touch-manipulation"
               :loading="creating"
               :disabled="!canCreateSale"
             />
@@ -152,24 +174,24 @@
       >
         <div v-if="createdVouchers.length > 0" class="space-y-6">
           <!-- Sale Summary -->
-          <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-            <h4 class="font-medium text-green-900 mb-3">Sale Summary</h4>
+          <div class="bg-white rounded-xl shadow-md border border-gray-100 p-5 border-l-4 border-l-emerald-500">
+            <h4 class="font-semibold text-gray-900 mb-3">Sale Summary</h4>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
-                <span class="text-green-600">Customer:</span>
-                <span class="ml-2 font-medium">{{ customerName || 'N/A' }}</span>
+                <span class="text-gray-500 block text-xs uppercase tracking-wide">Customer</span>
+                <span class="font-medium text-gray-900">{{ createdSaleSummary?.customerName || 'N/A' }}</span>
               </div>
               <div>
-                <span class="text-green-600">Phone:</span>
-                <span class="ml-2 font-medium">{{ customerPhone || 'N/A' }}</span>
+                <span class="text-gray-500 block text-xs uppercase tracking-wide">Phone</span>
+                <span class="font-medium text-gray-900">{{ createdSaleSummary?.customerPhone || 'N/A' }}</span>
               </div>
               <div>
-                <span class="text-green-600">Quantity:</span>
-                <span class="ml-2 font-medium">{{ createdVouchers.length }}</span>
+                <span class="text-gray-500 block text-xs uppercase tracking-wide">Quantity</span>
+                <span class="font-medium text-gray-900">{{ createdVouchers.length }}</span>
               </div>
               <div>
-                <span class="text-green-600">Total Amount:</span>
-                <span class="ml-2 font-medium text-green-700">${{ totalAmount.toFixed(2) }}</span>
+                <span class="text-gray-500 block text-xs uppercase tracking-wide">Total Amount</span>
+                <span class="font-semibold text-emerald-600">${{ createdSaleSummary ? createdSaleSummary.totalAmount.toFixed(2) : '0.00' }}</span>
               </div>
             </div>
           </div>
@@ -179,7 +201,7 @@
             <div 
               v-for="voucher in createdVouchers" 
               :key="voucher.id"
-              class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
+              class="bg-white rounded-xl shadow-md border border-gray-100 p-5 hover:shadow-lg transition-shadow duration-200"
             >
               <!-- Voucher Header -->
               <div class="text-center mb-4">
@@ -193,7 +215,7 @@
                   :value="voucher.voucherNumber"
                   :size="120"
                   level="M"
-                  class="border border-gray-200 rounded"
+                  class="border border-gray-200 rounded-lg shadow-sm"
                 />
               </div>
 
@@ -244,7 +266,7 @@
           </div>
 
           <!-- Bulk Actions -->
-          <div class="flex justify-center space-x-4 pt-4 border-t border-gray-200">
+          <div class="flex flex-wrap justify-center gap-3 pt-6 border-t border-gray-200">
             <Button 
               severity="success"
               class="flex items-center"
@@ -299,9 +321,34 @@ const creating = ref(false)
 const availabilityCheck = ref<any>(null)
 const showSuccessModal = ref(false)
 const createdVouchers = ref<any[]>([])
+const createdSaleSummary = ref<{ customerName: string; customerPhone: string; salePrice: number; totalAmount: number } | null>(null)
 const printing = ref(false)
 const printingAll = ref(false)
 const printingVouchers = ref<Set<string>>(new Set())
+
+// Bluetooth thermal printer (same as sales page)
+const PRINTER_PAPER_WIDTH_KEY = 'ufo-printer-paper-width'
+const printer = useBluetoothPrinter()
+const bluetoothSupported = printer.isSupported
+const bluetoothDevice = printer.device
+const bluetoothConnected = printer.isConnected
+const bluetoothConnecting = ref(false)
+const printerPaperWidth = ref(32)
+if (import.meta.client) {
+  const saved = localStorage.getItem(PRINTER_PAPER_WIDTH_KEY)
+  if (saved) { const n = parseInt(saved, 10); if (n === 32 || n === 42) printerPaperWidth.value = n }
+}
+async function connectBluetoothPrinter() {
+  bluetoothConnecting.value = true
+  try {
+    await printer.requestDevice()
+    if (printer.error.value && !String(printer.error.value).includes('cancelled')) {
+      toast.add({ severity: 'warn', summary: 'Printer', detail: String(printer.error.value), life: 5000 })
+    }
+  } finally {
+    bluetoothConnecting.value = false
+  }
+}
 
 // Computed
 const totalAmount = computed(() => quantity.value * salePrice.value)
@@ -434,8 +481,15 @@ const createSale = async () => {
     })
 
     if (response.success) {
-      // Store created vouchers and show success modal
-      createdVouchers.value = response.data.vouchers || []
+      const vouchers = response.data.vouchers || []
+      const summary = {
+        customerName: customerName.value,
+        customerPhone: customerPhone.value,
+        salePrice: salePrice.value,
+        totalAmount: totalAmount.value
+      }
+      createdSaleSummary.value = summary
+      createdVouchers.value = vouchers
       showSuccessModal.value = true
 
       // Reset form
@@ -446,9 +500,12 @@ const createSale = async () => {
       customerName.value = ''
       customerPhone.value = ''
       availabilityCheck.value = null
-
-      // Refresh voucher types
       availableVoucherTypes.value = []
+
+      // Auto-print to Bluetooth printer if connected
+      if (bluetoothConnected.value && vouchers.length > 0) {
+        autoPrintVouchers(vouchers, summary)
+      }
     }
   } catch (error: any) {
     console.error('Error creating sale:', error)
@@ -474,78 +531,102 @@ const formatDate = (dateString: string) => {
   })
 }
 
-// Print individual voucher using ESCPOS
-const printVoucher = async (voucher: any) => {
-  try {
-    printingVouchers.value.add(voucher.id)
-    
-    const printData = {
-      type: 'voucher',
-      voucher: {
-        voucherNumber: voucher.voucherNumber,
-        pin: voucher.pin,
-        hours: voucher.hours,
-        numberOfUsers: voucher.numberOfUsers,
-        location: voucher.location.name,
-        expiry: formatDate(voucher.endDate),
-        customerName: customerName.value || 'N/A',
-        customerPhone: customerPhone.value || 'N/A',
-        salePrice: salePrice.value
-      }
-    }
-
-    // Send to ESCPOS printer
-    const response = await $fetch('/api/print/escpos', {
-      method: 'POST',
-      body: printData
-    })
-
-    if (response.success) {
-      toast.add({
-        severity: 'success',
-        summary: 'Print Success',
-        detail: 'Voucher sent to printer',
-        life: 3000
-      })
-    }
-  } catch (error) {
-    console.error('Error printing voucher:', error)
-    toast.add({
-      severity: 'error',
-      summary: 'Print Error',
-      detail: 'Failed to print voucher',
-      life: 3000
-    })
-  } finally {
-    printingVouchers.value.delete(voucher.id)
+// Build sale object for receipt (uses createdSaleSummary when in success modal)
+function saleForReceipt(voucher: any) {
+  const summary = createdSaleSummary.value
+  return {
+    voucher: {
+      voucherNumber: voucher.voucherNumber,
+      pin: voucher.pin,
+      hours: voucher.hours,
+      numberOfUsers: voucher.numberOfUsers,
+      endDate: voucher.endDate,
+      location: voucher.location
+    },
+    buyerNote: summary?.customerName ?? customerName.value ?? null,
+    buyerPhone: summary?.customerPhone ?? customerPhone.value ?? null,
+    soldPrice: summary?.salePrice ?? salePrice.value,
+    createdAt: new Date().toISOString()
   }
 }
 
-// Print all vouchers
+// Auto-print all vouchers to Bluetooth after successful sale (runs in background)
+async function autoPrintVouchers(
+  vouchers: any[],
+  _summary: { customerName: string; customerPhone: string; salePrice: number; totalAmount: number }
+) {
+  if (!bluetoothConnected.value || vouchers.length === 0) return
+  const { encodeVoucherReceipt } = await import('~/utils/escpos-voucher')
+  for (let i = 0; i < vouchers.length; i++) {
+    try {
+      const sale = saleForReceipt(vouchers[i])
+      const data = encodeVoucherReceipt(sale, printerPaperWidth.value)
+      await printer.printRaw(data)
+      if (i < vouchers.length - 1) await new Promise(r => setTimeout(r, 400))
+    } catch (e) {
+      console.error('Auto-print error:', e)
+      toast.add({
+        severity: 'error',
+        summary: 'Print',
+        detail: `Could not auto-print voucher ${i + 1}: ${e instanceof Error ? e.message : 'Error'}`,
+        life: 5000
+      })
+    }
+  }
+  toast.add({
+    severity: 'success',
+    summary: 'Printed',
+    detail: `${vouchers.length} voucher(s) sent to printer`,
+    life: 3000
+  })
+}
+
+// Print individual voucher (Bluetooth if connected, else toast to connect)
+const printVoucher = async (voucher: any) => {
+  if (bluetoothConnected.value) {
+    try {
+      printingVouchers.value.add(voucher.id)
+      const { encodeVoucherReceipt } = await import('~/utils/escpos-voucher')
+      const sale = saleForReceipt(voucher)
+      const data = encodeVoucherReceipt(sale, printerPaperWidth.value)
+      await printer.printRaw(data)
+      toast.add({ severity: 'success', summary: 'Printed', detail: 'Voucher sent to printer', life: 3000 })
+    } catch (error) {
+      console.error('Error printing voucher:', error)
+      toast.add({ severity: 'error', summary: 'Print Error', detail: error instanceof Error ? error.message : 'Failed to print', life: 3000 })
+    } finally {
+      printingVouchers.value.delete(voucher.id)
+    }
+    return
+  }
+  toast.add({
+    severity: 'warn',
+    summary: 'Print',
+    detail: 'Connect a Bluetooth printer above to print vouchers',
+    life: 5000
+  })
+}
+
+// Print all vouchers (Bluetooth)
 const printAllVouchers = async () => {
+  if (!bluetoothConnected.value) {
+    toast.add({ severity: 'warn', summary: 'Print', detail: 'Connect a Bluetooth printer above to print', life: 5000 })
+    return
+  }
   try {
     printingAll.value = true
-    
-    for (const voucher of createdVouchers.value) {
-      await printVoucher(voucher)
-      // Small delay between prints
-      await new Promise(resolve => setTimeout(resolve, 500))
+    const { encodeVoucherReceipt } = await import('~/utils/escpos-voucher')
+    for (let i = 0; i < createdVouchers.value.length; i++) {
+      const voucher = createdVouchers.value[i]
+      const sale = saleForReceipt(voucher)
+      const data = encodeVoucherReceipt(sale, printerPaperWidth.value)
+      await printer.printRaw(data)
+      if (i < createdVouchers.value.length - 1) await new Promise(r => setTimeout(r, 400))
     }
-    
-    toast.add({
-      severity: 'success',
-      summary: 'Print Success',
-      detail: 'All vouchers sent to printer',
-      life: 3000
-    })
+    toast.add({ severity: 'success', summary: 'Printed', detail: 'All vouchers sent to printer', life: 3000 })
   } catch (error) {
     console.error('Error printing all vouchers:', error)
-    toast.add({
-      severity: 'error',
-      summary: 'Print Error',
-      detail: 'Failed to print some vouchers',
-      life: 3000
-    })
+    toast.add({ severity: 'error', summary: 'Print Error', detail: error instanceof Error ? error.message : 'Failed to print some vouchers', life: 3000 })
   } finally {
     printingAll.value = false
   }
@@ -913,6 +994,7 @@ const downloadAllVouchers = () => {
 const closeSuccessModal = () => {
   showSuccessModal.value = false
   createdVouchers.value = []
+  createdSaleSummary.value = null
 }
 
 // Fetch data on mount
@@ -939,10 +1021,16 @@ useHead({
   padding: 1.5rem;
 }
 
+.voucher-success-modal :deep(.p-dialog) {
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+}
 .voucher-success-modal :deep(.p-dialog-header) {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
-  border-radius: 0.5rem 0.5rem 0 0;
+  border-radius: 1rem 1rem 0 0;
+  padding: 1.25rem 1.5rem;
 }
 
 .voucher-success-modal :deep(.p-dialog-header-icon) {

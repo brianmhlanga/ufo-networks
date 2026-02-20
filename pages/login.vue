@@ -79,6 +79,24 @@
               <p class="text-[#2d3040]/60 text-sm">Sign in to your account to continue</p>
             </div>
 
+            <!-- Inline error message (shown when API returns error, e.g. wrong password) -->
+            <div
+              v-if="loginError"
+              class="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm flex items-start gap-2"
+              role="alert"
+            >
+              <span class="material-icons text-red-500 flex-shrink-0 mt-0.5">error</span>
+              <span>{{ loginError }}</span>
+              <button
+                type="button"
+                class="ml-auto p-1 rounded hover:bg-red-100 text-red-600"
+                aria-label="Dismiss"
+                @click="loginError = ''"
+              >
+                <span class="material-icons text-lg">close</span>
+              </button>
+            </div>
+
             <form @submit.prevent="handleLogin" class="space-y-5">
               <!-- Email Field -->
               <div class="space-y-2">
@@ -165,6 +183,9 @@
           </template>
         </Card>
 
+        <!-- Toast for validation and success (must be in template to render) -->
+        <Toast />
+
         <!-- Back to Home -->
         <div class="text-center mt-6">
           <NuxtLink
@@ -217,6 +238,7 @@ const form = ref({
 // UI state
 const loading = ref(false)
 const iconsLoaded = ref(false)
+const loginError = ref('')
 
 // Check if Material Icons are loaded
 onMounted(() => {
@@ -280,12 +302,13 @@ const validateForm = () => {
 
 // Handle login
 const handleLogin = async () => {
+  loginError.value = ''
   if (!validateForm()) return
 
   try {
     loading.value = true
-    
-    const response = await $fetch('/api/auth/login', {
+
+    const response = await $fetch<{ success: boolean; user?: { role: string } }>('/api/auth/login', {
       method: 'POST',
       body: {
         email: form.value.email,
@@ -293,62 +316,52 @@ const handleLogin = async () => {
       }
     })
 
-    if (response.success) {
-      toast.add({
-        severity: 'success',
-        summary: 'Success',
-        detail: 'Login successful!',
-        life: 3000
-      })
-
-      // Get redirect URL from query params or use default based on role
+    if (response.success && response.user) {
       const route = useRoute()
-      const redirectUrl = route.query.redirect as string
-      
-      // Redirect immediately after successful login
-      console.log('Redirecting user:', response.user.role, 'to:', redirectUrl || '/admin')
-      console.log('User data:', response.user)
-      
-      // Small delay to ensure session is updated
-      await new Promise(resolve => setTimeout(resolve, 100))
-      
-      if (redirectUrl) {
-        console.log('Using redirect URL from query params:', redirectUrl)
-        await navigateTo(redirectUrl, { replace: true })
-      } else {
-        // Redirect based on user role
-        console.log('No redirect URL, using role-based redirect')
+      const redirectUrl = (route.query.redirect as string) || ''
+
+      let target = redirectUrl
+      if (!target) {
         if (response.user.role === 'SUPER_ADMIN' || response.user.role === 'ADMIN') {
-          console.log('Redirecting admin to /admin')
-          await navigateTo('/admin', { replace: true })
-          // Force refresh to ensure session is loaded
-          window.location.href = '/admin'
+          target = '/admin'
         } else if (response.user.role === 'AGENT') {
-          console.log('Redirecting agent to /agent')
-          await navigateTo('/agent', { replace: true })
-          // Force refresh to ensure session is loaded
-          window.location.href = '/agent'
+          target = '/agent'
         } else {
-          console.log('Redirecting user to /user')
-          await navigateTo('/user', { replace: true })
-          // Force refresh to ensure session is loaded
-          window.location.href = '/user'
+          target = '/user'
         }
       }
+
+      console.log('[login] Success, redirecting to', target, 'role:', response.user.role)
+
+      // Redirect immediately with replace() so the browser navigates before any re-render
+      if (typeof location !== 'undefined') {
+        location.replace(target)
+        // Fallback: if still on page after 400ms (e.g. mobile not following replace), try assign
+        setTimeout(() => {
+          if (typeof location !== 'undefined' && location.pathname === '/login') {
+            console.warn('[login] Still on /login after replace, forcing location.assign', target)
+            location.assign(target)
+          }
+        }, 400)
+      }
+      return
     }
   } catch (error: any) {
     console.error('Login error:', error)
-    
-    let errorMessage = 'Login failed. Please try again.'
-    if (error.data?.statusMessage) {
-      errorMessage = error.data.statusMessage
-    }
 
+    const statusMessage =
+      error?.data?.statusMessage ||
+      error?.statusMessage ||
+      error?.cause?.statusMessage ||
+      (typeof error?.data?.message === 'string' ? error.data.message : null)
+    const errorMessage = statusMessage || 'Login failed. Please try again.'
+
+    loginError.value = errorMessage
     toast.add({
       severity: 'error',
-      summary: 'Error',
+      summary: 'Login failed',
       detail: errorMessage,
-      life: 3000
+      life: 5000
     })
   } finally {
     loading.value = false

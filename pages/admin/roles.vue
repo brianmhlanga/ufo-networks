@@ -1,6 +1,5 @@
 <template>
-  <NuxtLayout name="admin">
-    <div class="space-y-6">
+  <div class="space-y-6">
       <!-- Page Header -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -173,10 +172,10 @@
         </template>
       </Card>
     </div>
-  </NuxtLayout>
 </template>
 
 <script lang="ts" setup>
+definePageMeta({ layout: 'admin' })
 import { ALL_PERMISSIONS, DEFAULT_ROLE_PERMISSIONS, getPermissionsByCategory, getPermissionsForRole } from '~/configs/permissions'
 import { useToast } from 'primevue/usetoast'
 

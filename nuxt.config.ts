@@ -33,6 +33,10 @@ export default defineNuxtConfig({
   // Add Material Icons to head for better loading
   app: {
     head: {
+      meta: [
+        { charset: 'utf-8' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' }
+      ],
       link: [
         {
           rel: 'stylesheet',

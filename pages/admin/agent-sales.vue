@@ -1,6 +1,5 @@
 <template>
-  <NuxtLayout name="admin">
-    <div class="p-6 space-y-6">
+  <div class="p-6 space-y-6">
       <!-- Header -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -213,11 +212,11 @@
       
       <!-- Confirm Dialog -->
       <ConfirmDialog />
-    </div>
-  </NuxtLayout>
+  </div>
 </template>
 
 <script lang="ts" setup>
+definePageMeta({ layout: 'admin' })
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 // Toast and Confirm

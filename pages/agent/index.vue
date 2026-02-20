@@ -1,11 +1,11 @@
 <template>
   <NuxtLayout name="agent">
     <div class="space-y-6">
-      <!-- Page Header -->
-      <div class="flex justify-between items-center">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900">Agent Dashboard</h1>
-          </div>
+      <!-- Page Header (mobile-friendly) -->
+      <div class="flex flex-wrap justify-between items-center gap-4">
+        <div class="min-w-0">
+          <h1 class="text-xl sm:text-2xl font-bold text-gray-900">Agent Dashboard</h1>
+        </div>
       </div>
 
       <!-- Filters -->
@@ -185,10 +185,11 @@
             <h3 class="text-lg font-semibold text-gray-900">Top Performing Locations</h3>
           </template>
           <template #content>
+            <div class="overflow-x-auto -mx-2 sm:mx-0">
             <DataTable 
               :value="topLocations" 
               :loading="loading"
-              class="w-full"
+              class="w-full min-w-[500px]"
               stripedRows
             >
               <Column field="location" header="Location" sortable>
@@ -212,6 +213,7 @@
                 </template>
               </Column>
             </DataTable>
+            </div>
           </template>
         </Card>
 
@@ -221,10 +223,11 @@
             <h3 class="text-lg font-semibold text-gray-900">Recent Sales Activity</h3>
           </template>
           <template #content>
+            <div class="overflow-x-auto -mx-2 sm:mx-0">
             <DataTable 
               :value="recentSales" 
               :loading="loading"
-              class="w-full"
+              class="w-full min-w-[400px]"
               stripedRows
             >
               <Column field="date" header="Date" sortable>
@@ -248,6 +251,7 @@
                 </template>
               </Column>
             </DataTable>
+            </div>
           </template>
         </Card>
       </div>
