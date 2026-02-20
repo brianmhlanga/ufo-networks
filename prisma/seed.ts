@@ -49,8 +49,7 @@ async function main() {
       passwordHash: await hash('manager123', 12),
       name: 'System Manager',
       role: 'ADMIN',
-      status: 'ACTIVE'
-    }
+      status: 'ACTIVE'    }
   })
 
   const agent1 = await prisma.user.create({
