@@ -406,12 +406,12 @@ const confirmSale = async () => {
 
 // View history
 const viewHistory = (entitlement: any) => {
-  // TODO: Implement view history functionality
-  toast.add({
-    severity: 'info',
-    summary: 'Coming Soon',
-    detail: 'Sale history feature will be available soon',
-    life: 3000
+  const voucherType = `${entitlement.hours}-${entitlement.numberOfUsers}`
+  navigateTo({
+    path: '/agent/sales',
+    query: {
+      voucherType
+    }
   })
 }
 

@@ -66,25 +66,25 @@
                  <div>
                    <label class="block text-sm font-medium text-gray-700 mb-2">Display Name</label>
                    <InputText 
-                     :value="agentProfile.displayName || 'Not set'" 
-                     disabled
-                     class="w-full bg-gray-50"
+                     v-model="profileForm.displayName"
+                     :disabled="!profileEditMode"
+                     class="w-full"
                    />
                  </div>
                  <div>
                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
                    <InputText 
-                     :value="user.email || 'Not set'" 
-                     disabled
-                     class="w-full bg-gray-50"
+                     v-model="profileForm.email"
+                     :disabled="!profileEditMode"
+                     class="w-full"
                    />
                  </div>
                  <div>
                    <label class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
                    <InputText 
-                     :value="user.phone || 'Not set'" 
-                     disabled
-                     class="w-full bg-gray-50"
+                     v-model="profileForm.phone"
+                     :disabled="!profileEditMode"
+                     class="w-full"
                    />
                  </div>
                  <div>
@@ -93,6 +93,36 @@
                      :value="user.role" 
                      disabled
                      class="w-full bg-gray-50"
+                   />
+                 </div>
+               </div>
+               <div class="mt-4 flex justify-end">
+                 <div class="flex items-center gap-2">
+                   <Button
+                     v-if="!profileEditMode"
+                     @click="startProfileEdit"
+                     icon="edit"
+                     label="Edit Profile"
+                     severity="secondary"
+                     size="small"
+                   />
+                   <Button
+                     v-if="profileEditMode"
+                     @click="cancelProfileEdit"
+                     icon="close"
+                     label="Cancel"
+                     severity="secondary"
+                     size="small"
+                     text
+                   />
+                   <Button
+                     v-if="profileEditMode"
+                     @click="saveProfile"
+                     icon="save"
+                     label="Save Changes"
+                     severity="success"
+                     size="small"
+                     :loading="savingProfile"
                    />
                  </div>
                </div>
@@ -108,10 +138,14 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Default Discount (%)</label>
-                    <InputText 
-                      :value="`${agentProfile.defaultDiscountPct || 0}%`" 
-                      disabled
-                      class="w-full bg-gray-50"
+                    <InputNumber
+                      v-model="profileForm.defaultDiscountPct"
+                      :disabled="!profileEditMode"
+                      class="w-full"
+                      :min="0"
+                      :max="100"
+                      :minFractionDigits="0"
+                      :maxFractionDigits="2"
                     />
                     <p class="text-xs text-gray-500 mt-1">Default discount applied to voucher purchases</p>
                   </div>
@@ -119,8 +153,8 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">Cash Handling</label>
                     <div class="flex items-center space-x-3">
                       <Checkbox 
-                        :modelValue="agentProfile.cashOnly" 
-                        :disabled="true"
+                        v-model="profileForm.cashOnly"
+                        :disabled="!profileEditMode"
                         :binary="true"
                       />
                       <span class="text-sm text-gray-700">Cash only transactions</span>
@@ -292,6 +326,8 @@ const session = useUserSession()
 const toast = useToast()
 
 // State
+const profileEditMode = ref(false)
+const savingProfile = ref(false)
 const passwordEditMode = ref(false)
 const updatingPassword = ref(false)
 
@@ -304,6 +340,14 @@ const stats = ref({
   totalSales: 0,
   totalRevenue: 0,
   totalProfit: 0
+})
+
+const profileForm = ref({
+  displayName: '',
+  email: '',
+  phone: '',
+  defaultDiscountPct: 0,
+  cashOnly: false
 })
 
 // Password form
@@ -334,6 +378,13 @@ const fetchUserData = async () => {
       user.value = response.data.user
       agentProfile.value = response.data.agentProfile
       stats.value = response.data.stats
+      profileForm.value = {
+        displayName: response.data.agentProfile?.displayName || '',
+        email: response.data.user?.email || '',
+        phone: response.data.user?.phone || '',
+        defaultDiscountPct: Number(response.data.agentProfile?.defaultDiscountPct || 0),
+        cashOnly: Boolean(response.data.agentProfile?.cashOnly)
+      }
     }
   } catch (error) {
     console.error('Error fetching user data:', error)
@@ -343,6 +394,78 @@ const fetchUserData = async () => {
       detail: 'Failed to load profile data',
       life: 3000
     })
+  }
+}
+
+const startProfileEdit = () => {
+  profileEditMode.value = true
+}
+
+const cancelProfileEdit = () => {
+  profileEditMode.value = false
+  profileForm.value = {
+    displayName: agentProfile.value?.displayName || '',
+    email: user.value?.email || '',
+    phone: user.value?.phone || '',
+    defaultDiscountPct: Number(agentProfile.value?.defaultDiscountPct || 0),
+    cashOnly: Boolean(agentProfile.value?.cashOnly)
+  }
+}
+
+const saveProfile = async () => {
+  if (!profileForm.value.displayName?.trim()) {
+    toast.add({
+      severity: 'error',
+      summary: 'Validation Error',
+      detail: 'Display name is required',
+      life: 3000
+    })
+    return
+  }
+
+  if (!profileForm.value.email?.trim()) {
+    toast.add({
+      severity: 'error',
+      summary: 'Validation Error',
+      detail: 'Email is required',
+      life: 3000
+    })
+    return
+  }
+
+  try {
+    savingProfile.value = true
+    const response: any = await $fetch('/api/agent/profile', {
+      method: 'PUT',
+      body: {
+        displayName: profileForm.value.displayName.trim(),
+        email: profileForm.value.email.trim(),
+        phone: profileForm.value.phone?.trim() || null,
+        defaultDiscountPct: Number(profileForm.value.defaultDiscountPct || 0),
+        cashOnly: Boolean(profileForm.value.cashOnly)
+      }
+    })
+
+    if (response.success) {
+      toast.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'Profile updated successfully',
+        life: 3000
+      })
+      profileEditMode.value = false
+      await fetchUserData()
+    }
+  } catch (error: any) {
+    const errorMessage = error?.data?.statusMessage || error?.statusMessage || 'Failed to update profile'
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: errorMessage,
+      life: 3000
+    })
+  } finally {
+    savingProfile.value = false
   }
 }
 

@@ -26,9 +26,13 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Get request body
+    // Get request body (allowlist only)
     const body = await readBody(event)
-    const { displayName, email, phone, defaultDiscountPct, cashOnly } = body
+    const displayName = String(body?.displayName || '').trim()
+    const email = String(body?.email || '').trim().toLowerCase()
+    const phone = body?.phone ? String(body.phone).trim() : null
+    const defaultDiscountPct = Number(body?.defaultDiscountPct || 0)
+    const cashOnly = Boolean(body?.cashOnly)
 
     // Validate required fields
     if (!displayName || !email) {
@@ -38,27 +42,49 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Check if email is already taken by another user
-    if (email !== session.user.email) {
-      const existingUser = await prisma.user.findUnique({
-        where: { email }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Please provide a valid email address'
       })
-      
-      if (existingUser && existingUser.id !== session.user.id) {
-        throw createError({
-          statusCode: 400,
-          statusMessage: 'Email is already taken by another user'
-        })
-      }
+    }
+
+    if (defaultDiscountPct < 0 || defaultDiscountPct > 100) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Default discount must be between 0 and 100'
+      })
+    }
+
+    // Ensure current user exists and role remains unchanged (role is never updated here)
+    const currentUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true }
+    })
+    if (!currentUser) {
+      throw createError({
+        statusCode: 404,
+        statusMessage: 'User not found'
+      })
+    }
+
+    // Check if email is already taken by another user
+    const existingUserByEmail = await prisma.user.findUnique({
+      where: { email }
+    })
+    if (existingUserByEmail && existingUserByEmail.id !== session.user.id) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Email is already taken by another user'
+      })
     }
 
     // Check if phone is already taken by another user
-    if (phone && phone !== session.user.phone) {
-      const existingUser = await prisma.user.findUnique({
+    if (phone) {
+      const existingUserByPhone = await prisma.user.findUnique({
         where: { phone }
       })
-      
-      if (existingUser && existingUser.id !== session.user.id) {
+      if (existingUserByPhone && existingUserByPhone.id !== session.user.id) {
         throw createError({
           statusCode: 400,
           statusMessage: 'Phone number is already taken by another user'
@@ -81,8 +107,8 @@ export default defineEventHandler(async (event) => {
       where: { id: agentProfile.id },
       data: {
         displayName,
-        defaultDiscountPct: Number(defaultDiscountPct) || 0,
-        cashOnly: Boolean(cashOnly),
+        defaultDiscountPct,
+        cashOnly,
         updatedAt: new Date()
       }
     })

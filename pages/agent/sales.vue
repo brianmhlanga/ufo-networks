@@ -473,6 +473,7 @@ const stats = ref({
 const loading = ref(false)
 const showSaleDetails = ref(false)
 const selectedSale = ref<any>(null)
+const route = useRoute()
 
 // Filters
 const filters = ref({
@@ -564,6 +565,24 @@ const fetchFilterOptions = async () => {
 // Apply filters
 const applyFilters = () => {
   fetchSales()
+}
+
+// Apply querystring filters when navigating from other pages (e.g., entitlements history)
+const applyFiltersFromQuery = () => {
+  const { dateRange, voucherType, locationId, search } = route.query
+
+  if (typeof dateRange === 'string' && dateRangeOptions.some(o => o.value === dateRange)) {
+    filters.value.dateRange = dateRange
+  }
+  if (typeof voucherType === 'string') {
+    filters.value.voucherType = voucherType
+  }
+  if (typeof locationId === 'string') {
+    filters.value.locationId = locationId
+  }
+  if (typeof search === 'string') {
+    filters.value.search = search
+  }
 }
 
 // View sale details
@@ -726,8 +745,10 @@ const formatDate = (dateString: string) => {
 
 // Fetch data on mount
 onMounted(() => {
-  fetchFilterOptions()
-  fetchSales()
+  fetchFilterOptions().then(() => {
+    applyFiltersFromQuery()
+    fetchSales()
+  })
 })
 
 // Meta tags
