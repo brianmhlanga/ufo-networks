@@ -195,26 +195,6 @@
                 </div>
               </div>
 
-              <!-- Terms and Conditions -->
-              <div class="flex items-start space-x-3">
-                <Checkbox
-                  v-model="form.acceptTerms"
-                  :binary="true"
-                  inputId="acceptTerms"
-                  class="mt-1"
-                  :class="{ 'p-invalid': errors.acceptTerms }"
-                />
-                <div class="flex-1">
-                  <label for="acceptTerms" class="text-sm text-[#2d3040]/70 cursor-pointer leading-relaxed">
-                    I agree to the 
-                    <NuxtLink to="/terms" class="text-[#185ff9] hover:text-[#185ff9]/80 font-medium">Terms of Service</NuxtLink>
-                    and 
-                    <NuxtLink to="/privacy" class="text-[#185ff9] hover:text-[#185ff9]/80 font-medium">Privacy Policy</NuxtLink>
-                  </label>
-                  <small v-if="errors.acceptTerms" class="p-error block mt-1">{{ errors.acceptTerms }}</small>
-                </div>
-              </div>
-
               <!-- Register Button -->
               <Button
                 type="submit"
@@ -285,8 +265,7 @@ const form = ref({
   phone: '',
   password: '',
   confirmPassword: '',
-  role: 'CUSTOMER',
-  acceptTerms: false
+  role: 'AGENT',
 })
 
 // Form errors
@@ -296,8 +275,7 @@ const errors = ref({
   phone: '',
   password: '',
   confirmPassword: '',
-  role: '',
-  acceptTerms: ''
+  role: ''
 })
 
 // UI state
@@ -305,7 +283,6 @@ const loading = ref(false)
 
 // Role options based on Prisma schema
 const roleOptions = [
-  { label: 'Customer', value: 'CUSTOMER' },
   { label: 'Agent', value: 'AGENT' }
 ]
 
@@ -317,8 +294,7 @@ const validateForm = () => {
     phone: '', 
     password: '', 
     confirmPassword: '', 
-    role: '', 
-    acceptTerms: '' 
+    role: '' 
   }
   let isValid = true
 
@@ -373,12 +349,6 @@ const validateForm = () => {
   // Role validation
   if (!form.value.role) {
     errors.value.role = 'Please select an account type'
-    isValid = false
-  }
-
-  // Terms validation
-  if (!form.value.acceptTerms) {
-    errors.value.acceptTerms = 'You must accept the terms and conditions'
     isValid = false
   }
 
