@@ -13,16 +13,8 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Fetch all active locations for dropdowns
+    // Fetch all locations for admin dropdowns
     const locations = await prisma.location.findMany({
-      where: {
-        // Only get active locations
-        vouchers: {
-          some: {
-            status: 'AVAILABLE'
-          }
-        }
-      },
       select: {
         id: true,
         name: true,

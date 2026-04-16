@@ -37,21 +37,23 @@ export default defineEventHandler(async (event) => {
 
     // Get request body
     const body = await readBody(event)
-    const { 
-      name, 
-      description, 
-      locationId, 
-      quantity, 
-      unitCost, 
-      status, 
-      notes 
+    const {
+      name,
+      locationId,
+      retailPrice,
+      hours,
+      numberOfUsers,
+      startDate,
+      endDate,
+      active,
+      notes
     } = body
 
     // Validation
-    if (!name || !locationId || !quantity || !unitCost || !status) {
+    if (!name || !locationId || !retailPrice || !hours || !numberOfUsers || !startDate || !endDate) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Name, location, quantity, unit cost, and status are required'
+        statusMessage: 'Name, location, retail price, hours, number of users, start date, and end date are required'
       })
     }
 
@@ -79,18 +81,42 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Validate quantity and cost
-    if (quantity <= 0) {
+    // Validate numeric values
+    if (Number(retailPrice) <= 0) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Quantity must be greater than 0'
+        statusMessage: 'Retail price must be greater than 0'
       })
     }
 
-    if (unitCost <= 0) {
+    if (Number(hours) <= 0) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Unit cost must be greater than 0'
+        statusMessage: 'Hours must be greater than 0'
+      })
+    }
+
+    if (Number(numberOfUsers) <= 0) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Number of users must be greater than 0'
+      })
+    }
+
+    const startDateObj = new Date(startDate)
+    const endDateObj = new Date(endDate)
+
+    if (Number.isNaN(startDateObj.getTime()) || Number.isNaN(endDateObj.getTime())) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Invalid start or end date'
+      })
+    }
+
+    if (endDateObj <= startDateObj) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'End date must be after start date'
       })
     }
 
@@ -99,12 +125,13 @@ export default defineEventHandler(async (event) => {
       where: { id: batchId },
       data: {
         name,
-        description: description || '',
         locationId,
-        quantity: parseInt(quantity),
-        unitCost: parseFloat(unitCost),
-        totalCost: parseFloat(unitCost) * parseInt(quantity),
-        status,
+        retailPrice: parseFloat(retailPrice),
+        hours: parseInt(hours),
+        numberOfUsers: parseInt(numberOfUsers),
+        startDate: startDateObj,
+        endDate: endDateObj,
+        active: typeof active === 'boolean' ? active : existingBatch.active,
         notes: notes || ''
       },
       include: {

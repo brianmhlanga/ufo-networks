@@ -226,7 +226,7 @@
               </template>
             </Column>
             
-            <Column header="Actions" :exportable="false" style="min-width: 12rem">
+            <Column header="Actions" :exportable="false" style="min-width: 10rem">
               <template #body="{ data }">
                 <div class="flex items-center space-x-2">
                   <Button
@@ -249,17 +249,6 @@
                   >
                     <template #icon>
                       <span class="material-icons">edit</span>
-                    </template>
-                  </Button>
-                  <Button
-                    text
-                    size="small"
-                    @click="generateVouchers(data)"
-                    v-tooltip.top="'Generate Vouchers'"
-                    class="action-button generate-button"
-                  >
-                    <template #icon>
-                      <span class="material-icons">add_card</span>
                     </template>
                   </Button>
                   <Button
@@ -459,13 +448,38 @@
               :disabled="creatingBatch"
             />
             <Button 
-              label="Create Batch" 
-              @click="createBatch"
+              :label="isEditing ? 'Update Batch' : 'Create Batch'" 
+              @click="saveBatch"
               :loading="creatingBatch"
               class="custom-primary-button"
             />
           </div>
         </template>
+      </Dialog>
+
+      <!-- View Batch Dialog -->
+      <Dialog
+        v-model:visible="showViewDialog"
+        modal
+        header="Batch Details"
+        :style="{ width: '35rem' }"
+      >
+        <div v-if="selectedBatch" class="space-y-3 text-sm">
+          <div class="grid grid-cols-2 gap-3">
+            <div><span class="font-medium">Name:</span> {{ selectedBatch.name }}</div>
+            <div><span class="font-medium">Location:</span> {{ selectedBatch.location?.name || 'N/A' }}</div>
+            <div><span class="font-medium">Price:</span> ${{ selectedBatch.retailPrice }}</div>
+            <div><span class="font-medium">Duration:</span> {{ selectedBatch.hours }}h</div>
+            <div><span class="font-medium">Users:</span> {{ selectedBatch.numberOfUsers }}</div>
+            <div><span class="font-medium">Status:</span> {{ selectedBatch.active ? 'Active' : 'Inactive' }}</div>
+            <div><span class="font-medium">Start Date:</span> {{ formatDate(selectedBatch.startDate) }}</div>
+            <div><span class="font-medium">End Date:</span> {{ formatDate(selectedBatch.endDate) }}</div>
+          </div>
+          <div>
+            <span class="font-medium">Notes:</span>
+            <p class="text-[#2d3040]/70 mt-1">{{ selectedBatch.notes || 'No notes' }}</p>
+          </div>
+        </div>
       </Dialog>
       
                   <!-- Upload Batch with PDF Dialog -->
@@ -696,7 +710,6 @@
 <script lang="ts" setup>
 definePageMeta({ layout: 'admin' })
 import { useToast } from 'primevue/usetoast'
-import { extractBatchNumbers, validateBatchNumbers } from '~/utils/pdf'
 
 // Toast instance
 const toast = useToast()
@@ -711,8 +724,11 @@ const pageSize = ref(10)
 // Dialog states
 const showCreateDialog = ref(false)
 const showUploadDialog = ref(false)
+const showViewDialog = ref(false)
 const creatingBatch = ref(false)
 const uploadingBatch = ref(false)
+const isEditing = ref(false)
+const selectedBatch = ref<any | null>(null)
 
 // Batch stats
 const batchStats = ref({
@@ -741,7 +757,7 @@ const statusOptions = ref([
 const batchForm = ref({
   name: '',
   locationId: '',
-  retailPrice: '',
+  retailPrice: null as number | null,
   currency: 'USD',
   hours: 1,
   numberOfUsers: 1,
@@ -791,7 +807,7 @@ const resetBatchForm = () => {
   batchForm.value = {
     name: '',
     locationId: '',
-    retailPrice: '',
+    retailPrice: null,
     currency: 'USD',
     hours: 1,
     numberOfUsers: 1,
@@ -862,6 +878,8 @@ const openUploadDialog = () => {
 
 const closeCreateDialog = () => {
   showCreateDialog.value = false
+  isEditing.value = false
+  selectedBatch.value = null
   resetBatchForm()
 }
 
@@ -962,6 +980,54 @@ const createBatch = async () => {
   }
 }
 
+const updateBatch = async () => {
+  try {
+    if (!selectedBatch.value?.id) return
+    creatingBatch.value = true
+
+    const requestBody = {
+      ...batchForm.value,
+      startDate: batchForm.value.startDate?.toISOString(),
+      endDate: batchForm.value.endDate?.toISOString(),
+      retailPrice: Number(batchForm.value.retailPrice)
+    }
+
+    const response: any = await $fetch(`/api/admin/batches/${selectedBatch.value.id}`, {
+      method: 'PUT',
+      body: requestBody
+    })
+
+    if (response.success) {
+      toast.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'Batch updated successfully',
+        life: 3000
+      })
+      closeCreateDialog()
+      await fetchBatches()
+    }
+  } catch (error: any) {
+    console.error('Error updating batch:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: error.data?.message || error.statusMessage || 'Failed to update batch',
+      life: 5000
+    })
+  } finally {
+    creatingBatch.value = false
+  }
+}
+
+const saveBatch = async () => {
+  if (isEditing.value) {
+    await updateBatch()
+    return
+  }
+  await createBatch()
+}
+
 const uploadBatchWithPDF = async () => {
   try {
     console.log('Uploading batch with form data:', batchForm.value)
@@ -994,7 +1060,7 @@ const uploadBatchWithPDF = async () => {
     // Add form fields
     Object.entries(batchForm.value).forEach(([key, value]) => {
       if (value !== null && value !== undefined) {
-        if (key === 'startDate' || key === 'endDate') {
+        if ((key === 'startDate' || key === 'endDate') && value instanceof Date) {
           formData.append(key, value.toISOString())
         } else {
           formData.append(key, value.toString())
@@ -1114,13 +1180,10 @@ const onPageChange = (event: any) => {
   pageSize.value = event.rows
 }
 
-// Placeholder methods for future implementation
-const openGenerateDialog = () => {
-  toast.add({ severity: 'info', summary: 'Info', detail: 'Generate vouchers dialog will be implemented', life: 3000 })
-}
-
 const openCreateDialog = () => {
   showCreateDialog.value = true
+  isEditing.value = false
+  selectedBatch.value = null
   resetBatchForm()
   // Set default validity days to 60
   batchForm.value.validityDays = 60
@@ -1131,24 +1194,80 @@ const openCreateDialog = () => {
 }
 
 const viewBatch = (batch: any) => {
-  toast.add({ severity: 'info', summary: 'Info', detail: `Viewing batch: ${batch.name}`, life: 3000 })
+  selectedBatch.value = batch
+  showViewDialog.value = true
 }
 
 const editBatch = (batch: any) => {
-  toast.add({ severity: 'info', summary: 'Info', detail: `Editing batch: ${batch.name}`, life: 3000 })
+  selectedBatch.value = batch
+  isEditing.value = true
+  showCreateDialog.value = true
+  batchForm.value = {
+    name: batch.name || '',
+    locationId: String(batch.locationId || ''),
+    retailPrice: Number(batch.retailPrice) || null,
+    currency: 'USD',
+    hours: batch.hours || 1,
+    numberOfUsers: batch.numberOfUsers || 1,
+    validityDays: 60,
+    startDate: batch.startDate ? new Date(batch.startDate) : null,
+    endDate: batch.endDate ? new Date(batch.endDate) : null,
+    notes: batch.notes || ''
+  }
+  if (batchForm.value.startDate && batchForm.value.endDate) {
+    onEndDateChange()
+  }
 }
 
-const generateVouchers = (batch: any) => {
-  toast.add({ severity: 'info', summary: 'Info', detail: `Generating vouchers for: ${batch.name}`, life: 3000 })
-}
+const toggleBatchStatus = async (batch: any) => {
+  try {
+    await $fetch(`/api/admin/batches/${batch.id}/status`, {
+      method: 'PUT',
+      body: { active: !batch.active }
+    })
 
-const toggleBatchStatus = (batch: any) => {
-  toast.add({ severity: 'info', summary: 'Info', detail: `Toggling status for: ${batch.name}`, life: 3000 })
+    toast.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: `Batch ${!batch.active ? 'activated' : 'deactivated'} successfully`,
+      life: 3000
+    })
+    await fetchBatches()
+  } catch (error: any) {
+    console.error('Error toggling batch status:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: error.data?.message || error.statusMessage || 'Failed to update batch status',
+      life: 5000
+    })
+  }
 }
 
 const confirmDelete = (batch: any) => {
   if (confirm(`Are you sure you want to delete "${batch.name}"?`)) {
-    toast.add({ severity: 'success', summary: 'Success', detail: `Batch ${batch.name} deleted`, life: 3000 })
+    deleteBatch(batch)
+  }
+}
+
+const deleteBatch = async (batch: any) => {
+  try {
+    await $fetch(`/api/admin/batches/${batch.id}`, { method: 'DELETE' } as any)
+    toast.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: `Batch ${batch.name} deleted successfully`,
+      life: 3000
+    })
+    await fetchBatches()
+  } catch (error: any) {
+    console.error('Error deleting batch:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: error.data?.message || error.statusMessage || 'Failed to delete batch',
+      life: 5000
+    })
   }
 }
 
@@ -1264,17 +1383,6 @@ useHead({
 :deep(.edit-button:hover) {
   background: rgba(245, 158, 11, 0.2) !important;
   color: #f59e0b !important;
-}
-
-/* Generate button styling */
-:deep(.generate-button) {
-  color: #059669 !important;
-  background: rgba(5, 150, 105, 0.1) !important;
-}
-
-:deep(.generate-button:hover) {
-  background: rgba(5, 150, 105, 0.2) !important;
-  color: #059669 !important;
 }
 
 /* Toggle button styling */
