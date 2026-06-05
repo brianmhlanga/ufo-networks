@@ -54,6 +54,7 @@
     "mime-types": "^3.0.1",
     "nodemailer": "^6.9.8",
     "nuxt-auth-utils": "^0.5.20",
+    "nuxt-security": "^2.6.0",
     "paynow": "^2.2.2",
     "pdfjs-dist": "^3.11.174",
     "pdfmake": "^0.2.20",
