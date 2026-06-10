@@ -26,6 +26,7 @@ export default defineNuxtConfig({
           ],
           'script-src': [
             "'self'",
+            "'unsafe-inline'",
             'https://unpkg.com',
             'https://cdnjs.cloudflare.com',
           ],
@@ -33,9 +34,14 @@ export default defineNuxtConfig({
             "'self'",
             "'unsafe-inline'",
             'https://fonts.googleapis.com',
+            'https://unpkg.com',
           ],
           'font-src': ["'self'", 'https://fonts.gstatic.com', 'data:'],
-          'connect-src': ["'self'"],
+          'connect-src': [
+            "'self'",
+            'https://unpkg.com',
+            'https://*.tile.openstreetmap.org',
+          ],
           'upgrade-insecure-requests': true,
         },
         strictTransportSecurity: {

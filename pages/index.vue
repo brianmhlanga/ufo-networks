@@ -5,6 +5,39 @@
     <!-- Hero Slider -->
     <section class="relative overflow-hidden min-h-screen">
       <ClientOnly>
+        <template #fallback>
+          <div class="relative h-screen min-h-screen">
+            <div class="absolute inset-0">
+              <div class="absolute inset-0 bg-gradient-to-r from-blue-900/90 via-blue-800/70 to-transparent z-10"></div>
+              <img src="/images/slider1.jpg" alt="UFO Networks" class="w-full h-full object-cover object-right" />
+            </div>
+            <div class="relative z-20 h-full flex items-center">
+              <div class="container mx-auto px-6">
+                <div class="max-w-2xl">
+                  <h1 class="text-5xl md:text-7xl font-bold text-white leading-[0.9] mb-6">
+                    <span class="block">Fast, Reliable</span>
+                    <span class="block bg-gradient-to-r from-white via-blue-200 to-blue-100 bg-clip-text text-transparent">WiFi Anywhere</span>
+                  </h1>
+                  <p class="text-xl md:text-2xl text-white/90 font-medium leading-relaxed mb-10 max-w-xl">
+                    Connect instantly with secure vouchers. Buy online or from our trusted agents across Zimbabwe.
+                  </p>
+                  <div class="flex flex-col sm:flex-row items-start gap-6">
+                    <NuxtLink to="/vouchers">
+                      <Button class="px-12 py-5 bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 text-white rounded-3xl font-bold text-lg">
+                        Start Browsing Now
+                      </Button>
+                    </NuxtLink>
+                    <NuxtLink to="/locations">
+                      <Button class="px-12 py-5 bg-white/10 backdrop-blur-md text-white border-2 border-white/30 rounded-3xl font-bold text-lg">
+                        Find Locations
+                      </Button>
+                    </NuxtLink>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
         <swiper-container 
           ref="heroSwiperRef"
           class="hero-swiper h-screen"
