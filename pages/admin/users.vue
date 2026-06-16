@@ -45,7 +45,7 @@
             <label class="block text-sm font-medium text-[#2d3040] mb-2">Role</label>
             <Dropdown
               v-model="filters.role"
-              :options="roleOptions"
+              :options="filterRoleOptions"
               optionLabel="label"
               optionValue="value"
               placeholder="All Roles"
@@ -56,7 +56,7 @@
             <label class="block text-sm font-medium text-[#2d3040] mb-2">Status</label>
             <Dropdown
               v-model="filters.status"
-              :options="statusOptions"
+              :options="filterStatusOptions"
               optionLabel="label"
               optionValue="value"
               placeholder="All Status"
@@ -127,6 +127,15 @@
               />
             </template>
           </Column>
+
+          <Column field="status" header="Status" sortable>
+            <template #body="{ data }">
+              <Tag
+                :value="getStatusLabel(data.status)"
+                :severity="getStatusSeverity(data.status)"
+              />
+            </template>
+          </Column>
           
           <Column field="agentProfile" header="Agent Profile" sortable>
             <template #body="{ data }">
@@ -144,7 +153,7 @@
             </template>
           </Column>
           
-                     <Column header="Actions" :exportable="false" style="min-width: 8rem">
+                     <Column header="Actions" :exportable="false" style="min-width: 11rem">
              <template #body="{ data }">
                <div class="flex items-center space-x-2">
                  <Button
@@ -167,6 +176,30 @@
                  >
                    <template #icon>
                      <span class="material-icons">edit</span>
+                   </template>
+                 </Button>
+                 <Button
+                   v-if="data.status === 'ACTIVE'"
+                   text
+                   size="small"
+                   @click="confirmDisable(data)"
+                   v-tooltip.top="'Disable User'"
+                   class="action-button"
+                 >
+                   <template #icon>
+                     <span class="material-icons text-amber-600">block</span>
+                   </template>
+                 </Button>
+                 <Button
+                   v-else
+                   text
+                   size="small"
+                   @click="confirmEnable(data)"
+                   v-tooltip.top="'Enable User'"
+                   class="action-button"
+                 >
+                   <template #icon>
+                     <span class="material-icons text-green-600">check_circle</span>
                    </template>
                  </Button>
                  <Button
@@ -345,6 +378,11 @@
             <Tag
               :value="getRoleLabel(selectedUser.role)"
               :severity="getRoleSeverity(selectedUser.role)"
+              class="mr-2"
+            />
+            <Tag
+              :value="getStatusLabel(selectedUser.status)"
+              :severity="getStatusSeverity(selectedUser.status)"
             />
           </div>
         </div>
@@ -353,6 +391,10 @@
           <div>
             <label class="block text-sm font-medium text-[#2d3040]/60 mb-1">Phone</label>
             <p class="text-[#2d3040]">{{ selectedUser.phone || 'N/A' }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-[#2d3040]/60 mb-1">Status</label>
+            <p class="text-[#2d3040]">{{ getStatusLabel(selectedUser.status) }}</p>
           </div>
           <div>
             <label class="block text-sm font-medium text-[#2d3040]/60 mb-1">Created</label>
@@ -431,8 +473,8 @@ const selectedUser = ref<any>(null)
 // Filters
 const filters = ref({
   search: '',
-  role: null,
-  status: null
+  role: '',
+  status: '',
 })
 
 // User form
@@ -464,10 +506,16 @@ const roleOptions = ref([
   { label: 'Super Admin', value: 'SUPER_ADMIN' }
 ])
 
-const statusOptions = ref([
-  { label: 'All', value: '' },
+const filterRoleOptions = computed(() => [
+  { label: 'All Roles', value: '' },
+  ...roleOptions.value,
+])
+
+const filterStatusOptions = computed(() => [
+  { label: 'All Status', value: '' },
   { label: 'Active', value: 'ACTIVE' },
-  { label: 'Inactive', value: 'INACTIVE' }
+  { label: 'Inactive', value: 'INACTIVE' },
+  { label: 'Blacklisted', value: 'BLACKLISTED' },
 ])
 
 // API functions
@@ -522,6 +570,24 @@ const getRoleLabel = (role: string) => {
     case 'AGENT': return 'Agent'
     case 'CUSTOMER': return 'Customer'
     default: return role
+  }
+}
+
+const getStatusLabel = (status?: string) => {
+  switch (status) {
+    case 'ACTIVE': return 'Active'
+    case 'INACTIVE': return 'Inactive'
+    case 'BLACKLISTED': return 'Blacklisted'
+    default: return status || 'Active'
+  }
+}
+
+const getStatusSeverity = (status?: string) => {
+  switch (status) {
+    case 'ACTIVE': return 'success'
+    case 'INACTIVE': return 'warning'
+    case 'BLACKLISTED': return 'danger'
+    default: return 'success'
   }
 }
 
@@ -657,7 +723,7 @@ const editFromView = () => {
 
 const confirmDelete = (user: any) => {
   confirm.require({
-    message: `Are you sure you want to delete "${user.name || user.email}"?`,
+    message: `Delete "${user.name || user.email}"? Users with orders or sales history cannot be deleted — disable them instead.`,
     header: 'Confirm Delete',
     icon: 'pi pi-exclamation-triangle',
     rejectClass: 'p-button-secondary p-button-outlined',
@@ -666,15 +732,61 @@ const confirmDelete = (user: any) => {
     accept: () => {
       deleteUser(user)
     },
-    reject: () => {
-      toast.add({ 
-        severity: 'info', 
-        summary: 'Cancelled', 
-        detail: 'Delete operation cancelled', 
-        life: 3000 
-      })
-    }
   })
+}
+
+const confirmDisable = (user: any) => {
+  confirm.require({
+    message: `Disable "${user.name || user.email}"? They will no longer be able to sign in, but their records will be kept.`,
+    header: 'Disable User',
+    icon: 'pi pi-exclamation-triangle',
+    rejectClass: 'p-button-secondary p-button-outlined',
+    rejectLabel: 'Cancel',
+    acceptLabel: 'Disable',
+    accept: () => {
+      updateUserStatus(user, 'INACTIVE')
+    },
+  })
+}
+
+const confirmEnable = (user: any) => {
+  confirm.require({
+    message: `Re-enable "${user.name || user.email}"? They will be able to sign in again.`,
+    header: 'Enable User',
+    icon: 'pi pi-check-circle',
+    rejectClass: 'p-button-secondary p-button-outlined',
+    rejectLabel: 'Cancel',
+    acceptLabel: 'Enable',
+    accept: () => {
+      updateUserStatus(user, 'ACTIVE')
+    },
+  })
+}
+
+const updateUserStatus = async (user: any, status: string) => {
+  try {
+    await $fetch(`/api/admin/users/${user.id}/status`, {
+      method: 'PUT',
+      body: { status },
+    })
+
+    toast.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: status === 'ACTIVE' ? 'User enabled successfully' : 'User disabled successfully',
+      life: 3000,
+    })
+
+    fetchUsers()
+  } catch (error: any) {
+    console.error('Error updating user status:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: error?.data?.statusMessage || error?.statusMessage || 'Failed to update user status',
+      life: 5000,
+    })
+  }
 }
 
 const deleteUser = async (user: any) => {
@@ -685,10 +797,16 @@ const deleteUser = async (user: any) => {
     
     toast.add({ severity: 'success', summary: 'Success', detail: 'User deleted successfully', life: 3000 })
     
-    fetchUsers() // Refresh the list
-  } catch (error) {
+    fetchUsers()
+  } catch (error: any) {
     console.error('Error deleting user:', error)
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete user', life: 3000 })
+    const message = error?.data?.statusMessage || error?.statusMessage || 'Failed to delete user'
+    toast.add({
+      severity: 'error',
+      summary: 'Cannot Delete User',
+      detail: `${message} Use the disable action instead.`,
+      life: 6000,
+    })
   }
 }
 
@@ -741,8 +859,8 @@ const exportSelected = () => {
 const clearFilters = () => {
   filters.value = {
     search: '',
-    role: null,
-    status: null
+    role: '',
+    status: '',
   }
 }
 

@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { getAuditActor, serializeForAudit, writeAuditLog } from '~/server/utils/auditLog'
 
 const prisma = new PrismaClient()
 
@@ -221,6 +222,23 @@ export default defineEventHandler(async (event) => {
     // Create the order
     const order = await prisma.order.create({
       data: orderData
+    })
+
+    const audit = await getAuditActor(event)
+    const orderSnapshot = await prisma.order.findUnique({
+      where: { id: order.id },
+      include: { items: true, payments: true },
+    })
+    await writeAuditLog(prisma, {
+      ...audit,
+      action: 'ORDER_CREATED',
+      entity: 'Order',
+      entityId: order.id,
+      details: {
+        snapshot: serializeForAudit(orderSnapshot),
+        paymentMethod,
+        isAgentOrder: Boolean(isAgentOrder),
+      },
     })
     
     console.log('Order creation: Created order:', order)

@@ -19,7 +19,7 @@
 
             <!-- Main heading -->
             <h1 class="text-4xl md:text-6xl font-bold text-white leading-tight mb-6">
-              <span class="block">Order WiFi</span>
+              <span class="block">Buy WiFi</span>
               <span class="block bg-gradient-to-r from-blue-300 to-blue-100 bg-clip-text text-transparent">
                 Vouchers
               </span>
@@ -48,7 +48,7 @@
                   </svg>
                 </div>
                 <h3 class="text-white font-semibold mb-2">Multiple Locations</h3>
-                <p class="text-white/80 text-sm">Available nationwide</p>
+                <p class="text-white/80 text-sm">Growing footprint</p>
               </div>
               <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-white/20">
                 <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -67,7 +67,7 @@
       <!-- Main Content -->
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-gray-50">
 
-      <!-- Order Form -->
+      <!-- Buy Form -->
       <div class="max-w-4xl mx-auto">
         <Card class="mb-8">
           <template #content>
@@ -78,39 +78,25 @@
                   <span class="w-6 h-6 bg-[#185ff9] text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">1</span>
                   Select Location
                 </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Province</label>
-                    <Select 
-                      v-model="selectedProvince" 
-                      :options="provinceOptions" 
-                      optionLabel="label" 
-                      optionValue="value"
-                      placeholder="Select Province" 
-                      class="w-full"
-                      @change="onProvinceChange"
-                    />
-                  </div>
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
-                    <Select 
-                      v-model="selectedLocation" 
-                      :options="locationOptions" 
-                      optionLabel="label" 
-                      optionValue="id"
-                      placeholder="Select Location" 
-                      class="w-full"
-                      :disabled="!selectedProvince"
-                      @change="onLocationChange"
-                    />
-                  </div>
+                <div class="max-w-xl">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                  <Select 
+                    v-model="selectedLocation" 
+                    :options="locationOptions" 
+                    optionLabel="label" 
+                    optionValue="id"
+                    placeholder="Select Location" 
+                    class="w-full"
+                    :loading="loadingLocations"
+                    @change="onLocationChange"
+                  />
                 </div>
                 <div v-if="selectedLocation" class="mt-4 p-4 bg-blue-50 rounded-lg">
                   <div class="flex items-center space-x-3">
                     <span class="material-icons text-blue-600">location_on</span>
                     <div>
                       <p class="font-medium text-[#2d3040]">{{ selectedLocationDetails?.name }}</p>
-                      <p class="text-sm text-gray-600">{{ selectedLocationDetails?.town }}, {{ selectedLocationDetails?.province }}</p>
+                      <p v-if="locationSubtitle" class="text-sm text-gray-600">{{ locationSubtitle }}</p>
                     </div>
                   </div>
                 </div>
@@ -192,11 +178,11 @@
                 </div>
               </div>
 
-              <!-- Step 4: Order Summary -->
+              <!-- Step 4: Buy Summary -->
               <div v-if="orderSummary.totalItems > 0" class="border-b border-gray-200 pb-6">
                 <h3 class="text-lg font-semibold text-[#2d3040] mb-4 flex items-center">
                   <span class="w-6 h-6 bg-[#185ff9] text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">4</span>
-                  Order Summary
+                  Buy Summary
                 </h3>
                 <div class="bg-gray-50 rounded-lg p-4">
                   <div class="space-y-3">
@@ -348,7 +334,7 @@
 const toast = useToast()
 
 // Form data
-const selectedProvince = ref('')
+const route = useRoute()
 const selectedLocation = ref('')
 const customerEmail = ref('')
 const customerPhone = ref('')
@@ -357,6 +343,7 @@ const mobilePhone = ref('')
 const mobileProvider = ref('')
 
 // State
+const loadingLocations = ref(false)
 const loadingVouchers = ref(false)
 const processingOrder = ref(false)
 const availableVouchers = ref<any[]>([])
@@ -372,91 +359,47 @@ const showPaymentPolling = ref(false)
 const paymentPollingData = ref<any>(null)
 
 // Options
-const provinceOptions = ref([
-  { label: 'Harare', value: 'Harare' },
-  { label: 'Bulawayo', value: 'Bulawayo' },
-  { label: 'Chitungwiza', value: 'Chitungwiza' },
-  { label: 'Mutare', value: 'Mutare' },
-  { label: 'Epworth', value: 'Epworth' },
-  { label: 'Gweru', value: 'Gweru' },
-  { label: 'Kwekwe', value: 'Kwekwe' },
-  { label: 'Kadoma', value: 'Kadoma' },
-  { label: 'Masvingo', value: 'Masvingo' },
-  { label: 'Chinhoyi', value: 'Chinhoyi' },
-  { label: 'Marondera', value: 'Marondera' },
-  { label: 'Ruwa', value: 'Ruwa' },
-  { label: 'Chegutu', value: 'Chegutu' },
-  { label: 'Zvishavane', value: 'Zvishavane' },
-  { label: 'Bindura', value: 'Bindura' },
-  { label: 'Beitbridge', value: 'Beitbridge' },
-  { label: 'Redcliff', value: 'Redcliff' },
-  { label: 'Victoria Falls', value: 'Victoria Falls' },
-  { label: 'Hwange', value: 'Hwange' },
-  { label: 'Chiredzi', value: 'Chiredzi' },
-  { label: 'Kariba', value: 'Kariba' },
-  { label: 'Karoi', value: 'Karoi' },
-  { label: 'Chipinge', value: 'Chipinge' },
-  { label: 'Gokwe', value: 'Gokwe' },
-  { label: 'Shurugwi', value: 'Shurugwi' },
-  { label: 'Mazowe', value: 'Mazowe' },
-  { label: 'Guruve', value: 'Guruve' },
-  { label: 'Mt Darwin', value: 'Mt Darwin' },
-  { label: 'Shamva', value: 'Shamva' },
-  { label: 'Murehwa', value: 'Murehwa' },
-  { label: 'Wedza', value: 'Wedza' },
-  { label: 'Goromonzi', value: 'Goromonzi' },
-  { label: 'Seke', value: 'Seke' },
-  { label: 'Norton', value: 'Norton' },
-  { label: 'Sanyati', value: 'Sanyati' },
-  { label: 'Nembudziya', value: 'Nembudziya' },
-  { label: 'Shangani', value: 'Shangani' },
-  { label: 'Lupane', value: 'Lupane' },
-  { label: 'Nkayi', value: 'Nkayi' },
-  { label: 'Tsholotsho', value: 'Tsholotsho' },
-  { label: 'Umguza', value: 'Umguza' },
-  { label: 'Matobo', value: 'Matobo' },
-  { label: 'Mangwe', value: 'Mangwe' },
-  { label: 'Gwanda', value: 'Gwanda' },
-  { label: 'Insiza', value: 'Insiza' },
-  { label: 'Umzingwane', value: 'Umzingwane' },
-  { label: 'Bubi', value: 'Bubi' },
-  { label: 'Binga', value: 'Binga' }
-])
-
 const locationOptions = ref<any[]>([])
 const mobileProviderOptions = ref([
   { label: 'Ecocash', value: 'ecocash' },
   { label: 'OneMoney', value: 'onemoney' }
 ])
 
+const locationSubtitle = computed(() => {
+  const details = selectedLocationDetails.value
+  if (!details) return ''
+  return [details.town, details.province].filter(Boolean).join(', ')
+})
+
 // Methods
-const onProvinceChange = async () => {
-  selectedLocation.value = ''
-  selectedLocationDetails.value = null
+const onLocationChange = async () => {
   availableVouchers.value = []
   orderSummary.value = { totalItems: 0, totalAmount: 0, items: [] }
-  
-  if (selectedProvince.value) {
-    await fetchLocations()
-  }
-}
 
-const onLocationChange = async () => {
   if (selectedLocation.value) {
+    selectedLocationDetails.value = locationOptions.value.find(
+      (loc) => loc.id === selectedLocation.value
+    ) ?? null
     await fetchAvailableVouchers()
+  } else {
+    selectedLocationDetails.value = null
   }
 }
 
 const fetchLocations = async () => {
   try {
-    const response:any = await $fetch('/api/locations', {
-      params: { province: selectedProvince.value }
-    })
+    loadingLocations.value = true
+    const response: any = await $fetch('/api/locations')
     
     if (response.success) {
       locationOptions.value = response.data.map((location: any) => ({
         id: location.id,
-        label: `${location.name} (${location.code})`
+        name: location.name,
+        town: location.town,
+        province: location.province,
+        label: location.town
+          ? `${location.name} – ${location.town}`
+          : location.name,
       }))
     }
   } catch (error) {
@@ -467,6 +410,8 @@ const fetchLocations = async () => {
       detail: 'Failed to fetch locations',
       life: 3000
     })
+  } finally {
+    loadingLocations.value = false
   }
 }
 
@@ -484,9 +429,9 @@ const fetchAvailableVouchers = async () => {
       }))
       
       // Get location details
-      const locationResponse = await $fetch(`/api/locations/${selectedLocation.value}`)
+      const locationResponse: any = await $fetch(`/api/locations/${selectedLocation.value}`)
       if (locationResponse.success) {
-        selectedLocationDetails.value = locationResponse.location
+        selectedLocationDetails.value = locationResponse.data
       }
     }
   } catch (error) {
@@ -647,10 +592,20 @@ const handlePaymentCancelled = () => {
 
 // Meta tags
 useHead({
-  title: 'Order WiFi Vouchers - UFO Networks',
+  title: 'Buy WiFi Vouchers - UFO Networks',
   meta: [
-    { name: 'description', content: 'Order WiFi vouchers for UFO Networks locations. Fast, reliable internet access with secure Paynow payment.' }
+    { name: 'description', content: 'Buy WiFi vouchers for UFO Networks locations. Fast, reliable internet access with secure Paynow payment.' }
   ]
+})
+
+onMounted(async () => {
+  await fetchLocations()
+
+  const locationId = route.query.location as string | undefined
+  if (locationId && locationOptions.value.some((loc) => loc.id === locationId)) {
+    selectedLocation.value = locationId
+    await onLocationChange()
+  }
 })
 </script>
 

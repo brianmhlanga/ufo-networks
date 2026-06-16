@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { getAuditActor, serializeForAudit, writeAuditLog } from '~/server/utils/auditLog'
 
 const prisma = new PrismaClient()
 
@@ -98,19 +99,19 @@ export default defineEventHandler(async (event) => {
     })
 
     // Log the status change in audit log
-    await prisma.auditLog.create({
-      data: {
-        actorId: session.user.id,
-        action: 'VOUCHER_STATUS_CHANGED',
-        entity: 'Voucher',
-        entityId: voucherId,
-        details: {
-          oldStatus: existingVoucher.status,
-          newStatus: status,
-          notes: notes || null,
-          timestamp: new Date().toISOString()
-        }
-      }
+    const audit = await getAuditActor(event)
+    await writeAuditLog(prisma, {
+      ...audit,
+      actorId: session.user.id,
+      action: 'VOUCHER_STATUS_CHANGED',
+      entity: 'Voucher',
+      entityId: voucherId,
+      details: {
+        oldStatus: existingVoucher.status,
+        newStatus: status,
+        notes: notes || null,
+        timestamp: new Date().toISOString(),
+      },
     })
 
     return {

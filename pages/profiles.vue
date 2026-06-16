@@ -21,7 +21,7 @@
 
             <!-- Subtitle -->
             <p class="text-lg md:text-xl text-white/90 font-medium max-w-3xl mx-auto leading-relaxed mb-8">
-              Connect with our verified agents across Zimbabwe. Buy vouchers in person with cash or get instant digital vouchers.
+              Connect with our verified agents at our UFO WIFI Hotspots. Buy vouchers in person with cash or get instant digital vouchers.
             </p>
 
             <!-- Search Bar -->
@@ -34,20 +34,6 @@
                   class="w-full pl-12 pr-4 py-4 text-lg rounded-2xl border-2 border-white/30 focus:border-white/60 transition-colors outline-none bg-white/90 backdrop-blur-sm text-gray-800 placeholder-gray-600"
                 />
                 <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-600 text-lg">🔍</span>
-              </div>
-            </div>
-
-            <!-- Filter Buttons -->
-            <div class="mb-4">
-              <p class="text-sm text-white/80 mb-3">Select Province:</p>
-              <div class="flex flex-wrap items-center justify-center gap-3">
-                <Button 
-                  v-for="province in provinces" 
-                  :key="province"
-                  :label="province" 
-                  :class="getProvinceButtonClass(province)"
-                  @click="toggleProvince(province)"
-                />
               </div>
             </div>
           </div>
@@ -69,8 +55,8 @@
               <span class="text-3xl text-gray-400">👥</span>
             </div>
             <h3 class="text-2xl font-bold text-secondary mb-2">No agents found</h3>
-            <p class="text-secondary/70 mb-6">Try adjusting your search or filter criteria</p>
-            <Button label="Clear Filters" @click="clearFilters" class="bg-primary text-white rounded-xl" />
+            <p class="text-secondary/70 mb-6">Try a different search term</p>
+            <Button label="Clear Search" @click="clearFilters" class="bg-primary text-white rounded-xl" />
           </div>
 
           <!-- Agents Grid -->
@@ -207,8 +193,18 @@
             Join our network of trusted agents and start earning by selling WiFi vouchers in your area.
           </p>
           <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button label="Apply Now" class="px-8 py-3 bg-white text-primary rounded-xl hover:bg-gray-50 font-semibold" />
-            <Button label="Learn More" class="px-8 py-3 bg-white/20 text-white border border-white/30 rounded-xl hover:bg-white/30 font-semibold" text />
+            <NuxtLink
+              to="/contact#send-message"
+              class="inline-flex items-center justify-center px-8 py-3 bg-white text-primary rounded-xl hover:bg-gray-50 font-semibold transition-colors"
+            >
+              Apply Now
+            </NuxtLink>
+            <NuxtLink
+              to="/#for-agents"
+              class="inline-flex items-center justify-center px-8 py-3 bg-white/20 text-white border border-white/30 rounded-xl hover:bg-white/30 font-semibold transition-colors"
+            >
+              Learn More
+            </NuxtLink>
           </div>
         </div>
       </section>
@@ -223,47 +219,27 @@ import { primaryColor, secondaryColor } from '~/configs/colors'
 const agents = ref([])
 const loading = ref(true)
 const searchQuery = ref('')
-const selectedProvince = ref(null)
 
 // Computed properties
 const totalAgents = computed(() => agents.value?.length || 0)
 
-const provinces = computed(() => {
-  if (!agents.value || agents.value.length === 0) return []
-  const uniqueProvinces = [...new Set(agents.value.map(agent => agent.agentProfile?.location?.province).filter(Boolean))]
-  return uniqueProvinces.sort()
-})
-
 const filteredAgents = computed(() => {
   if (!agents.value || agents.value.length === 0) return []
   
-  let filtered = agents.value
+  if (!searchQuery.value) return agents.value
 
-  // Filter by search query
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(agent => 
-      agent.name.toLowerCase().includes(query) ||
-      agent.agentProfile.displayName.toLowerCase().includes(query) ||
-      agent.email.toLowerCase().includes(query) ||
-      agent.phone.includes(query) ||
-      (agent.agentProfile?.location?.province?.toLowerCase().includes(query) || false) ||
-      agent.locations.some(loc => 
-        loc.name.toLowerCase().includes(query) ||
-        loc.town.toLowerCase().includes(query)
-      )
+  const query = searchQuery.value.toLowerCase()
+  return agents.value.filter(agent => 
+    agent.name.toLowerCase().includes(query) ||
+    agent.agentProfile.displayName.toLowerCase().includes(query) ||
+    agent.email.toLowerCase().includes(query) ||
+    agent.phone.includes(query) ||
+    (agent.agentProfile?.location?.province?.toLowerCase().includes(query) || false) ||
+    agent.locations.some(loc => 
+      loc.name.toLowerCase().includes(query) ||
+      loc.town.toLowerCase().includes(query)
     )
-  }
-
-  // Filter by province
-  if (selectedProvince.value) {
-    filtered = filtered.filter(agent => 
-      agent.agentProfile?.location?.province === selectedProvince.value ||
-      agent.locations.some(loc => loc.province === selectedProvince.value)
-    )
-  }
-
-  return filtered
+  )
 })
 
 // Methods
@@ -307,22 +283,6 @@ const makeCall = (agent) => {
 
 const clearFilters = () => {
   searchQuery.value = ''
-  selectedProvince.value = null
-}
-
-const getProvinceButtonClass = (province) => {
-  const baseClasses = 'px-4 py-2 rounded-xl font-medium transition-all'
-  const isSelected = selectedProvince.value === province
-  
-  if (isSelected) {
-    return `${baseClasses} bg-blue-600 text-white shadow-lg`
-  } else {
-    return `${baseClasses} bg-white/90 text-gray-800 hover:bg-white border border-white/30 backdrop-blur-sm`
-  }
-}
-
-const toggleProvince = (province) => {
-  selectedProvince.value = selectedProvince.value === province ? null : province
 }
 
 const getAgentLocation = (agent) => {
@@ -339,7 +299,7 @@ const getAgentLocation = (agent) => {
 useHead({
   title: 'UFO Networks Agents – Find Trusted WiFi Agents',
   meta: [
-    { name: 'description', content: 'Find verified UFO Networks agents across Zimbabwe. Buy WiFi vouchers in person with cash or get instant digital vouchers.' }
+    { name: 'description', content: 'Find verified UFO Networks agents at our UFO WIFI Hotspots. Buy WiFi vouchers in person with cash or get instant digital vouchers.' }
   ]
 })
 

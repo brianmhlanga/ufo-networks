@@ -45,8 +45,7 @@ export default defineEventHandler(async (event) => {
 
     // Status filter (if implemented in schema)
     if (status) {
-      // Note: Add status field to User model if needed
-      // where.status = status
+      where.status = status
     }
 
     // Get total count

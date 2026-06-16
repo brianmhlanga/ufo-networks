@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { getAuditActor, serializeForAudit, writeAuditLog } from '~/server/utils/auditLog'
 
 const prisma = new PrismaClient()
 
@@ -182,6 +183,15 @@ export default defineEventHandler(async (event) => {
          active: true
        }
      })
+
+    const audit = await getAuditActor(event)
+    await writeAuditLog(prisma, {
+      ...audit,
+      action: 'VOUCHER_BATCH_CREATED',
+      entity: 'VoucherBatch',
+      entityId: batch.id,
+      details: { snapshot: serializeForAudit(batch) },
+    })
 
     return {
       success: true,

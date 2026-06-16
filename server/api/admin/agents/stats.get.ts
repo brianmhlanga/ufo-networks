@@ -29,36 +29,36 @@ export default defineEventHandler(async (event) => {
     const [
       totalAgents,
       activeAgents,
-      blacklistedAgents
+      blacklistedAgents,
+      salesRevenue,
     ] = await Promise.all([
-      // Total agents
       prisma.user.count({
-        where: { role: 'AGENT' }
+        where: { role: 'AGENT' },
       }),
-      // Active agents
       prisma.user.count({
-        where: { 
+        where: {
           role: 'AGENT',
-          status: 'ACTIVE'
-        }
+          status: 'ACTIVE',
+        },
       }),
-      // Blacklisted agents
       prisma.user.count({
-        where: { 
+        where: {
           role: 'AGENT',
-          status: 'BLACKLISTED'
-        }
-      })
+          status: 'BLACKLISTED',
+        },
+      }),
+      prisma.agentSale.aggregate({
+        _sum: { soldPrice: true },
+      }),
     ])
 
-    // Calculate total sales (placeholder - in real app this would come from actual sales data)
-    const totalSales = Math.random() * 100000 // Placeholder value
+    const totalSales = Number(salesRevenue._sum.soldPrice || 0)
 
     return {
       totalAgents,
       activeAgents,
       blacklistedAgents,
-      totalSales: Math.round(totalSales)
+      totalSales,
     }
   } catch (error) {
     console.error('Error fetching agent stats:', error)

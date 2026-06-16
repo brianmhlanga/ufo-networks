@@ -117,11 +117,11 @@
           <div class="flex items-center justify-center space-x-6 text-sm text-gray-500">
             <div class="flex items-center space-x-2">
               <span class="material-icons text-gray-400">email</span>
-              <span>support@ufonetworks.co.zw</span>
+              <a href="mailto:support@ufo-networks.org" class="hover:text-primary transition-colors">support@ufo-networks.org</a>
             </div>
             <div class="flex items-center space-x-2">
               <span class="material-icons text-gray-400">phone</span>
-              <span>+263 77 123 4567</span>
+              <a href="tel:+263781326200" class="hover:text-primary transition-colors">+263781326200</a>
             </div>
           </div>
         </div>

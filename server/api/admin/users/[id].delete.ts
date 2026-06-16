@@ -63,7 +63,7 @@ export default defineEventHandler(async (event) => {
     if (hasAssociatedData) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Cannot delete user with associated data (orders, audit logs, assigned vouchers, agent transactions). Please archive the user instead.'
+        statusMessage: 'Cannot delete user with associated data (orders, audit logs, assigned vouchers, agent transactions). Disable the user instead to block access while keeping their records.'
       })
     }
 

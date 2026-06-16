@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { resolveLocationCoords } from '~/utils/locationCoords'
 
 const prisma = new PrismaClient()
 
@@ -12,7 +13,10 @@ export default defineEventHandler(async (event) => {
         town: true,
         area: true,
         province: true,
-        code: true
+        code: true,
+        latitude: true,
+        longitude: true,
+        meta: true,
       },
       orderBy: {
         name: 'asc'
@@ -53,6 +57,7 @@ export default defineEventHandler(async (event) => {
 
         return {
           ...location,
+          coords: resolveLocationCoords(location),
           voucherTypes: formattedVoucherTypes,
           totalVouchers: formattedVoucherTypes.reduce((sum, type) => sum + type.availableCount, 0)
         }

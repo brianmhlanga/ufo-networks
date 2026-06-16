@@ -87,12 +87,22 @@ export default defineEventHandler(async (event) => {
       take: limit
     })
 
-    // Transform agents to include stats
-    const agentsWithStats = agents.map(agent => {
-      // Calculate basic stats (in a real app, these would come from actual sales data)
-      const totalSales = Math.random() * 10000 // Placeholder
-      const totalVouchers = agent.agentProfile?._count?.sales || 0
-      const totalCommission = totalSales * 0.1 // 10% commission placeholder
+    // Aggregate real sales totals per agent profile
+    const salesByAgent = await prisma.agentSale.groupBy({
+      by: ['agentId'],
+      _sum: { soldPrice: true },
+      _count: { id: true },
+    })
+
+    const salesMap = new Map(
+      salesByAgent.map((sale) => [sale.agentId, sale]),
+    )
+
+    const agentsWithStats = agents.map((agent) => {
+      const agentProfileId = agent.agentProfile?.id
+      const salesData = agentProfileId ? salesMap.get(agentProfileId) : null
+      const totalSales = Number(salesData?._sum.soldPrice || 0)
+      const totalVouchers = salesData?._count.id ?? agent.agentProfile?._count?.sales ?? 0
 
       return {
         id: agent.id,
@@ -107,8 +117,8 @@ export default defineEventHandler(async (event) => {
         agentStats: {
           totalSales,
           totalVouchers,
-          totalCommission
-        }
+          totalCommission: 0,
+        },
       }
     })
 

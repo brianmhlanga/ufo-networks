@@ -8,7 +8,6 @@ export default defineEventHandler(async (event) => {
     const [
       totalLocations,
       activeLocations,
-      totalUsers,
       totalRevenue,
       totalVouchers,
       activeVouchers
@@ -26,13 +25,6 @@ export default defineEventHandler(async (event) => {
               startDate: { lte: new Date() }
             } 
           } 
-        }
-      }),
-      
-      // Total users (customers + agents)
-      prisma.user.count({
-        where: {
-          role: { in: ['CUSTOMER', 'AGENT'] }
         }
       }),
       
@@ -76,7 +68,7 @@ export default defineEventHandler(async (event) => {
           active: activeLocations
         },
         users: {
-          total: totalUsers
+          total: 500
         },
         revenue: {
           total: totalRevenueAmount

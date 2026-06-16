@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { getAuditActor, serializeForAudit, writeAuditLog } from '~/server/utils/auditLog'
 
 const prisma = new PrismaClient()
 
@@ -124,6 +125,18 @@ export default defineEventHandler(async (event) => {
       createdAt: location.createdAt,
       updatedAt: location.updatedAt
     }
+
+    const audit = await getAuditActor(event)
+    await writeAuditLog(prisma, {
+      ...audit,
+      action: 'LOCATION_UPDATED',
+      entity: 'Location',
+      entityId: id,
+      details: {
+        before: serializeForAudit(existingLocation),
+        after: serializeForAudit(transformedLocation),
+      },
+    })
 
     return {
       message: 'Location updated successfully',

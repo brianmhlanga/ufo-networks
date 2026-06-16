@@ -205,11 +205,6 @@
 <script setup>
 import { primaryColor, secondaryColor } from '~/configs/colors'
 
-// Set layout
-definePageMeta({
-  layout: 'home'
-})
-
 // Get location code from route params
 const route = useRoute()
 const locationCode = route.params.locationId

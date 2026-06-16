@@ -5,7 +5,7 @@
         <div class="flex items-center justify-between">
           <div>
             <h1 class="text-3xl font-bold text-[#2d3040] mb-2">Locations Management</h1>
-            <p class="text-[#2d3040]/60">Manage WiFi hotspot locations across Zimbabwe</p>
+            <p class="text-[#2d3040]/60">Manage WiFi hotspot locations at our UFO WIFI Hotspots</p>
           </div>
           <Button
             label="Add New Location"
@@ -747,15 +747,13 @@ const editFromView = () => {
 }
 
 const confirmDelete = (location: any) => {
-  if (confirm(`Are you sure you want to delete "${location.name}"?`)) {
+  const voucherCount = location._count?.vouchers ?? 0
+  const batchCount = location._count?.batches ?? 0
+  const warning = voucherCount || batchCount
+    ? ` This will permanently remove ${voucherCount} voucher(s), ${batchCount} batch(es), and related sales records.`
+    : ''
+  if (confirm(`Are you sure you want to delete "${location.name}"?${warning}`)) {
     deleteLocation(location)
-  } else {
-    toast.add({
-      severity: 'info',
-      summary: 'Cancelled',
-      detail: 'Delete operation cancelled',
-      life: 3000
-    })
   }
 }
 
@@ -870,7 +868,7 @@ const toggleLocationStatus = async (location: any, newStatus: string) => {
 useHead({
   title: 'Locations Management - UFO Networks Admin',
   meta: [
-    { name: 'description', content: 'Manage WiFi hotspot locations across Zimbabwe' }
+    { name: 'description', content: 'Manage WiFi hotspot locations at our UFO WIFI Hotspots' }
   ]
 })
 </script>

@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { getAuditActor, serializeForAudit, writeAuditLog } from '~/server/utils/auditLog'
 
 const prisma = new PrismaClient()
 
@@ -119,6 +120,15 @@ export default defineEventHandler(async (event) => {
          expiryDate: new Date(expiryDate)
        }
      })
+
+    const audit = await getAuditActor(event)
+    await writeAuditLog(prisma, {
+      ...audit,
+      action: 'VOUCHER_CREATED',
+      entity: 'Voucher',
+      entityId: voucher.id,
+      details: { snapshot: serializeForAudit(voucher) },
+    })
 
     return {
       success: true,

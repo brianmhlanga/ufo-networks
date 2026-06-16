@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { getAuditActor, serializeForAudit, writeAuditLog } from '~/server/utils/auditLog'
 
 const prisma = new PrismaClient()
 
@@ -55,10 +56,15 @@ export default defineEventHandler(async (event) => {
 
     // Update payment record status based on payment result
     if (status === 'Paid' || status === 'Awaiting Delivery') {
-      // Payment confirmed - assign vouchers to the order
+      const reservedVouchers = await prisma.voucher.findMany({
+        where: {
+          reservedByOrderId: paymentRecord.order.id,
+          status: 'RESERVED',
+        },
+      })
+
       await assignVouchersToOrder(paymentRecord.order.id)
       
-      // Update payment record status
       await prisma.payment.update({
         where: { id: paymentRecord.id },
         data: {
@@ -67,12 +73,38 @@ export default defineEventHandler(async (event) => {
         }
       })
 
-      // Update order status
       await prisma.order.update({
         where: { id: paymentRecord.order.id },
         data: {
           status: 'PAID'
         }
+      })
+
+      const audit = await getAuditActor(event)
+      const paymentSnapshot = await prisma.payment.findUnique({
+        where: { id: paymentRecord.id },
+        include: {
+          order: { include: { items: true } },
+        },
+      })
+      const soldVouchers = reservedVouchers.length
+        ? await prisma.voucher.findMany({
+            where: { id: { in: reservedVouchers.map((voucher) => voucher.id) } },
+          })
+        : []
+
+      await writeAuditLog(prisma, {
+        ...audit,
+        action: 'PAYMENT_COMPLETED',
+        entity: 'Payment',
+        entityId: paymentRecord.id,
+        details: {
+          paynowStatus: status,
+          amount,
+          paymentReference,
+          snapshot: serializeForAudit(paymentSnapshot),
+          vouchersSold: serializeForAudit(soldVouchers),
+        },
       })
 
       console.log(`Payment confirmed for order ${paymentRecord.order.id}`)
@@ -95,6 +127,20 @@ export default defineEventHandler(async (event) => {
         data: {
           status: 'FAILED'
         }
+      })
+
+      const audit = await getAuditActor(event)
+      await writeAuditLog(prisma, {
+        ...audit,
+        action: 'PAYMENT_FAILED',
+        entity: 'Payment',
+        entityId: paymentRecord.id,
+        details: {
+          paynowStatus: status,
+          amount,
+          paymentReference,
+          orderId: paymentRecord.order.id,
+        },
       })
 
       console.log(`Payment failed for order ${paymentRecord.order.id}: ${status}`)

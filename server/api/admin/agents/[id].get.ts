@@ -61,26 +61,38 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Calculate stats
-    const totalSales = Math.random() * 10000 // Placeholder
-    const totalVouchers = agent.agentProfile?._count?.sales || 0
-    const totalCommission = totalSales * 0.1 // 10% commission placeholder
+    // Calculate stats from actual agent sales
+    const agentProfileId = agent.agentProfile?.id
+    const salesStats = agentProfileId
+      ? await prisma.agentSale.aggregate({
+          where: { agentId: agentProfileId },
+          _sum: { soldPrice: true },
+          _count: { id: true },
+        })
+      : { _sum: { soldPrice: null }, _count: { id: 0 } }
 
-    // Get recent activity (placeholder - in real app this would come from actual activity logs)
-    const recentActivity = [
-      {
-        id: '1',
-        icon: 'sell',
-        description: 'Sold 5 vouchers',
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: '2',
-        icon: 'account_balance_wallet',
-        description: 'Received commission payment',
-        createdAt: new Date(Date.now() - 86400000).toISOString()
-      }
-    ]
+    const totalSales = Number(salesStats._sum.soldPrice || 0)
+    const totalVouchers = salesStats._count.id
+
+    const recentSales = agentProfileId
+      ? await prisma.agentSale.findMany({
+          where: { agentId: agentProfileId },
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+          include: {
+            voucher: {
+              select: { voucherNumber: true },
+            },
+          },
+        })
+      : []
+
+    const recentActivity = recentSales.map((sale) => ({
+      id: sale.id,
+      icon: 'sell',
+      description: `Sold voucher ${sale.voucher?.voucherNumber || 'N/A'} for $${Number(sale.soldPrice).toFixed(2)}`,
+      createdAt: sale.createdAt.toISOString(),
+    }))
 
     // Remove password hash from response
     const { passwordHash: _, ...agentWithoutPassword } = agent
@@ -92,7 +104,7 @@ export default defineEventHandler(async (event) => {
         agentStats: {
           totalSales,
           totalVouchers,
-          totalCommission
+          totalCommission: 0,
         },
         recentActivity
       }

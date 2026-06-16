@@ -16,7 +16,18 @@ export default defineEventHandler(async (event) => {
 
     // Get agent profile
     const agentProfile = await prisma.agentProfile.findUnique({
-      where: { userId: session.user.id }
+      where: { userId: session.user.id },
+      include: {
+        location: {
+          select: {
+            id: true,
+            name: true,
+            town: true,
+            province: true,
+            code: true,
+          },
+        },
+      },
     })
 
     if (!agentProfile) {

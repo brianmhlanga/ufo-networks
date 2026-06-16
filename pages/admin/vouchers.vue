@@ -1000,7 +1000,10 @@ const updateVoucherStatus = async () => {
 }
 
 const confirmDelete = (voucher: any) => {
-  if (confirm(`Are you sure you want to delete voucher "${voucher.voucherNumber}"?`)) {
+  const statusNote = ['SOLD', 'REDEEMED'].includes(voucher.status)
+    ? ' This voucher has been sold or redeemed and related sales records will also be removed.'
+    : ''
+  if (confirm(`Are you sure you want to delete voucher "${voucher.voucherNumber}"?${statusNote}`)) {
     deleteVoucher(voucher)
   }
 }

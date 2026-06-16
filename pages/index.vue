@@ -15,11 +15,11 @@
               <div class="container mx-auto px-6">
                 <div class="max-w-2xl">
                   <h1 class="text-5xl md:text-7xl font-bold text-white leading-[0.9] mb-6">
-                    <span class="block">Fast, Reliable</span>
-                    <span class="block bg-gradient-to-r from-white via-blue-200 to-blue-100 bg-clip-text text-transparent">WiFi Anywhere</span>
+                    <span class="block">Fast, Reliable Internet</span>
+                    <span class="block bg-gradient-to-r from-white via-blue-200 to-blue-100 bg-clip-text text-transparent">at our UFO WIFI Hotspots</span>
                   </h1>
                   <p class="text-xl md:text-2xl text-white/90 font-medium leading-relaxed mb-10 max-w-xl">
-                    Connect instantly with secure vouchers. Buy online or from our trusted agents across Zimbabwe.
+                    Connect instantly with secure vouchers. Buy online or from our trusted agents at our UFO WIFI Hotspots.
                   </p>
                   <div class="flex flex-col sm:flex-row items-start gap-6">
                     <NuxtLink to="/vouchers">
@@ -64,19 +64,19 @@
                   <div class="inline-flex items-center px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full shadow-lg border border-white/30 mb-8">
                     <div class="w-2 h-2 bg-green-400 rounded-full mr-3 animate-pulse"></div>
                     <span class="text-sm font-medium text-white">
-                      Live in {{ (stats && stats.locations && stats.locations.active) || 0 }}+ locations across Zimbabwe
+                      Live in {{ (stats && stats.locations && stats.locations.active) || 0 }}+ locations at our UFO WIFI Hotspots
                     </span>
         </div>
 
                   <!-- Main heading -->
                   <h1 class="text-5xl md:text-7xl font-bold text-white leading-[0.9] mb-6">
-                    <span class="block">Fast, Reliable</span>
-                    <span class="block bg-gradient-to-r from-white via-blue-200 to-blue-100 bg-clip-text text-transparent">WiFi Anywhere</span>
+                    <span class="block">Fast, Reliable Internet</span>
+                    <span class="block bg-gradient-to-r from-white via-blue-200 to-blue-100 bg-clip-text text-transparent">at our UFO WIFI Hotspots</span>
                   </h1>
 
                   <!-- Subtitle -->
                   <p class="text-xl md:text-2xl text-white/90 font-medium leading-relaxed mb-10 max-w-xl">
-                    Connect instantly with secure vouchers. Buy online or from our trusted agents across Zimbabwe.
+                    Connect instantly with secure vouchers. Buy online or from our trusted agents at our UFO WIFI Hotspots.
                   </p>
 
                   <!-- CTA Buttons -->
@@ -218,7 +218,7 @@
     </section>
 
     <!-- How It Works -->
-    <section class="bg-gray-50 py-24">
+    <section id="how-it-works" class="bg-gray-50 py-24 scroll-mt-32">
       <div class="container mx-auto px-6">
         <!-- Section Header -->
         <div class="text-center mb-20">
@@ -289,7 +289,7 @@
                       <span class="text-blue-600 text-sm font-semibold">3</span>
                     </div>
                     <div>
-                      <p class="text-gray-600 leading-relaxed font-medium">Connect seamlessly at any UFO Networks hotspot</p>
+                      <p class="text-gray-600 leading-relaxed font-medium">Connect to UFO WIFI using password '12345678' and then input the Voucher Number to access Internet</p>
                       <span class="text-blue-600 text-xs font-medium">Nationwide Coverage</span>
                     </div>
                   </div>
@@ -299,7 +299,7 @@
           </div>
 
           <!-- Agent Card -->
-          <div class="group">
+          <div id="for-agents" class="group scroll-mt-32">
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden">
               <!-- Image Box -->
               <div class="relative h-48 bg-gradient-to-br from-blue-600 to-blue-700 overflow-hidden">
@@ -362,7 +362,7 @@
           <div class="group">
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden">
               <!-- Image Box -->
-              <div class="relative h-48 bg-gradient-to-br from-gray-800 to-black overflow-hidden">
+              <div class="relative h-48 bg-gradient-to-br from-blue-600 to-blue-700 overflow-hidden">
                 <img src="/images/suits.jpg" alt="Marketing and advertising" class="w-full h-full object-cover opacity-80 group-hover:opacity-90 transition-opacity duration-300" />
                 <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                 <div class="absolute top-4 left-4 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
@@ -371,7 +371,7 @@
                 </svg>
                 </div>
                 <!-- Floating pill -->
-                <div class="absolute top-4 right-4 bg-gray-600/90 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-semibold">
+                <div class="absolute top-4 right-4 bg-blue-500/90 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-semibold">
                   Marketing
                 </div>
               </div>
@@ -380,36 +380,36 @@
               <div class="p-8">
                 <div class="flex items-center gap-3 mb-6">
                   <h3 class="text-2xl font-bold text-gray-900">For Advertisers</h3>
-                  <div class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm font-medium">
+                  <div class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
                     Reach Customers
                   </div>
                 </div>
                 <div class="space-y-4">
                   <div class="flex items-start gap-4">
-                    <div class="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span class="text-gray-600 text-sm font-semibold">1</span>
+                    <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span class="text-blue-600 text-sm font-semibold">1</span>
                     </div>
                     <div>
                       <p class="text-gray-600 leading-relaxed font-medium">Select from our range of advertising packages</p>
-                      <span class="text-gray-600 text-xs font-medium">Flexible Options</span>
+                      <span class="text-blue-600 text-xs font-medium">Flexible Options</span>
                     </div>
                   </div>
                   <div class="flex items-start gap-4">
-                    <div class="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span class="text-gray-600 text-sm font-semibold">2</span>
+                    <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span class="text-blue-600 text-sm font-semibold">2</span>
                     </div>
                     <div>
                       <p class="text-gray-600 leading-relaxed font-medium">Submit your creative content for approval</p>
-                      <span class="text-gray-600 text-xs font-medium">Easy Upload</span>
+                      <span class="text-blue-600 text-xs font-medium">Easy Upload</span>
                     </div>
                   </div>
                   <div class="flex items-start gap-4">
-                    <div class="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span class="text-gray-600 text-sm font-semibold">3</span>
+                    <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span class="text-blue-600 text-sm font-semibold">3</span>
                     </div>
                     <div>
                       <p class="text-gray-600 leading-relaxed font-medium">Reach customers on our success pages</p>
-                      <span class="text-gray-600 text-xs font-medium">High Visibility</span>
+                      <span class="text-blue-600 text-xs font-medium">High Visibility</span>
                     </div>
                   </div>
                 </div>
@@ -439,7 +439,7 @@
             <span class="bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">Achievements</span>
             </h2>
           <p class="text-xl text-white/80 max-w-2xl mx-auto leading-relaxed">
-            Trusted by thousands across Zimbabwe with 
+            Trusted by thousands at our UFO WIFI Hotspots with 
             <span class="font-semibold text-white">reliable connectivity</span>
           </p>
         </div>
@@ -468,7 +468,7 @@
                   {{ (stats && stats.locations && stats.locations.active) || 0 }}+
                 </div>
                 <h3 class="text-xl font-bold text-gray-900 mb-2">Active Locations</h3>
-                <p class="text-gray-600 leading-relaxed">across Zimbabwe</p>
+                <p class="text-gray-600 leading-relaxed">at our UFO WIFI Hotspots</p>
               </div>
             </div>
               </div>
@@ -491,7 +491,7 @@
               <!-- Content -->
               <div class="p-8 text-center">
                 <div class="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
-                  {{ formatNumber((stats && stats.users && stats.users.total) || 0) }}+
+                  500+
                 </div>
                 <h3 class="text-xl font-bold text-gray-900 mb-2">Happy Users</h3>
                 <p class="text-gray-600 leading-relaxed">connected daily</p>
@@ -517,7 +517,7 @@
               <!-- Content -->
               <div class="p-8 text-center">
                 <div class="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
-                  {{ (stats && stats.uptime) || 99.9 }}%
+                  Over 99.9%
                 </div>
                 <h3 class="text-xl font-bold text-gray-900 mb-2">Network Uptime</h3>
                 <p class="text-gray-600 leading-relaxed">reliable connection</p>
@@ -525,91 +525,6 @@
             </div>
           </div>
 
-        </div>
-      </div>
-    </section>
-
-    <!-- Coverage Map Section -->
-    <section class="bg-gray-50 py-24">
-        <div class="container mx-auto px-6">
-        <!-- Section Header -->
-        <div class="text-center mb-20">
-          <div class="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-semibold mb-6">
-            <i class="pi pi-map text-blue-600"></i>
-            Coverage
-          </div>
-          <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-            Network 
-            <span class="bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">Coverage</span>
-          </h2>
-          <p class="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-            Connect anywhere across Zimbabwe with our 
-            <span class="font-semibold text-gray-800">extensive network</span>
-          </p>
-        </div>
-      
-        <!-- Map Container -->
-        <div class="relative bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden mb-12">
-          <!-- Map -->
-          <div id="zimbabwe-map" class="h-96 md:h-[500px] w-full"></div>
-          
-          <!-- Map Overlay Info -->
-          <div class="absolute top-6 left-6 z-10">
-            <div class="bg-white/95 backdrop-blur-sm rounded-2xl px-6 py-4 shadow-lg border border-gray-200">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl flex items-center justify-center">
-                  <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
-                  </svg>
-                </div>
-                <div>
-                  <div class="text-lg font-bold text-gray-900">{{ mapLocations.filter(l => l.type === 'active').length }}+</div>
-                  <div class="text-sm text-gray-600">Active Locations</div>
-                </div>
-              </div>
-            </div>
-          </div>
-      
-          <!-- Map Legend -->
-          <div class="absolute top-6 right-6 z-10">
-            <div class="bg-white/95 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-gray-200">
-              <h4 class="text-sm font-semibold text-gray-900 mb-3">Network Status</h4>
-              <div class="space-y-2">
-                <div class="flex items-center gap-2">
-                  <div class="w-3 h-3 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full animate-pulse"></div>
-                  <span class="text-xs font-medium text-gray-700">Active Hotspot</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <div class="w-3 h-3 bg-gradient-to-r from-gray-400 to-gray-500 rounded-full"></div>
-                  <span class="text-xs font-medium text-gray-700">Coming Soon</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Action Buttons -->
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <NuxtLink to="/locations">
-            <Button class="group px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-2xl hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl font-semibold text-lg transition-all duration-300 transform hover:scale-105">
-              <span class="flex items-center">
-                Find Nearest Hotspot
-                <svg class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                </svg>
-              </span>
-            </Button>
-          </NuxtLink>
-          <NuxtLink to="/locations">
-            <Button class="px-8 py-4 bg-white text-gray-700 border-2 border-gray-200 rounded-2xl hover:bg-gray-50 hover:border-blue-500 shadow-lg font-semibold text-lg transition-all duration-300 transform hover:scale-105" text>
-              <span class="flex items-center">
-                View All Locations
-                <svg class="w-5 h-5 ml-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path>
-                </svg>
-              </span>
-            </Button>
-          </NuxtLink>
         </div>
       </div>
     </section>
@@ -656,16 +571,15 @@
               <!-- Package Header -->
               <div class="p-8 text-center">
                 <div class="w-14 h-14 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <!-- Dynamic Icon based on package type -->
                   <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 20 20">
                     <path v-if="pkg.packageType === 'hour'" fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
                     <path v-else-if="pkg.packageType === 'day'" fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
                     <path v-else fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path>
                   </svg>
                 </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ pkg.name }}</h3>
+                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ pkg.period }}</h3>
                 <div class="text-3xl font-bold text-blue-600 mb-2">${{ pkg.price.toFixed(2) }}</div>
-                <p class="text-gray-600 text-sm leading-relaxed">{{ pkg.description }}</p>
+                <p class="text-gray-600 text-sm leading-relaxed">{{ pkg.packageName }}</p>
               </div>
               
               <!-- Features -->
@@ -690,7 +604,7 @@
               <div class="p-8 pt-0">
                 <NuxtLink v-if="pkg.isAvailable" to="/vouchers">
                   <Button 
-                    class="w-full rounded-xl shadow-sm hover:shadow-md font-semibold transition-all duration-300 bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800"
+                    class="w-full rounded-xl shadow-sm hover:shadow-md font-semibold transition-all duration-300 bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800"
                   >
                     Buy Now
                   </Button>
@@ -928,16 +842,16 @@
 
               <!-- Testimonial Text -->
               <p class="text-gray-600 text-lg leading-relaxed mb-6 italic flex-grow">
-                "UFO Networks made it so easy to get WiFi anywhere in Harare. The vouchers are affordable and work perfectly!"
+                "UFO Networks made it so easy to get WiFi. The vouchers are affordable and work perfectly!"
               </p>
 
               <!-- Author Info -->
               <div class="flex items-center justify-center mt-auto">
                 <div class="w-12 h-12 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full flex items-center justify-center mr-4">
-                  <span class="text-white font-bold text-lg">SM</span>
+                  <span class="text-white font-bold text-lg">JT</span>
                 </div>
                 <div>
-                  <div class="font-semibold text-gray-900">Sarah M.</div>
+                  <div class="font-semibold text-gray-900">Joseph Tsuro</div>
                   <div class="text-sm text-gray-600">Customer</div>
                 </div>
               </div>
@@ -996,10 +910,10 @@
               <!-- Author Info -->
               <div class="flex items-center justify-center mt-auto">
                 <div class="w-12 h-12 bg-gradient-to-r from-blue-600 to-blue-700 rounded-full flex items-center justify-center mr-4">
-                  <span class="text-white font-bold text-lg">JD</span>
+                  <span class="text-white font-bold text-lg">CM</span>
                 </div>
                 <div>
-                  <div class="font-semibold text-gray-900">John D.</div>
+                  <div class="font-semibold text-gray-900">Clemence Mandina</div>
                   <div class="text-sm text-gray-600">Agent</div>
                 </div>
               </div>
@@ -1058,10 +972,10 @@
               <!-- Author Info -->
               <div class="flex items-center justify-center mt-auto">
                 <div class="w-12 h-12 bg-gradient-to-r from-gray-800 to-black rounded-full flex items-center justify-center mr-4">
-                  <span class="text-white font-bold text-lg">TC</span>
+                  <span class="text-white font-bold text-lg">MG</span>
                 </div>
                 <div>
-                  <div class="font-semibold text-gray-900">TechCorp Ltd</div>
+                  <div class="font-semibold text-gray-900">Mujuru General Dealer</div>
                   <div class="text-sm text-gray-600">Advertiser</div>
                 </div>
               </div>
@@ -1084,7 +998,6 @@ const stats = ref<any>({
   users: { total: 0 }, 
   uptime: 99.9 
 })
-const mapLocations = ref<any[]>([])
 const voucherPackages = ref<any[]>([])
 const loading = ref(true)
 
@@ -1109,19 +1022,6 @@ const fetchStats = async () => {
   }
 }
 
-// Fetch map locations
-const fetchMapLocations = async () => {
-  try {
-    const response = await $fetch('/api/locations/map')
-    if (response && response.success) {
-      mapLocations.value = response.data
-    }
-  } catch (error) {
-    console.error('Error fetching map locations:', error)
-    mapLocations.value = []
-  }
-}
-
 // Fetch voucher packages
 const fetchVoucherPackages = async () => {
   try {
@@ -1137,172 +1037,21 @@ const fetchVoucherPackages = async () => {
   }
 }
 
-// Format numbers for display
-const formatNumber = (num: number) => {
-  if (num >= 1000000) {
-    return (num / 1000000).toFixed(1) + 'M'
-  } else if (num >= 1000) {
-    return (num / 1000).toFixed(1) + 'K'
-  }
-  return num.toString()
-}
-
 // Lifecycle
 onMounted(async () => {
   await Promise.all([
     fetchStats(),
-    fetchMapLocations(),
     fetchVoucherPackages()
   ])
-  
-  // Wait for Leaflet to load
-  setTimeout(() => {
-    if (typeof window !== 'undefined' && (window as any).L) {
-      initZimbabweMap()
-    }
-  }, 100)
 })
 
 // Meta tags for SEO
 useHead({
-  title: 'UFO Networks – Fast, Affordable WiFi Anywhere',
+  title: 'UFO Networks – Fast, Affordable WiFi at our UFO WIFI Hotspots',
   meta: [
     { name: 'description', content: 'Buy WiFi vouchers online or from agents. Connect at any UFO hotspot.' }
-  ],
-  link: [
-    { rel: 'stylesheet', href: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css' }
-  ],
-  script: [
-    { src: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js' }
   ]
 })
-
-const initZimbabweMap = () => {
-  try {
-    // Check if Leaflet is loaded
-    if (typeof window === 'undefined' || typeof (window as any).L === 'undefined') {
-      console.warn('Leaflet not loaded yet')
-      return
-    }
-    
-    const L = (window as any).L
-    
-    // Zimbabwe coordinates (center) - focused view
-    const zimbabweCenter = [-19.0154, 29.1549]
-    
-    // Initialize map with Zimbabwe-focused bounds
-    const map = L.map('zimbabwe-map', {
-      center: zimbabweCenter,
-      zoom: 7,
-      minZoom: 6,
-      maxZoom: 12,
-      zoomControl: true,
-      scrollWheelZoom: true,
-      doubleClickZoom: true,
-      boxZoom: false,
-      keyboard: false,
-      dragging: true,
-      touchZoom: true
-    })
-    
-    // Add OpenStreetMap tiles with Zimbabwe-focused styling
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 18,
-      className: 'zimbabwe-map-tiles'
-    }).addTo(map)
-    
-    // Set Zimbabwe bounds to prevent panning outside
-    const zimbabweBounds = L.latLngBounds(
-      L.latLng(-22.5, 25.0), // Southwest corner
-      L.latLng(-15.5, 33.5)  // Northeast corner
-    )
-    map.setMaxBounds(zimbabweBounds)
-    
-    // Use real locations from database
-    const locations = mapLocations.value
-    
-    // Add markers for each location with enhanced styling
-    locations.forEach(location => {
-      const isActive = location.type === 'active'
-      const iconColor = isActive ? '#3b82f6' : '#6b7280'
-      const iconSize = isActive ? [30, 30] : [24, 24]
-      const pulseColor = isActive ? '#3b82f6' : '#6b7280'
-      
-      const customIcon = L.divIcon({
-        className: 'ufo-hotspot-marker',
-        html: `
-          <div class="hotspot-marker" style="
-            width: ${iconSize[0]}px; 
-            height: ${iconSize[1]}px; 
-            background: linear-gradient(135deg, ${iconColor}, ${isActive ? '#1d4ed8' : '#4b5563'});
-            border-radius: 50%; 
-            border: 3px solid white; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3), 0 0 0 4px ${pulseColor}20;
-            position: relative;
-            animation: ${isActive ? 'pulse 2s infinite' : 'none'};
-          ">
-            <div style="
-              position: absolute;
-              top: 50%;
-              left: 50%;
-              transform: translate(-50%, -50%);
-              width: 8px;
-              height: 8px;
-              background: white;
-              border-radius: 50%;
-            "></div>
-          </div>
-        `,
-        iconSize: iconSize,
-        iconAnchor: [iconSize[0]/2, iconSize[1]/2]
-      })
-      
-      const marker = L.marker(location.coords, { icon: customIcon }).addTo(map)
-      
-      // Add enhanced popup with location info
-      marker.bindPopup(`
-        <div class="hotspot-popup" style="min-width: 220px; text-align: center;">
-          <div style="
-            background: linear-gradient(135deg, ${isActive ? '#3b82f6' : '#6b7280'}, ${isActive ? '#1d4ed8' : '#4b5563'});
-            color: white;
-            padding: 10px 14px;
-            border-radius: 8px 8px 0 0;
-            margin: -10px -10px 10px -10px;
-            font-weight: bold;
-            font-size: 15px;
-          ">
-            ${location.name}
-          </div>
-          <p style="color: #374151; margin: 8px 0; font-size: 13px; line-height: 1.4;">${location.address}</p>
-          ${location.code ? `<p style="color: #6b7280; margin: 4px 0; font-size: 12px; font-family: monospace;">Code: ${location.code}</p>` : ''}
-          ${isActive && location.availableVouchers > 0 ? `<p style="color: #059669; margin: 4px 0; font-size: 12px; font-weight: 600;">${location.availableVouchers} vouchers available</p>` : ''}
-          <div style="
-            display: inline-flex;
-            align-items: center;
-            padding: 6px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-top: 8px;
-            ${isActive 
-              ? 'background: #dcfce7; color: #166534;' 
-              : 'background: #fef3c7; color: #92400e;'
-            }
-          ">
-            ${isActive ? '🟢 Active Hotspot' : '🟡 Coming Soon'}
-          </div>
-        </div>
-      `, {
-        maxWidth: 280,
-        className: 'ufo-popup'
-      })
-    })
-    
-  } catch (error) {
-    console.error('Error in map initialization:', error)
-  }
-}
 </script>
 
 <style scoped>
@@ -1525,43 +1274,6 @@ header {
 /* Custom card shadow */
 .custom-card-shadow {
   box-shadow: 0 5px 10px 0 rgba(41, 61, 102, 0.2);
-}
-
-/* Map-specific styles */
-.zimbabwe-map-tiles {
-  filter: grayscale(20%) contrast(1.1) brightness(1.05);
-}
-
-/* Hotspot marker animations */
-@keyframes pulse {
-  0% {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3), 0 0 0 4px rgba(59, 130, 246, 0.2);
-  }
-  50% {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3), 0 0 0 8px rgba(59, 130, 246, 0.1);
-  }
-  100% {
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3), 0 0 0 4px rgba(59, 130, 246, 0.2);
-  }
-}
-
-/* Popup styling */
-.ufo-popup .leaflet-popup-content-wrapper {
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-  border: 1px solid rgba(59, 130, 246, 0.1);
-}
-
-.ufo-popup .leaflet-popup-tip {
-  background: white;
-  border: 1px solid rgba(59, 130, 246, 0.1);
-}
-
-/* Map container enhancements */
-#zimbabwe-map {
-  width: 100%;
-  height: 100%;
-  min-height: 100vh;
 }
 
 /* Drop shadow utilities for text overlays */

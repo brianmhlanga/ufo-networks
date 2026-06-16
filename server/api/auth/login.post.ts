@@ -53,6 +53,16 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    if (user.status !== 'ACTIVE') {
+      console.log('[auth/login] Rejected: user status is', user.status)
+      throw createError({
+        statusCode: 403,
+        statusMessage: user.status === 'BLACKLISTED'
+          ? 'Your account has been suspended. Please contact support.'
+          : 'Your account has been disabled. Please contact an administrator.',
+      })
+    }
+
     console.log('[auth/login] Password OK, setting session for role:', user.role)
 
     // Create session using nuxt-auth-utils

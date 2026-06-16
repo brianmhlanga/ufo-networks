@@ -354,6 +354,12 @@ const navigationSections = ref([
     ]
   },
   {
+    title: 'System',
+    items: [
+      { label: 'Audit Trail', icon: 'history', path: '/admin/audit' }
+    ]
+  },
+  {
     title: 'Account',
     items: [
       { label: 'Profile', icon: 'person', path: '/admin/profile' }

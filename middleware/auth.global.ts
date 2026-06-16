@@ -33,7 +33,7 @@ export default defineNuxtRouteMiddleware((to) => {
     const adminRoutes = ['/admin']
     const agentRoutes = ['/agent']
     const companyDashboardRoutes = ['/company/dashboard', '/company/analytics', '/company/reports', '/company/responses', '/company/edit', '/company/subscription', '/company/abuse-reports']
-    const authRoutes = ['/login', '/signup']
+    const authRoutes = ['/login']
     
     // Check if current route is protected
     const isUserRoute = userRoutes.some(route => to.path.startsWith(route))

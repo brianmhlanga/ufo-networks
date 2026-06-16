@@ -17,12 +17,6 @@
             <span class="text-sm font-medium text-[#2d3040]">Cheap Vouchers</span>
           </div>
           
-          <!-- 24/7 Availability Pill -->
-          <div class="inline-flex items-center px-4 py-2 bg-white/90 backdrop-blur-sm rounded-full border border-white/30 shadow-lg hover:shadow-xl transition-all duration-300 group">
-            <span class="material-icons text-[#185ff9] text-sm mr-2 group-hover:scale-110 transition-transform">schedule</span>
-            <span class="text-sm font-medium text-[#2d3040]">24/7 Availability</span>
-          </div>
-          
           <!-- Fast WiFi Pill -->
           <div class="inline-flex items-center px-4 py-2 bg-white/90 backdrop-blur-sm rounded-full border border-white/30 shadow-lg hover:shadow-xl transition-all duration-300 group">
             <span class="material-icons text-[#185ff9] text-sm mr-2 group-hover:scale-110 transition-transform">wifi</span>
@@ -167,19 +161,6 @@
                 </template>
               </Button>
             </form>
-
-            <!-- Sign Up Link -->
-            <div class="text-center mt-6 pt-4 border-t border-gray-100">
-              <p class="text-[#2d3040]/60 text-sm">
-                Don't have an account?
-                <NuxtLink
-                  to="/signup"
-                  class="text-[#185ff9] hover:text-[#185ff9]/80 font-medium transition-colors ml-1"
-                >
-                  Sign up here
-                </NuxtLink>
-              </p>
-            </div>
           </template>
         </Card>
 
@@ -208,8 +189,8 @@
              <p class="text-xs text-[#2d3040]/70 font-medium">Fast WiFi</p>
            </div>
            <div class="text-center p-3 bg-white/60 backdrop-blur-sm rounded-lg border border-white/30 shadow-sm">
-             <span class="material-icons text-[#185ff9] text-lg mb-1">schedule</span>
-             <p class="text-xs text-[#2d3040]/70 font-medium">24/7 Support</p>
+             <span class="material-icons text-[#185ff9] text-lg mb-1">local_offer</span>
+             <p class="text-xs text-[#2d3040]/70 font-medium">Cheap Vouchers</p>
            </div>
          </div>
 

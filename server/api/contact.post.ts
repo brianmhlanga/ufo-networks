@@ -48,7 +48,8 @@ export default defineEventHandler(async (event) => {
     // Subject validation
     const validSubjects = [
       'general', 'business_claim', 'technical', 'account', 'billing',
-      'report', 'partnership', 'feature_request', 'bug_report', 'other'
+      'report', 'partnership', 'feature_request', 'bug_report', 'other',
+      'voucher', 'agent',
     ]
 
     if (!validSubjects.includes(subject)) {

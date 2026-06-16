@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { getAuditActor, serializeForAudit, writeAuditLog } from '~/server/utils/auditLog'
 
 const prisma = new PrismaClient()
 
@@ -71,17 +72,34 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Delete order with related data in a transaction
+    const orderSnapshot = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { items: true, payments: true },
+    })
+
+    const audit = await getAuditActor(event)
+
     await prisma.$transaction(async (tx) => {
-      // Delete order items first (due to foreign key constraints)
       await tx.orderItem.deleteMany({
         where: { orderId }
       })
 
-      // Delete the order
       await tx.order.delete({
         where: { id: orderId }
       })
+
+      if (orderSnapshot) {
+        await writeAuditLog(tx, {
+          ...audit,
+          action: 'ORDER_DELETED',
+          entity: 'Order',
+          entityId: orderId,
+          details: {
+            snapshot: serializeForAudit(orderSnapshot),
+            deletedAt: new Date().toISOString(),
+          },
+        })
+      }
     })
 
     return {

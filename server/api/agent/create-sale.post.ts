@@ -47,6 +47,21 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    // Agents may only sell at their assigned location
+    if (agentProfile.locationId && locationId !== agentProfile.locationId) {
+      throw createError({
+        statusCode: 403,
+        statusMessage: 'You can only create sales for your assigned location',
+      })
+    }
+
+    if (!agentProfile.locationId) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'No location assigned to your agent profile. Contact an administrator.',
+      })
+    }
+
     // Check availability again before proceeding
     const vouchersInStock = await prisma.voucher.count({
       where: {

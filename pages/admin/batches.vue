@@ -182,7 +182,7 @@
             <Column field="hours" header="Duration" sortable>
               <template #body="{ data }">
                 <Tag
-                  :value="`${data.hours}h`"
+                  :value="formatDuration(data.hours)"
                   :severity="getDurationSeverity(data.hours)"
                 />
               </template>
@@ -354,13 +354,22 @@
              </div>
              
              <div>
-               <label class="block text-sm font-medium text-[#2d3040] mb-2">Hours *</label>
-               <InputNumber 
-                 v-model="batchForm.hours" 
-                 placeholder="1" 
-                 :min="1"
-                 class="w-full"
-               />
+               <label class="block text-sm font-medium text-[#2d3040] mb-2">Voucher Period *</label>
+               <div class="flex gap-2">
+                 <InputNumber
+                   v-model="batchForm.periodValue"
+                   placeholder="1"
+                   :min="1"
+                   class="flex-1"
+                 />
+                 <Dropdown
+                   v-model="batchForm.periodUnit"
+                   :options="periodUnitOptions"
+                   optionLabel="label"
+                   optionValue="value"
+                   class="w-32"
+                 />
+               </div>
              </div>
              
              <div>
@@ -469,7 +478,7 @@
             <div><span class="font-medium">Name:</span> {{ selectedBatch.name }}</div>
             <div><span class="font-medium">Location:</span> {{ selectedBatch.location?.name || 'N/A' }}</div>
             <div><span class="font-medium">Price:</span> ${{ selectedBatch.retailPrice }}</div>
-            <div><span class="font-medium">Duration:</span> {{ selectedBatch.hours }}h</div>
+            <div><span class="font-medium">Duration:</span> {{ formatDuration(selectedBatch.hours) }}</div>
             <div><span class="font-medium">Users:</span> {{ selectedBatch.numberOfUsers }}</div>
             <div><span class="font-medium">Status:</span> {{ selectedBatch.active ? 'Active' : 'Inactive' }}</div>
             <div><span class="font-medium">Start Date:</span> {{ formatDate(selectedBatch.startDate) }}</div>
@@ -558,13 +567,22 @@
              </div>
              
              <div>
-               <label class="block text-sm font-medium text-[#2d3040] mb-2">Hours *</label>
-               <InputNumber 
-                 v-model="batchForm.hours" 
-                 placeholder="1" 
-                 :min="1"
-                 class="w-full"
-               />
+               <label class="block text-sm font-medium text-[#2d3040] mb-2">Voucher Period *</label>
+               <div class="flex gap-2">
+                 <InputNumber
+                   v-model="batchForm.periodValue"
+                   placeholder="1"
+                   :min="1"
+                   class="flex-1"
+                 />
+                 <Dropdown
+                   v-model="batchForm.periodUnit"
+                   :options="periodUnitOptions"
+                   optionLabel="label"
+                   optionValue="value"
+                   class="w-32"
+                 />
+               </div>
              </div>
              
              <div>
@@ -753,13 +771,19 @@ const statusOptions = ref([
   { label: 'Inactive', value: false }
 ])
 
+const periodUnitOptions = ref([
+  { label: 'Hours', value: 'HOURS' },
+  { label: 'Days', value: 'DAYS' },
+])
+
 // Batch form data
 const batchForm = ref({
   name: '',
   locationId: '',
   retailPrice: null as number | null,
   currency: 'USD',
-  hours: 1,
+  periodValue: 1,
+  periodUnit: 'HOURS',
   numberOfUsers: 1,
   validityDays: 60,
   startDate: null as Date | null,
@@ -775,6 +799,45 @@ const extractingPDF = ref(false)
 const loadingLocations = ref(false)
 
 // Methods
+const periodToHours = (periodValue: number, periodUnit: string) => {
+  if (periodUnit === 'DAYS') {
+    return periodValue * 24
+  }
+  return periodValue
+}
+
+const hoursToPeriod = (hours: number) => {
+  if (hours >= 24 && hours % 24 === 0) {
+    return { periodValue: hours / 24, periodUnit: 'DAYS' }
+  }
+  return { periodValue: hours, periodUnit: 'HOURS' }
+}
+
+const formatDuration = (hours: number) => {
+  if (hours >= 24 && hours % 24 === 0) {
+    const days = hours / 24
+    return `${days} day${days === 1 ? '' : 's'}`
+  }
+  return `${hours}h`
+}
+
+const buildBatchRequestBody = () => {
+  const hours = periodToHours(batchForm.value.periodValue, batchForm.value.periodUnit)
+
+  return {
+    name: batchForm.value.name,
+    locationId: batchForm.value.locationId,
+    retailPrice: batchForm.value.retailPrice,
+    currency: batchForm.value.currency,
+    hours,
+    numberOfUsers: batchForm.value.numberOfUsers,
+    validityDays: batchForm.value.validityDays,
+    startDate: batchForm.value.startDate?.toISOString(),
+    endDate: batchForm.value.endDate?.toISOString(),
+    notes: batchForm.value.notes,
+  }
+}
+
 const getDurationSeverity = (hours: number) => {
   if (hours <= 1) return 'info'
   if (hours <= 24) return 'success'
@@ -809,7 +872,8 @@ const resetBatchForm = () => {
     locationId: '',
     retailPrice: null,
     currency: 'USD',
-    hours: 1,
+    periodValue: 1,
+    periodUnit: 'HOURS',
     numberOfUsers: 1,
     validityDays: 60,
     startDate: null,
@@ -941,12 +1005,7 @@ const createBatch = async () => {
     console.log('Creating batch with form data:', batchForm.value)
     creatingBatch.value = true
     
-    // Convert dates to ISO strings for API
-    const requestBody = {
-      ...batchForm.value,
-      startDate: batchForm.value.startDate?.toISOString(),
-      endDate: batchForm.value.endDate?.toISOString()
-    }
+    const requestBody = buildBatchRequestBody()
     
     console.log('Request body being sent:', requestBody)
     
@@ -986,10 +1045,8 @@ const updateBatch = async () => {
     creatingBatch.value = true
 
     const requestBody = {
-      ...batchForm.value,
-      startDate: batchForm.value.startDate?.toISOString(),
-      endDate: batchForm.value.endDate?.toISOString(),
-      retailPrice: Number(batchForm.value.retailPrice)
+      ...buildBatchRequestBody(),
+      retailPrice: Number(batchForm.value.retailPrice),
     }
 
     const response: any = await $fetch(`/api/admin/batches/${selectedBatch.value.id}`, {
@@ -1057,14 +1114,10 @@ const uploadBatchWithPDF = async () => {
     const formData = new FormData()
     formData.append('pdfFile', pdfFile.value)
     
-    // Add form fields
-    Object.entries(batchForm.value).forEach(([key, value]) => {
+    const requestBody = buildBatchRequestBody()
+    Object.entries(requestBody).forEach(([key, value]) => {
       if (value !== null && value !== undefined) {
-        if ((key === 'startDate' || key === 'endDate') && value instanceof Date) {
-          formData.append(key, value.toISOString())
-        } else {
-          formData.append(key, value.toString())
-        }
+        formData.append(key, value.toString())
       }
     })
     
@@ -1149,7 +1202,18 @@ const fetchLocations = async () => {
 const fetchBatches = async () => {
   try {
     loading.value = true
-    const response = await $fetch('/api/admin/batches')
+    const params = new URLSearchParams({
+      page: currentPage.value.toString(),
+      limit: pageSize.value.toString(),
+    })
+
+    if (filters.value.search) params.append('search', filters.value.search)
+    if (filters.value.locationId) params.append('locationId', String(filters.value.locationId))
+    if (filters.value.active === true || filters.value.active === false) {
+      params.append('active', String(filters.value.active))
+    }
+
+    const response = await $fetch(`/api/admin/batches?${params}`)
     if (response.success) {
       batches.value = response.batches
       totalBatches.value = response.total
@@ -1178,6 +1242,7 @@ const fetchBatches = async () => {
 const onPageChange = (event: any) => {
   currentPage.value = event.page + 1
   pageSize.value = event.rows
+  fetchBatches()
 }
 
 const openCreateDialog = () => {
@@ -1202,12 +1267,14 @@ const editBatch = (batch: any) => {
   selectedBatch.value = batch
   isEditing.value = true
   showCreateDialog.value = true
+  const period = hoursToPeriod(batch.hours || 1)
   batchForm.value = {
     name: batch.name || '',
     locationId: String(batch.locationId || ''),
     retailPrice: Number(batch.retailPrice) || null,
     currency: 'USD',
-    hours: batch.hours || 1,
+    periodValue: period.periodValue,
+    periodUnit: period.periodUnit,
     numberOfUsers: batch.numberOfUsers || 1,
     validityDays: 60,
     startDate: batch.startDate ? new Date(batch.startDate) : null,
@@ -1277,6 +1344,11 @@ onMounted(() => {
   fetchLocations()
   fetchBatches()
 })
+
+watch(filters, () => {
+  currentPage.value = 1
+  fetchBatches()
+}, { deep: true })
 
 // Watch for changes in validityDays to auto-calculate dates
 watch(() => batchForm.value.validityDays, (newValidityDays) => {

@@ -34,19 +34,18 @@
       <!-- Sale Form -->
       <div class="bg-white rounded-xl shadow-md border border-gray-100 p-4 sm:p-6 md:p-8">
         <form @submit.prevent="createSale" class="space-y-6">
-          <!-- Location Selection -->
+          <!-- Assigned location (read-only) -->
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">Location *</label>
-            <Select 
-              v-model="selectedLocation" 
-              :options="locations" 
-              optionLabel="name" 
-              optionValue="id"
-              placeholder="Select a location" 
+            <InputText
+              v-if="assignedLocation"
+              :model-value="assignedLocationLabel"
               class="w-full"
-              required
-              @change="onLocationChange"
+              disabled
             />
+            <p v-else class="text-sm text-amber-600">
+              No location assigned to your profile. Contact an administrator.
+            </p>
           </div>
 
           <!-- Voucher Type Selection -->
@@ -309,7 +308,7 @@ const session = useUserSession()
 const toast = useToast()
 
 // State
-const locations = ref<any[]>([])
+const assignedLocation = ref<any | null>(null)
 const availableVoucherTypes = ref<any[]>([])
 const selectedLocation = ref<string>('')
 const selectedVoucherType = ref<string>('')
@@ -353,6 +352,13 @@ async function connectBluetoothPrinter() {
 // Computed
 const totalAmount = computed(() => quantity.value * salePrice.value)
 
+const assignedLocationLabel = computed(() => {
+  if (!assignedLocation.value) return ''
+  const parts = [assignedLocation.value.name, assignedLocation.value.town, assignedLocation.value.province]
+    .filter(Boolean)
+  return parts.join(', ')
+})
+
 const maxAvailableQuantity = computed(() => {
   if (!availabilityCheck.value) return 0
   return availabilityCheck.value.availableForSale
@@ -367,25 +373,33 @@ const canCreateSale = computed(() => {
          quantity.value <= availabilityCheck.value.availableForSale
 })
 
-// Fetch locations
-const fetchLocations = async () => {
+// Load the agent's assigned location and voucher types
+const initializeAgentLocation = async () => {
   try {
-    const response = await $fetch('/api/locations')
-    if (response.success) {
-      locations.value = response.data
+    const response: any = await $fetch('/api/agent/profile')
+    const profile = response.data?.agentProfile
+
+    if (!profile?.locationId) {
+      assignedLocation.value = null
+      selectedLocation.value = ''
+      return
     }
+
+    assignedLocation.value = profile.location || { id: profile.locationId, name: 'Assigned location' }
+    selectedLocation.value = profile.locationId
+    await fetchVoucherTypes()
   } catch (error) {
-    console.error('Error fetching locations:', error)
+    console.error('Error loading agent location:', error)
     toast.add({
       severity: 'error',
       summary: 'Error',
-      detail: 'Failed to load locations',
-      life: 3000
+      detail: 'Failed to load your assigned location',
+      life: 3000,
     })
   }
 }
 
-// Fetch voucher types for selected location
+// Fetch voucher types for assigned location
 const fetchVoucherTypes = async () => {
   if (!selectedLocation.value) return
   
@@ -445,13 +459,6 @@ const checkAvailability = async () => {
 }
 
 // Event handlers
-const onLocationChange = () => {
-  selectedVoucherType.value = ''
-  quantity.value = 1
-  availabilityCheck.value = null
-  fetchVoucherTypes()
-}
-
 const onVoucherTypeChange = () => {
   quantity.value = 1
   checkAvailability()
@@ -492,8 +499,7 @@ const createSale = async () => {
       createdVouchers.value = vouchers
       showSuccessModal.value = true
 
-      // Reset form
-      selectedLocation.value = ''
+      // Reset form (keep assigned location)
       selectedVoucherType.value = ''
       quantity.value = 1
       salePrice.value = 0
@@ -501,6 +507,7 @@ const createSale = async () => {
       customerPhone.value = ''
       availabilityCheck.value = null
       availableVoucherTypes.value = []
+      await fetchVoucherTypes()
 
       // Auto-print to Bluetooth printer if connected
       if (bluetoothConnected.value && vouchers.length > 0) {
@@ -762,7 +769,7 @@ const generateVoucherHTML = (voucher: any) => {
 <body>
     <div class="voucher">
         <div class="logo">UFO Networks</div>
-        <div class="tagline">Fast WiFi Anywhere</div>
+        <div class="tagline">UFO WIFI Hotspots</div>
         
         <div class="voucher-number">
             <h2>${voucher.voucherNumber}</h2>
@@ -999,7 +1006,7 @@ const closeSuccessModal = () => {
 
 // Fetch data on mount
 onMounted(() => {
-  fetchLocations()
+  initializeAgentLocation()
 })
 
 // Meta tags
