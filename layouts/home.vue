@@ -136,10 +136,23 @@
             <div class="text-gray-300 text-sm">
               © 2024 UFO Networks. All rights reserved.
             </div>
-            <div class="flex items-center gap-6 text-gray-300 text-sm">
-              <a href="#" class="hover:text-primary transition-colors">Terms of Service</a>
-              <a href="#" class="hover:text-primary transition-colors">Privacy Policy</a>
-              <a href="#" class="hover:text-primary transition-colors">Cookie Policy</a>
+            <div class="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-gray-300 text-sm">
+              <div class="flex items-center gap-6">
+                <a href="#" class="hover:text-primary transition-colors">Terms of Service</a>
+                <a href="#" class="hover:text-primary transition-colors">Privacy Policy</a>
+                <a href="#" class="hover:text-primary transition-colors">Cookie Policy</a>
+              </div>
+              <span class="text-gray-400">
+                Designed by
+                <a
+                  href="https://www.webdev.co.zw"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-primary hover:text-blue-300 font-medium transition-colors ml-1"
+                >
+                  WebDev
+                </a>
+              </span>
             </div>
           </div>
         </div>

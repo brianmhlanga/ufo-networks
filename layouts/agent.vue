@@ -159,14 +159,14 @@
         <div class="flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-slate-500">
           <span class="font-medium text-slate-700">UFO Networks</span>
           <span>
-            Powered by
+            Designed by
             <a
-              href="https://webdev.co.zw"
+              href="https://www.webdev.co.zw"
               target="_blank"
               rel="noopener noreferrer"
               class="text-emerald-600 hover:text-emerald-700 font-medium transition-colors"
             >
-              webdev
+              WebDev
             </a>
           </span>
         </div>
