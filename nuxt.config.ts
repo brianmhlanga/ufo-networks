@@ -86,6 +86,9 @@ export default defineNuxtConfig({
       password: process.env.NUXT_SESSION_PASSWORD || 'development-session-password-change-me',
       maxAge: 60 * 60 * 24 * 7, // 1 week
     },
+    paynowIntegrationId: process.env.PAYNOW_INTEGRATION_ID || process.env.NUXT_PAYNOW_INTEGRATION_ID || '',
+    paynowIntegrationKey: process.env.PAYNOW_INTEGRATION_KEY || process.env.NUXT_PAYNOW_INTEGRATION_KEY || '',
+    paynowAuthEmail: process.env.PAYNOW_AUTH_EMAIL || process.env.NUXT_PAYNOW_AUTH_EMAIL || '',
   },
 
   primevue: {

@@ -1,11 +1,8 @@
 import { PrismaClient } from '@prisma/client'
 import { getAuditActor, serializeForAudit, writeAuditLog } from '~/server/utils/auditLog'
+import { getPaynowAuthEmail, requirePaynowCredentials } from '~/server/utils/paynow'
 
 const prisma = new PrismaClient()
-
-// Paynow configuration
-const PAYNOW_INTEGRATION_ID = process.env.PAYNOW_INTEGRATION_ID
-const PAYNOW_INTEGRATION_KEY = process.env.PAYNOW_INTEGRATION_KEY
 
 export default defineEventHandler(async (event) => {
   try {
@@ -254,13 +251,8 @@ export default defineEventHandler(async (event) => {
 
     // Initialize Paynow payment
     const { Paynow } = await import('paynow')
-    if (!PAYNOW_INTEGRATION_ID || !PAYNOW_INTEGRATION_KEY) {
-      throw createError({
-        statusCode: 500,
-        statusMessage: 'Paynow credentials are not configured in environment variables',
-      })
-    }
-    const paynow = new Paynow(PAYNOW_INTEGRATION_ID, PAYNOW_INTEGRATION_KEY)
+    const { integrationId, integrationKey } = requirePaynowCredentials()
+    const paynow = new Paynow(integrationId, integrationKey)
 
     // Set URLs
     const baseUrl = getRequestURL(event).origin
@@ -276,7 +268,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Create payment
-    const payment = paynow.createPayment(paymentReference, customerEmail)
+    const payment = paynow.createPayment(paymentReference, getPaynowAuthEmail(customerEmail))
     
          // Add items to payment
      for (const item of orderItems) {
