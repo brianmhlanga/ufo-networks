@@ -218,9 +218,17 @@
                       placeholder="Tell us how we can help you..."
                       rows="5"
                       class="w-full"
-                      :class="{ 'p-invalid': submitted && !form.message }"
+                      :class="{ 'p-invalid': submitted && (!form.message || form.message.trim().length < 10 || form.message.trim().length > 2000) }"
                     />
                     <small v-if="submitted && !form.message" class="p-error">Message is required.</small>
+                    <small
+                      v-if="submitted && form.message && form.message.trim().length > 0 && form.message.trim().length < 10"
+                      class="p-error"
+                    >Message must be at least 10 characters.</small>
+                    <small
+                      v-if="submitted && form.message && form.message.trim().length > 2000"
+                      class="p-error"
+                    >Message must be less than 2000 characters.</small>
                   </div>
 
                   <!-- Submit Button -->
@@ -270,6 +278,8 @@
           </div>
         </div>
       </section>
+
+      <Toast />
     </div>
   </NuxtLayout>
 </template>
@@ -278,6 +288,7 @@
 import { primaryColor, secondaryColor } from '~/configs/colors'
 import { contactInfo } from '~/configs/contact'
 import { useToast } from 'primevue/usetoast'
+import { getFetchErrorMessage } from '~/utils/getFetchErrorMessage'
 
 // Toast instance
 const toast = useToast()
@@ -310,6 +321,9 @@ const submitForm = async () => {
 
   // Validation
   if (!form.value.name || !form.value.email || !form.value.subject || !form.value.message) {
+    return
+  }
+  if (form.value.message.trim().length < 10 || form.value.message.trim().length > 2000) {
     return
   }
 
@@ -351,7 +365,7 @@ const submitForm = async () => {
 
   } catch (error) {
     console.error('Error submitting form:', error)
-    const detail = error?.data?.statusMessage || 'Failed to send message. Please try again.'
+    const detail = getFetchErrorMessage(error, 'Failed to send message. Please try again.')
     toast.add({
       severity: 'error',
       summary: 'Error',
