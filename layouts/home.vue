@@ -78,11 +78,11 @@
           <div class="space-y-4">
             <h4 class="text-lg font-semibold text-white">Quick Links</h4>
             <ul class="space-y-3">
-              <li><a href="/" class="text-gray-300 hover:text-primary transition-colors text-sm">Home</a></li>
-              <li><a href="/vouchers" class="text-gray-300 hover:text-primary transition-colors text-sm">Buy Vouchers</a></li>
-              <li><a href="/locations" class="text-gray-300 hover:text-primary transition-colors text-sm">Locations</a></li>
-              <li><a href="/profiles" class="text-gray-300 hover:text-primary transition-colors text-sm">Find Agents</a></li>
-              <li><a href="/contact" class="text-gray-300 hover:text-primary transition-colors text-sm">Contact Us</a></li>
+              <li><NuxtLink to="/" class="text-gray-300 hover:text-primary transition-colors text-sm" @click="scrollToTop">Home</NuxtLink></li>
+              <li><NuxtLink to="/vouchers" class="text-gray-300 hover:text-primary transition-colors text-sm" @click="scrollToTop">Buy Vouchers</NuxtLink></li>
+              <li><NuxtLink to="/locations" class="text-gray-300 hover:text-primary transition-colors text-sm" @click="scrollToTop">Locations</NuxtLink></li>
+              <li><NuxtLink to="/profiles" class="text-gray-300 hover:text-primary transition-colors text-sm" @click="scrollToTop">Find Agents</NuxtLink></li>
+              <li><NuxtLink to="/contact" class="text-gray-300 hover:text-primary transition-colors text-sm" @click="scrollToTop">Contact Us</NuxtLink></li>
             </ul>
           </div>
 
@@ -90,11 +90,11 @@
           <div class="space-y-4">
             <h4 class="text-lg font-semibold text-white">Support</h4>
             <ul class="space-y-3">
-              <li><a href="/contact" class="text-gray-300 hover:text-primary transition-colors text-sm">Help Center</a></li>
-              <li><a href="/contact" class="text-gray-300 hover:text-primary transition-colors text-sm">Technical Support</a></li>
-              <li><a href="/contact" class="text-gray-300 hover:text-primary transition-colors text-sm">Agent Support</a></li>
-              <li><a href="/contact" class="text-gray-300 hover:text-primary transition-colors text-sm">Report Issue</a></li>
-              <li><a href="/contact" class="text-gray-300 hover:text-primary transition-colors text-sm">Status Page</a></li>
+              <li><NuxtLink to="/contact" class="text-gray-300 hover:text-primary transition-colors text-sm" @click="scrollToTop">Help Center</NuxtLink></li>
+              <li><NuxtLink to="/contact" class="text-gray-300 hover:text-primary transition-colors text-sm" @click="scrollToTop">Technical Support</NuxtLink></li>
+              <li><NuxtLink to="/contact" class="text-gray-300 hover:text-primary transition-colors text-sm" @click="scrollToTop">Agent Support</NuxtLink></li>
+              <li><NuxtLink to="/contact" class="text-gray-300 hover:text-primary transition-colors text-sm" @click="scrollToTop">Report Issue</NuxtLink></li>
+              <li><NuxtLink to="/contact" class="text-gray-300 hover:text-primary transition-colors text-sm" @click="scrollToTop">Status Page</NuxtLink></li>
             </ul>
           </div>
 
@@ -175,6 +175,11 @@ const menuItems = ref([
     route: '/contact'
   }
 ])
+
+const scrollToTop = () => {
+  if (typeof window === 'undefined') return
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 </script>
 
 <style scoped>

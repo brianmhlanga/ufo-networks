@@ -1,435 +1,47 @@
 import nodemailer from 'nodemailer'
 
+const MAILTRAP_TOKEN = process.env.MAILTRAP_TOKEN || ''
+const senderEmail = process.env.SENDER_EMAIL || 'noreply@ufo-networks.org'
+const contactAdminEmail = process.env.CONTACT_ADMIN_EMAIL || 'support@ufo-networks.org'
+const appUrl = process.env.APP_URL || 'https://ufo-networks.org'
+
 const transport = nodemailer.createTransport({
-  host: 'sandbox.smtp.mailtrap.io',
-  port: 2525,
+  host: 'live.smtp.mailtrap.io',
+  port: 587,
+  secure: false,
   auth: {
-    user: '137328aecc402e',
-    pass: '314e08c03d6645'
-  }
+    user: 'api',
+    pass: MAILTRAP_TOKEN,
+  },
 })
 
-export async function sendAdminStatsEmail(stats: any) {
-  // Send to all admin users
-  for (const adminUser of stats.adminUsers) {
-    try {
-      const html = getAdminStatsTemplate(adminUser.firstName, stats)
-      await transport.sendMail({
-        from: 'noreply@review.co.zw',
-        to: adminUser.email,
-        subject: `Daily Admin Statistics Report - ${stats.reportDate}`,
-        html
-      })
-      console.log(`[Admin Stats Email] Sent to ${adminUser.email}`)
-    } catch (error: any) {
-      console.error(`[Admin Stats Email] Error sending to ${adminUser.email}: ${error.message}`)
-    }
-  }
-}
-
-function getAdminStatsTemplate(adminName: string, stats: any) {
+function getUfoLogo() {
   return `
-  <div style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);padding:0;margin:0;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;min-height:100vh;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);padding:0;margin:0;">
-      <tr>
-        <td align="center" style="padding:40px 20px;">
-          <table width="600" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border-radius:20px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,0.15);overflow:hidden;border:1px solid #f0f0f0;">
-            <tr>
-              <td align="center" style="padding:40px 0 30px 0;background:linear-gradient(135deg, #2c3e50 0%, #34495e 100%);">
-                <img src="https://review.co.zw/logo.png" alt="review.co.zw" width="64" height="64" style="display:block;margin:0 auto 16px auto;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,0.2);" />
-                <h1 style="color:#ffffff;font-size:2rem;font-weight:600;margin:0;letter-spacing:-0.5px;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Daily Admin Report</h1>
-                <p style="color:#ecf0f1;font-size:1.1rem;margin:8px 0 0 0;font-weight:300;opacity:0.9;">${stats.reportDate} - Platform Statistics</p>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:40px 40px 30px 40px;">
-                <p style="font-size:1.2rem;color:#2c3e50;margin:0 0 20px 0;line-height:1.6;font-weight:400;">Good morning <strong style="color:#3498db;">${adminName}</strong>,</p>
-                <p style="font-size:1rem;color:#5a6c7d;margin:0 0 32px 0;line-height:1.7;">Here's your daily overview of the review.co.zw platform statistics for ${stats.reportDate}.</p>
-                
-                <!-- Growth Overview -->
-                <div style="background:linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);border-radius:16px;padding:28px;margin:32px 0;border-left:5px solid #27ae60;box-shadow:0 4px 12px rgba(0,0,0,0.05);">
-                  <h3 style="margin:0 0 20px 0;color:#2c3e50;font-size:1.3rem;font-weight:600;">📈 Yesterday's Growth</h3>
-                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
-                    <div style="text-align:center;padding:16px;background:rgba(255,255,255,0.7);border-radius:12px;">
-                      <div style="font-size:2rem;font-weight:700;color:#27ae60;">${stats.newUsersYesterday}</div>
-                      <div style="font-size:0.9rem;color:#5a6c7d;">New Users</div>
-                      <div style="font-size:0.8rem;color:#27ae60;">+${stats.userGrowthPercentage}%</div>
-                    </div>
-                    <div style="text-align:center;padding:16px;background:rgba(255,255,255,0.7);border-radius:12px;">
-                      <div style="font-size:2rem;font-weight:700;color:#3498db;">${stats.newCompaniesYesterday}</div>
-                      <div style="font-size:0.9rem;color:#5a6c7d;">New Companies</div>
-                      <div style="font-size:0.8rem;color:#3498db;">+${stats.companyGrowthPercentage}%</div>
-                    </div>
-                    <div style="text-align:center;padding:16px;background:rgba(255,255,255,0.7);border-radius:12px;">
-                      <div style="font-size:2rem;font-weight:700;color:#e67e22;">${stats.newReviewsYesterday}</div>
-                      <div style="font-size:0.9rem;color:#5a6c7d;">New Reviews</div>
-                      <div style="font-size:0.8rem;color:#e67e22;">+${stats.reviewGrowthPercentage}%</div>
-                    </div>
-                    <div style="text-align:center;padding:16px;background:rgba(255,255,255,0.7);border-radius:12px;">
-                      <div style="font-size:2rem;font-weight:700;color:#9b59b6;">${stats.newSubscriptionsYesterday}</div>
-                      <div style="font-size:0.9rem;color:#5a6c7d;">New Subscriptions</div>
-                      <div style="font-size:0.8rem;color:#9b59b6;">+${stats.subscriptionGrowthPercentage}%</div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Pending Items Alert -->
-                <div style="background:linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);border-radius:16px;padding:28px;margin:32px 0;border-left:5px solid #f39c12;box-shadow:0 4px 12px rgba(0,0,0,0.05);">
-                  <h3 style="margin:0 0 20px 0;color:#2c3e50;font-size:1.3rem;font-weight:600;">⚠️ Items Requiring Attention</h3>
-                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
-                    <div style="text-align:center;padding:16px;background:rgba(255,255,255,0.7);border-radius:12px;">
-                      <div style="font-size:2rem;font-weight:700;color:#e74c3c;">${stats.pendingReviews}</div>
-                      <div style="font-size:0.9rem;color:#5a6c7d;">Pending Reviews</div>
-                    </div>
-                    <div style="text-align:center;padding:16px;background:rgba(255,255,255,0.7);border-radius:12px;">
-                      <div style="font-size:2rem;font-weight:700;color:#e74c3c;">${stats.pendingComments}</div>
-                      <div style="font-size:0.9rem;color:#5a6c7d;">Pending Comments</div>
-                    </div>
-                    <div style="text-align:center;padding:16px;background:rgba(255,255,255,0.7);border-radius:12px;">
-                      <div style="font-size:2rem;font-weight:700;color:#e74c3c;">${stats.pendingReports}</div>
-                      <div style="font-size:0.9rem;color:#5a6c7d;">Pending Reports</div>
-                    </div>
-                    <div style="text-align:center;padding:16px;background:rgba(255,255,255,0.7);border-radius:12px;">
-                      <div style="font-size:2rem;font-weight:700;color:#e74c3c;">${stats.pendingCompanyResponses}</div>
-                      <div style="font-size:0.9rem;color:#5a6c7d;">Pending Responses</div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Platform Overview -->
-                <div style="background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);border-radius:16px;padding:28px;margin:32px 0;border-left:5px solid #6c757d;box-shadow:0 4px 12px rgba(0,0,0,0.05);">
-                  <h3 style="margin:0 0 20px 0;color:#2c3e50;font-size:1.3rem;font-weight:600;">📊 Platform Overview</h3>
-                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
-                    <div style="background:white;padding:20px;border-radius:12px;border-left:4px solid #3498db;">
-                      <h4 style="margin:0 0 12px 0;color:#2c3e50;font-size:1.1rem;">Users</h4>
-                      <div style="font-size:1.5rem;font-weight:700;color:#3498db;">${stats.totalUsers.toLocaleString()}</div>
-                      <div style="font-size:0.8rem;color:#7f8c8d;margin-top:4px;">
-                        ${stats.verifiedUsers} verified • ${stats.suspendedUsers} suspended • ${stats.blacklistedUsers} blacklisted
-                      </div>
-                    </div>
-                    <div style="background:white;padding:20px;border-radius:12px;border-left:4px solid #e67e22;">
-                      <h4 style="margin:0 0 12px 0;color:#2c3e50;font-size:1.1rem;">Companies</h4>
-                      <div style="font-size:1.5rem;font-weight:700;color:#e67e22;">${stats.totalCompanies.toLocaleString()}</div>
-                      <div style="font-size:0.8rem;color:#7f8c8d;margin-top:4px;">
-                        ${stats.verifiedCompanies} verified • ${stats.claimedCompanies} claimed • ${stats.activeCompanies} active
-                      </div>
-                    </div>
-                    <div style="background:white;padding:20px;border-radius:12px;border-left:4px solid #27ae60;">
-                      <h4 style="margin:0 0 12px 0;color:#2c3e50;font-size:1.1rem;">Reviews</h4>
-                      <div style="font-size:1.5rem;font-weight:700;color:#27ae60;">${stats.totalReviews.toLocaleString()}</div>
-                      <div style="font-size:0.8rem;color:#7f8c8d;margin-top:4px;">
-                        ${stats.approvedReviews} approved • ${stats.verifiedReviews} verified • ${stats.rejectedReviews} rejected
-                      </div>
-                    </div>
-                    <div style="background:white;padding:20px;border-radius:12px;border-left:4px solid #9b59b6;">
-                      <h4 style="margin:0 0 12px 0;color:#2c3e50;font-size:1.1rem;">Subscriptions</h4>
-                      <div style="font-size:1.5rem;font-weight:700;color:#9b59b6;">${stats.totalSubscriptions.toLocaleString()}</div>
-                      <div style="font-size:0.8rem;color:#7f8c8d;margin-top:4px;">
-                        ${stats.activeSubscriptions} active • ${stats.paidSubscriptions} paid • ${stats.expiredSubscriptions} expired
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Additional Statistics -->
-                <div style="background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);border-radius:16px;padding:28px;margin:32px 0;border-left:5px solid #6c757d;box-shadow:0 4px 12px rgba(0,0,0,0.05);">
-                  <h3 style="margin:0 0 20px 0;color:#2c3e50;font-size:1.3rem;font-weight:600;">📋 Additional Statistics</h3>
-                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;font-size:0.9rem;">
-                    <div><strong>Comments:</strong> ${stats.totalComments.toLocaleString()} (${stats.pendingComments} pending)</div>
-                    <div><strong>Company Responses:</strong> ${stats.totalCompanyResponses.toLocaleString()} (${stats.pendingCompanyResponses} pending)</div>
-                    <div><strong>Reports:</strong> ${stats.totalReports.toLocaleString()} (${stats.pendingReports} pending)</div>
-                    <div><strong>Payments:</strong> ${stats.totalPayments.toLocaleString()} (${stats.successfulPayments} successful)</div>
-                    <div><strong>Company Users:</strong> ${stats.totalCompanyUsers.toLocaleString()} (${stats.activeCompanyUsers} active)</div>
-                    <div><strong>Company Invites:</strong> ${stats.totalCompanyInvites.toLocaleString()} (${stats.pendingCompanyInvites} pending)</div>
-                    <div><strong>Review Votes:</strong> ${stats.totalReviewVotes.toLocaleString()} (${stats.approvedReviewVotes} approved)</div>
-                    <div><strong>Categories:</strong> ${stats.totalCategories.toLocaleString()} (${stats.activeCategories} active)</div>
-                    <div><strong>Images:</strong> ${stats.totalImages.toLocaleString()} (${stats.newImagesYesterday} new)</div>
-                  </div>
-                </div>
-
-                <!-- System Statistics -->
-                <div style="background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);border-radius:16px;padding:28px;margin:32px 0;border-left:5px solid #6c757d;box-shadow:0 4px 12px rgba(0,0,0,0.05);">
-                  <h3 style="margin:0 0 20px 0;color:#2c3e50;font-size:1.3rem;font-weight:600;">⚙️ System Statistics</h3>
-                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;font-size:0.9rem;">
-                    <div><strong>System Settings:</strong> ${stats.totalSystemSettings} (${stats.activeSystemSettings} active)</div>
-                    <div><strong>Email Templates:</strong> ${stats.totalEmailTemplates} (${stats.activeEmailTemplates} active)</div>
-                    <div><strong>Feature Flags:</strong> ${stats.totalFeatureFlags} (${stats.enabledFeatureFlags} enabled)</div>
-                    <div><strong>API Keys:</strong> ${stats.totalApiKeys} (${stats.activeApiKeys} active)</div>
-                    <div><strong>Webhooks:</strong> ${stats.totalWebhooks} (${stats.activeWebhooks} active)</div>
-                    <div><strong>Maintenance Windows:</strong> ${stats.totalMaintenanceWindows} (${stats.activeMaintenanceWindows} active)</div>
-                    <div><strong>User Suspensions:</strong> ${stats.totalUserSuspensions} (${stats.activeUserSuspensions} active)</div>
-                    <div><strong>User Blacklists:</strong> ${stats.totalUserBlacklists}</div>
-                    <div><strong>Admin Users:</strong> ${stats.adminUsers.length}</div>
-                  </div>
-                </div>
-
-                <a href="https://review.co.zw/admin" style="display:inline-block;background:linear-gradient(135deg, #3498db 0%, #2980b9 100%);color:#ffffff;font-weight:600;padding:16px 40px;border-radius:12px;text-decoration:none;font-size:1.1rem;box-shadow:0 8px 24px rgba(52,152,219,0.3);margin:32px 0 24px 0;transition:all 0.3s ease;border:none;">Access Admin Dashboard</a>
-                
-                <div style="background:linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);border-radius:12px;padding:20px;margin:24px 0;border-left:4px solid #27ae60;">
-                  <p style="font-size:0.95rem;color:#2c3e50;margin:0;line-height:1.6;font-weight:500;">
-                    <strong style="color:#27ae60;">Need to take action?</strong> Use the admin dashboard to review pending items, manage users, and monitor platform activity.
-                  </p>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:0 40px 40px 40px;">
-                <hr style="border:none;border-top:1px solid #ecf0f1;margin:32px 0;" />
-                <p style="font-size:0.9rem;color:#95a5a6;text-align:center;margin:0;font-weight:400;">&copy; ${new Date().getFullYear()} review.co.zw &mdash; Daily Admin Statistics Report</p>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </div>
+    <div style="text-align:center;margin:0 auto;">
+      <div style="width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,#185ff9 0%, #2d3040 100%);display:flex;align-items:center;justify-content:center;margin:0 auto 12px auto;box-shadow:0 12px 30px rgba(24,95,249,0.25);">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2C8 5 5 9 5 13c0 4 3.6 8 7 9 3.4-1 7-5 7-9 0-4-3-8-7-11Z" stroke="white" stroke-width="1.6" opacity="0.95"/>
+          <path d="M9.2 14.2c1.6 1.2 4 1.2 5.6 0" stroke="white" stroke-width="1.6" stroke-linecap="round"/>
+          <path d="M8.6 11.4c.9-.7 2.1-1.1 3.4-1.1s2.5.4 3.4 1.1" stroke="white" stroke-width="1.4" stroke-linecap="round" opacity="0.9"/>
+        </svg>
+      </div>
+      <div style="color:#ffffff;font-size:20px;font-weight:800;letter-spacing:-0.4px;line-height:1;">UFO Networks</div>
+      <div style="color:#bfdbfe;font-size:13px;font-weight:700;margin-top:4px;line-height:1;">UFO WIFI Hotspots</div>
+    </div>
   `
 }
 
-export async function sendWelcomeEmail(to: string, firstName: string) {
-  const html = getWelcomeTemplate(firstName)
-  await transport.sendMail({
-    from: 'noreply@review.co.zw',
-    to,
-    subject: 'Welcome to review.co.zw!',
-    html
-  })
-}
-
-function getWelcomeTemplate(firstName: string) {
+function emailFooter() {
   return `
-  <div style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);padding:0;margin:0;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;min-height:100vh;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);padding:0;margin:0;">
-      <tr>
-        <td align="center" style="padding:40px 20px;">
-          <table width="500" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border-radius:20px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,0.15);overflow:hidden;border:1px solid #f0f0f0;">
-            <tr>
-              <td align="center" style="padding:40px 0 30px 0;background:linear-gradient(135deg, #2c3e50 0%, #34495e 100%);">
-                <img src="https://review.co.zw/logo.png" alt="review.co.zw" width="64" height="64" style="display:block;margin:0 auto 16px auto;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,0.2);" />
-                <h1 style="color:#ffffff;font-size:2.2rem;font-weight:600;margin:0;letter-spacing:-0.5px;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Welcome, ${firstName}!</h1>
-                <p style="color:#ecf0f1;font-size:1.1rem;margin:8px 0 0 0;font-weight:300;opacity:0.9;">Your journey begins here</p>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:40px 40px 30px 40px;">
-                <p style="font-size:1.2rem;color:#2c3e50;margin:0 0 20px 0;line-height:1.6;font-weight:400;">We are delighted to welcome you to <strong style="color:#3498db;">review.co.zw</strong>, the premier platform for authentic business reviews and insights.</p>
-                <p style="font-size:1rem;color:#5a6c7d;margin:0 0 32px 0;line-height:1.7;">Join our growing community of discerning consumers and business professionals who rely on honest, comprehensive reviews to make informed decisions.</p>
-                
-                <div style="background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);border-radius:12px;padding:24px;margin:32px 0;border-left:4px solid #3498db;">
-                  <h3 style="margin:0 0 16px 0;color:#2c3e50;font-size:1.1rem;font-weight:600;">What you can do:</h3>
-                  <ul style="margin:0;padding-left:20px;color:#5a6c7d;line-height:1.6;">
-                    <li style="margin-bottom:8px;">Explore and review businesses across various industries</li>
-                    <li style="margin-bottom:8px;">Share authentic experiences to help others</li>
-                    <li style="margin-bottom:8px;">Access detailed insights and ratings</li>
-                    <li style="margin-bottom:0;">Connect with a community of trusted reviewers</li>
-                  </ul>
-                </div>
-                
-                <a href="https://review.co.zw/login" style="display:inline-block;background:linear-gradient(135deg, #3498db 0%, #2980b9 100%);color:#ffffff;font-weight:600;padding:16px 40px;border-radius:12px;text-decoration:none;font-size:1.1rem;box-shadow:0 8px 24px rgba(52,152,219,0.3);margin-bottom:24px;transition:all 0.3s ease;border:none;">Access Your Account</a>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:0 40px 40px 40px;">
-                <p style="font-size:0.95rem;color:#7f8c8d;margin:0 0 12px 0;line-height:1.5;">If you did not create this account, please disregard this email or contact our support team immediately.</p>
-                <hr style="border:none;border-top:1px solid #ecf0f1;margin:32px 0;" />
-                <p style="font-size:0.9rem;color:#95a5a6;text-align:center;margin:0;font-weight:400;">&copy; ${new Date().getFullYear()} review.co.zw &mdash; Empowering informed decisions through authentic reviews</p>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </div>
+    <tr>
+      <td style="padding:0 34px 26px 34px;">
+        <hr style="border:none;border-top:1px solid #e5e7eb;margin:22px 0;" />
+        <p style="font-size:0.85rem;color:#6b7280;text-align:center;margin:0;font-weight:700;">
+          &copy; ${new Date().getFullYear()} UFO Networks — UFO WIFI Hotspots
+        </p>
+      </td>
+    </tr>
   `
-}
-
-export async function sendPaymentReminderEmail(to: string, firstName: string, companyName: string, planName: string, planPrice: number, expiryDate: string, daysUntilExpiry: number) {
-  const html = getPaymentReminderTemplate(firstName, companyName, planName, planPrice, expiryDate, daysUntilExpiry)
-  await transport.sendMail({
-    from: 'noreply@review.co.zw',
-    to,
-    subject: `Payment Reminder: Your ${companyName} subscription expires in ${daysUntilExpiry} days`,
-    html
-  })
-}
-
-function getPaymentReminderTemplate(firstName: string, companyName: string, planName: string, planPrice: number, expiryDate: string, daysUntilExpiry: number) {
-  const formattedPrice = planPrice === 0 ? 'Free' : `$${planPrice.toFixed(2)}`
-  
-  // Enhanced urgency colors with gradients
-  let urgencyGradient, urgencyText, urgencyAccent
-  if (daysUntilExpiry <= 3) {
-    urgencyGradient = 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)'
-    urgencyText = 'URGENT RENEWAL REQUIRED'
-    urgencyAccent = '#e74c3c'
-  } else if (daysUntilExpiry <= 7) {
-    urgencyGradient = 'linear-gradient(135deg, #f39c12 0%, #e67e22 100%)'
-    urgencyText = 'RENEWAL DUE SOON'
-    urgencyAccent = '#f39c12'
-  } else {
-    urgencyGradient = 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)'
-    urgencyText = 'SUBSCRIPTION RENEWAL REMINDER'
-    urgencyAccent = '#3498db'
-  }
-  
-  return `
-  <div style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);padding:0;margin:0;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;min-height:100vh;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);padding:0;margin:0;">
-      <tr>
-        <td align="center" style="padding:40px 20px;">
-          <table width="500" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border-radius:20px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,0.15);overflow:hidden;border:1px solid #f0f0f0;">
-            <tr>
-              <td align="center" style="padding:40px 0 30px 0;background:${urgencyGradient};">
-                <img src="https://review.co.zw/logo.png" alt="review.co.zw" width="64" height="64" style="display:block;margin:0 auto 16px auto;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,0.2);" />
-                <h1 style="color:#ffffff;font-size:1.8rem;font-weight:600;margin:0;letter-spacing:-0.5px;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">${urgencyText}</h1>
-                <p style="color:#ecf0f1;font-size:1rem;margin:8px 0 0 0;font-weight:300;opacity:0.9;">Action Required</p>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:40px 40px 30px 40px;">
-                <p style="font-size:1.2rem;color:#2c3e50;margin:0 0 20px 0;line-height:1.6;font-weight:400;">Dear <strong style="color:#3498db;">${firstName}</strong>,</p>
-                <p style="font-size:1.1rem;color:#5a6c7d;margin:0 0 24px 0;line-height:1.7;">We would like to inform you that your subscription for <strong style="color:#2c3e50;">${companyName}</strong> will expire in <span style="color:${urgencyAccent};font-weight:700;font-size:1.2rem;">${daysUntilExpiry} days</span> on <strong style="color:#2c3e50;">${expiryDate}</strong>.</p>
-                
-                <div style="background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);border-radius:16px;padding:28px;margin:32px 0;border-left:5px solid ${urgencyAccent};box-shadow:0 4px 12px rgba(0,0,0,0.05);">
-                  <h3 style="margin:0 0 20px 0;color:#2c3e50;font-size:1.2rem;font-weight:600;display:flex;align-items:center;">
-                    <span style="background:${urgencyAccent};color:white;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-right:12px;font-size:0.9rem;">ℹ</span>
-                    Subscription Details
-                  </h3>
-                  <div style="display:flex;justify-content:space-between;margin:12px 0;padding:8px 0;border-bottom:1px solid #ecf0f1;">
-                    <span style="color:#7f8c8d;font-weight:500;">Plan:</span>
-                    <span style="font-weight:600;color:#2c3e50;">${planName}</span>
-                  </div>
-                  <div style="display:flex;justify-content:space-between;margin:12px 0;padding:8px 0;border-bottom:1px solid #ecf0f1;">
-                    <span style="color:#7f8c8d;font-weight:500;">Price:</span>
-                    <span style="font-weight:600;color:#2c3e50;">${formattedPrice}</span>
-                  </div>
-                  <div style="display:flex;justify-content:space-between;margin:12px 0;padding:8px 0;">
-                    <span style="color:#7f8c8d;font-weight:500;">Expires:</span>
-                    <span style="font-weight:600;color:#2c3e50;">${expiryDate}</span>
-                  </div>
-                </div>
-                
-                <p style="font-size:1rem;color:#5a6c7d;margin:0 0 32px 0;line-height:1.7;">To ensure uninterrupted access to our premium features and maintain your business presence, we strongly recommend renewing your subscription before the expiration date.</p>
-                
-                <a href="https://review.co.zw/company/dashboard" style="display:inline-block;background:${urgencyGradient};color:#ffffff;font-weight:600;padding:16px 40px;border-radius:12px;text-decoration:none;font-size:1.1rem;box-shadow:0 8px 24px rgba(0,0,0,0.2);margin-bottom:24px;transition:all 0.3s ease;border:none;">Renew Subscription Now</a>
-                
-                <div style="background:linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);border-radius:12px;padding:20px;margin:24px 0;border-left:4px solid #27ae60;">
-                  <p style="font-size:0.95rem;color:#2c3e50;margin:0;line-height:1.6;font-weight:500;">
-                    <strong style="color:#27ae60;">Need assistance?</strong> Our dedicated support team is available to help you with any questions regarding your subscription or account management.
-                  </p>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:0 40px 40px 40px;">
-                <hr style="border:none;border-top:1px solid #ecf0f1;margin:32px 0;" />
-                <p style="font-size:0.9rem;color:#95a5a6;text-align:center;margin:0;font-weight:400;">&copy; ${new Date().getFullYear()} review.co.zw &mdash; Empowering informed decisions through authentic reviews</p>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </div>
-  `
-}
-
-export async function sendSubscriptionDowngradeEmail(to: string, firstName: string, companyName: string, planName: string, planPrice: number) {
-  const html = getSubscriptionDowngradeTemplate(firstName, companyName, planName, planPrice)
-  await transport.sendMail({
-    from: 'noreply@review.co.zw',
-    to,
-    subject: `Subscription Update: ${companyName} has been downgraded to the free plan`,
-    html
-  })
-}
-
-function getSubscriptionDowngradeTemplate(firstName: string, companyName: string, planName: string, planPrice: number) {
-  const formattedPrice = planPrice === 0 ? 'Free' : `$${planPrice.toFixed(2)}`
-  
-  return `
-  <div style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);padding:0;margin:0;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;min-height:100vh;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);padding:0;margin:0;">
-      <tr>
-        <td align="center" style="padding:40px 20px;">
-          <table width="500" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border-radius:20px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,0.15);overflow:hidden;border:1px solid #f0f0f0;">
-            <tr>
-              <td align="center" style="padding:40px 0 30px 0;background:linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);">
-                <img src="https://review.co.zw/logo.png" alt="review.co.zw" width="64" height="64" style="display:block;margin:0 auto 16px auto;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,0.2);" />
-                <h1 style="color:#ffffff;font-size:1.8rem;font-weight:600;margin:0;letter-spacing:-0.5px;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">SUBSCRIPTION UPDATED</h1>
-                <p style="color:#ecf0f1;font-size:1rem;margin:8px 0 0 0;font-weight:300;opacity:0.9;">Plan Change Notification</p>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:40px 40px 30px 40px;">
-                <p style="font-size:1.2rem;color:#2c3e50;margin:0 0 20px 0;line-height:1.6;font-weight:400;">Dear <strong style="color:#3498db;">${firstName}</strong>,</p>
-                <p style="font-size:1.1rem;color:#5a6c7d;margin:0 0 24px 0;line-height:1.7;">We would like to inform you that your subscription for <strong style="color:#2c3e50;">${companyName}</strong> has been automatically downgraded to our free plan due to expiration of your previous subscription.</p>
-                
-                <div style="background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);border-radius:16px;padding:28px;margin:32px 0;border-left:5px solid #95a5a6;box-shadow:0 4px 12px rgba(0,0,0,0.05);">
-                  <h3 style="margin:0 0 20px 0;color:#2c3e50;font-size:1.2rem;font-weight:600;display:flex;align-items:center;">
-                    <span style="background:#95a5a6;color:white;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-right:12px;font-size:0.9rem;">ℹ</span>
-                    New Subscription Details
-                  </h3>
-                  <div style="display:flex;justify-content:space-between;margin:12px 0;padding:8px 0;border-bottom:1px solid #ecf0f1;">
-                    <span style="color:#7f8c8d;font-weight:500;">Plan:</span>
-                    <span style="font-weight:600;color:#2c3e50;">${planName}</span>
-                  </div>
-                  <div style="display:flex;justify-content:space-between;margin:12px 0;padding:8px 0;">
-                    <span style="color:#7f8c8d;font-weight:500;">Price:</span>
-                    <span style="font-weight:600;color:#2c3e50;">${formattedPrice}</span>
-                  </div>
-                </div>
-                
-                <div style="background:linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);border-radius:12px;padding:24px;margin:24px 0;border-left:4px solid #f39c12;">
-                  <h4 style="margin:0 0 12px 0;color:#2c3e50;font-size:1.1rem;font-weight:600;">What this means:</h4>
-                  <ul style="margin:0;padding-left:20px;color:#5a6c7d;line-height:1.6;">
-                    <li style="margin-bottom:8px;">Your company profile remains active and visible</li>
-                    <li style="margin-bottom:8px;">Basic features are still available</li>
-                    <li style="margin-bottom:8px;">Some premium features may be limited</li>
-                    <li style="margin-bottom:0;">You can upgrade anytime to restore full access</li>
-                  </ul>
-                </div>
-                
-                <p style="font-size:1rem;color:#5a6c7d;margin:0 0 32px 0;line-height:1.7;">To restore access to all premium features and enhance your business presence, you can upgrade your subscription at any time through your company dashboard.</p>
-                
-                <a href="https://review.co.zw/company/dashboard" style="display:inline-block;background:linear-gradient(135deg, #3498db 0%, #2980b9 100%);color:#ffffff;font-weight:600;padding:16px 40px;border-radius:12px;text-decoration:none;font-size:1.1rem;box-shadow:0 8px 24px rgba(52,152,219,0.3);margin-bottom:24px;transition:all 0.3s ease;border:none;">Upgrade Subscription</a>
-                
-                <div style="background:linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);border-radius:12px;padding:20px;margin:24px 0;border-left:4px solid #27ae60;">
-                  <p style="font-size:0.95rem;color:#2c3e50;margin:0;line-height:1.6;font-weight:500;">
-                    <strong style="color:#27ae60;">Questions?</strong> Our support team is here to help you understand the changes and assist with any upgrade questions you may have.
-                  </p>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:0 40px 40px 40px;">
-                <hr style="border:none;border-top:1px solid #ecf0f1;margin:32px 0;" />
-                <p style="font-size:0.9rem;color:#95a5a6;text-align:center;margin:0;font-weight:400;">&copy; ${new Date().getFullYear()} review.co.zw &mdash; Empowering informed decisions through authentic reviews</p>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </div>
-  `
-}
-
-export async function sendReviewInvitationEmail({ to, name, companyName, invitationId, companyId, message }: {
-  to: string
-  name: string
-  companyName: string
-  invitationId: string
-  companyId: string
-  message: string
-}) {
-  const html = getReviewInvitationTemplate(name, companyName, invitationId, companyId, message)
-  await transport.sendMail({
-    from: 'noreply@review.co.zw',
-    to,
-    subject: `You're invited to review ${companyName} on review.co.zw`,
-    html
-  })
 }
 
 export async function sendPasswordResetEmail({ to, name, otpCode }: {
@@ -440,10 +52,10 @@ export async function sendPasswordResetEmail({ to, name, otpCode }: {
   try {
     const html = getPasswordResetTemplate({ name, otpCode })
     await transport.sendMail({
-      from: 'noreply@review.co.zw',
+      from: senderEmail,
       to,
-      subject: 'Password Reset Code - review.co.zw',
-      html
+      subject: 'UFO Networks - Password Reset Code',
+      html,
     })
     console.log(`[Password Reset Email] Sent to ${to}`)
   } catch (error: any) {
@@ -459,10 +71,10 @@ export async function sendPasswordResetConfirmationEmail({ to, name }: {
   try {
     const html = getPasswordResetConfirmationTemplate({ name })
     await transport.sendMail({
-      from: 'noreply@review.co.zw',
+      from: senderEmail,
       to,
-      subject: 'Password Reset Successful - review.co.zw',
-      html
+      subject: 'UFO Networks - Password Reset Successful',
+      html,
     })
     console.log(`[Password Reset Confirmation Email] Sent to ${to}`)
   } catch (error: any) {
@@ -482,14 +94,14 @@ export async function sendContactEmail({ firstName, lastName, email, phone, subj
   try {
     const html = getContactEmailTemplate({ firstName, lastName, email, phone, subject, message })
     await transport.sendMail({
-      from: 'noreply@review.co.zw',
-      to: 'admin@review.co.zw',
-      subject: `Contact Form: ${subject} - ${firstName} ${lastName}`,
-      html
+      from: senderEmail,
+      to: contactAdminEmail,
+      subject: `UFO Networks Contact Form: ${subject} - ${firstName} ${lastName}`,
+      html,
     })
-    console.log(`[Contact Email] Sent from ${email} to admin@review.co.zw`)
+    console.log(`[Contact Email] Sent from ${email} to ${contactAdminEmail}`)
   } catch (error: any) {
-    console.error(`[Contact Email] Error sending to admin@review.co.zw: ${error.message}`)
+    console.error(`[Contact Email] Error sending to ${contactAdminEmail}: ${error.message}`)
     throw error
   }
 }
@@ -502,91 +114,60 @@ function getContactEmailTemplate({ firstName, lastName, email, phone, subject, m
   subject: string
   message: string
 }) {
-  const subjectLabels: { [key: string]: string } = {
+  const subjectLabels: Record<string, string> = {
     general: 'General Inquiry',
-    business_claim: 'Business Claim Support',
+    voucher: 'Voucher Support',
     technical: 'Technical Support',
-    account: 'Account Issues',
-    billing: 'Billing & Subscriptions',
-    report: 'Report Inappropriate Content',
-    partnership: 'Partnership Opportunities',
-    feature_request: 'Feature Request',
-    bug_report: 'Bug Report',
-    other: 'Other'
+    agent: 'Agent Application',
+    partnership: 'Business Partnership',
+    other: 'Other',
   }
 
-  const subjectLabel = subjectLabels[subject] || 'General Inquiry'
-  
+  const subjectLabel = subjectLabels[subject] || subject
+
   return `
-  <div style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);padding:0;margin:0;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;min-height:100vh;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);padding:0;margin:0;">
+  <div style="background:linear-gradient(135deg,#185ff9 0%, #2d3040 100%);padding:0;margin:0;font-family:Segoe UI, Tahoma, Geneva, Verdana, sans-serif;min-height:100vh;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:linear-gradient(135deg,#185ff9 0%, #2d3040 100%);padding:0;margin:0;">
       <tr>
         <td align="center" style="padding:40px 20px;">
-          <table width="600" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border-radius:20px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,0.15);overflow:hidden;border:1px solid #f0f0f0;">
+          <table width="600" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border-radius:20px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,0.15);overflow:hidden;border:1px solid rgba(24,95,249,0.15);">
             <tr>
-              <td align="center" style="padding:40px 0 30px 0;background:linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
-                <img src="https://review.co.zw/logo.png" alt="review.co.zw" width="64" height="64" style="display:block;margin:0 auto 16px auto;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,0.2);" />
-                <h1 style="color:#ffffff;font-size:1.8rem;font-weight:600;margin:0;letter-spacing:-0.5px;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">New Contact Message</h1>
-                <p style="color:#ecf0f1;font-size:1rem;margin:8px 0 0 0;font-weight:300;opacity:0.9;">From review.co.zw contact form</p>
+              <td align="center" style="padding:34px 24px 26px 24px;background:linear-gradient(135deg,#185ff9 0%, #1f3b8a 100%);">
+                ${getUfoLogo()}
+                <h1 style="color:#ffffff;font-size:1.75rem;font-weight:800;margin:10px 0 0 0;letter-spacing:-0.4px;">New Contact Message</h1>
+                <p style="color:rgba(255,255,255,0.9);font-size:1rem;margin:8px 0 0 0;font-weight:500;">Sent from the UFO Networks website</p>
               </td>
             </tr>
             <tr>
-              <td style="padding:40px 40px 30px 40px;">
-                <div style="background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);border-radius:16px;padding:28px;margin:0 0 32px 0;border-left:5px solid #3498db;box-shadow:0 4px 12px rgba(0,0,0,0.05);">
-                  <h3 style="margin:0 0 20px 0;color:#2c3e50;font-size:1.2rem;font-weight:600;">📧 Contact Information</h3>
-                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;font-size:0.95rem;">
-                    <div>
-                      <strong style="color:#7f8c8d;">Name:</strong><br>
-                      <span style="color:#2c3e50;font-weight:500;">${firstName} ${lastName}</span>
-                    </div>
-                    <div>
-                      <strong style="color:#7f8c8d;">Email:</strong><br>
-                      <a href="mailto:${email}" style="color:#3498db;text-decoration:none;font-weight:500;">${email}</a>
-                    </div>
-                    ${phone ? `
-                    <div>
-                      <strong style="color:#7f8c8d;">Phone:</strong><br>
-                      <a href="tel:${phone}" style="color:#3498db;text-decoration:none;font-weight:500;">${phone}</a>
-                    </div>
-                    ` : ''}
-                    <div>
-                      <strong style="color:#7f8c8d;">Subject:</strong><br>
-                      <span style="color:#2c3e50;font-weight:500;">${subjectLabel}</span>
-                    </div>
+              <td style="padding:34px 34px 28px 34px;">
+                <div style="background:linear-gradient(135deg,#f8fafc 0%, #eef2ff 100%);border-radius:16px;padding:24px;margin:0 0 22px 0;border-left:5px solid #185ff9;">
+                  <h3 style="margin:0 0 16px 0;color:#1f2937;font-size:1.2rem;font-weight:800;">Contact Information</h3>
+                  <div style="font-size:0.95rem;line-height:1.8;">
+                    <div><strong style="color:#6b7280;">Name:</strong> <span style="color:#111827;font-weight:700;">${firstName} ${lastName}</span></div>
+                    <div><strong style="color:#6b7280;">Email:</strong> <a href="mailto:${email}" style="color:#185ff9;text-decoration:none;font-weight:700;">${email}</a></div>
+                    ${phone ? `<div><strong style="color:#6b7280;">Phone:</strong> <a href="tel:${phone}" style="color:#185ff9;text-decoration:none;font-weight:700;">${phone}</a></div>` : ''}
+                    <div><strong style="color:#6b7280;">Subject:</strong> <span style="color:#111827;font-weight:700;">${subjectLabel}</span></div>
                   </div>
                 </div>
 
-                <div style="background:linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);border-radius:16px;padding:28px;margin:32px 0;border-left:5px solid #27ae60;box-shadow:0 4px 12px rgba(0,0,0,0.05);">
-                  <h3 style="margin:0 0 20px 0;color:#2c3e50;font-size:1.2rem;font-weight:600;">💬 Message</h3>
-                  <div style="background:white;padding:20px;border-radius:12px;border:1px solid #e9ecef;">
-                    <p style="color:#2c3e50;line-height:1.7;margin:0;white-space:pre-wrap;font-size:1rem;">${message}</p>
+                <div style="background:linear-gradient(135deg,#eff6ff 0%, #eef2ff 100%);border-radius:16px;padding:24px;margin:22px 0;border-left:5px solid #185ff9;">
+                  <h3 style="margin:0 0 14px 0;color:#1f2937;font-size:1.2rem;font-weight:800;">Message</h3>
+                  <div style="background:#ffffff;padding:18px;border-radius:12px;border:1px solid #e5e7eb;">
+                    <p style="color:#111827;line-height:1.7;margin:0;white-space:pre-wrap;font-size:1rem;">${message}</p>
                   </div>
                 </div>
 
-                <div style="background:linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);border-radius:12px;padding:20px;margin:24px 0;border-left:4px solid #f39c12;">
-                  <h4 style="margin:0 0 12px 0;color:#2c3e50;font-size:1rem;font-weight:600;">📋 Quick Actions</h4>
-                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:0.9rem;">
-                    <a href="mailto:${email}?subject=Re: ${subjectLabel}" style="display:inline-block;background:#3498db;color:white;padding:8px 16px;border-radius:8px;text-decoration:none;text-align:center;font-weight:500;">Reply to ${firstName}</a>
-                    <a href="https://review.co.zw/admin" style="display:inline-block;background:#27ae60;color:white;padding:8px 16px;border-radius:8px;text-decoration:none;text-align:center;font-weight:500;">Admin Dashboard</a>
-                  </div>
-                </div>
-
-                <div style="background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);border-radius:12px;padding:20px;margin:24px 0;border-left:4px solid #6c757d;">
-                  <p style="font-size:0.95rem;color:#2c3e50;margin:0;line-height:1.6;font-weight:500;">
-                    <strong style="color:#6c757d;">Message Details:</strong><br>
-                    • Received: ${new Date().toLocaleString('en-US', { timeZone: 'Africa/Harare' })}<br>
-                    • Form: review.co.zw Contact Page<br>
-                    • IP: [Auto-detected by system]
+                <div style="background:linear-gradient(135deg,#f8fafc 0%, #eef2ff 100%);border-radius:12px;padding:18px;margin:22px 0;border-left:4px solid #185ff9;">
+                  <a href="mailto:${email}?subject=Re: ${subjectLabel}" style="display:inline-block;background:#185ff9;color:#ffffff;padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:800;font-size:0.95rem;">
+                    Reply to ${firstName}
+                  </a>
+                  <p style="margin:12px 0 0 0;color:#6b7280;font-size:0.9rem;">
+                    Received: ${new Date().toLocaleString('en-US', { timeZone: 'Africa/Harare' })}
                   </p>
                 </div>
               </td>
             </tr>
-            <tr>
-              <td style="padding:0 40px 40px 40px;">
-                <hr style="border:none;border-top:1px solid #ecf0f1;margin:32px 0;" />
-                <p style="font-size:0.9rem;color:#95a5a6;text-align:center;margin:0;font-weight:400;">&copy; ${new Date().getFullYear()} review.co.zw &mdash; Contact Form Notification</p>
-              </td>
-            </tr>
+            ${emailFooter()}
           </table>
         </td>
       </tr>
@@ -597,56 +178,43 @@ function getContactEmailTemplate({ firstName, lastName, email, phone, subject, m
 
 function getPasswordResetConfirmationTemplate({ name }: { name: string }) {
   return `
-  <div style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);padding:0;margin:0;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;min-height:100vh;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);padding:0;margin:0;">
+  <div style="background:linear-gradient(135deg,#185ff9 0%, #2d3040 100%);padding:0;margin:0;font-family:Segoe UI, Tahoma, Geneva, Verdana, sans-serif;min-height:100vh;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:linear-gradient(135deg,#185ff9 0%, #2d3040 100%);padding:0;margin:0;">
       <tr>
         <td align="center" style="padding:40px 20px;">
-          <table width="500" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border-radius:20px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,0.15);overflow:hidden;border:1px solid #f0f0f0;">
+          <table width="560" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border-radius:20px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,0.15);overflow:hidden;border:1px solid rgba(24,95,249,0.15);">
             <tr>
-              <td align="center" style="padding:40px 0 30px 0;background:linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);">
-                <img src="https://review.co.zw/logo.png" alt="review.co.zw" width="64" height="64" style="display:block;margin:0 auto 16px auto;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,0.2);" />
-                <h1 style="color:#ffffff;font-size:1.8rem;font-weight:600;margin:0;letter-spacing:-0.5px;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Password Reset Successful</h1>
-                <p style="color:#ecf0f1;font-size:1rem;margin:8px 0 0 0;font-weight:300;opacity:0.9;">Your account is now secure</p>
+              <td align="center" style="padding:34px 24px 26px 24px;background:linear-gradient(135deg,#185ff9 0%, #1f3b8a 100%);">
+                ${getUfoLogo()}
+                <h1 style="color:#ffffff;font-size:1.75rem;font-weight:800;margin:10px 0 0 0;letter-spacing:-0.4px;">Password Reset Successful</h1>
+                <p style="color:rgba(255,255,255,0.9);font-size:1rem;margin:8px 0 0 0;font-weight:500;">Your account is now protected</p>
               </td>
             </tr>
             <tr>
-              <td style="padding:40px 40px 30px 40px;">
-                <p style="font-size:1.2rem;color:#2c3e50;margin:0 0 20px 0;line-height:1.6;font-weight:400;">Hello <strong style="color:#3498db;">${name}</strong>,</p>
-                <p style="font-size:1.1rem;color:#5a6c7d;margin:0 0 24px 0;line-height:1.7;">Your password has been successfully reset for your review.co.zw account. You can now sign in with your new password.</p>
-                
-                <div style="background:linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);border-radius:16px;padding:32px;margin:32px 0;text-align:center;border:2px solid #27ae60;">
-                  <div style="font-size:4rem;margin-bottom:16px;">✅</div>
-                  <h3 style="margin:0 0 16px 0;color:#2c3e50;font-size:1.2rem;font-weight:600;">Password Reset Complete</h3>
-                  <p style="font-size:1rem;color:#5a6c7d;margin:0;">Your account is now secure with your new password</p>
+              <td style="padding:34px 34px 28px 34px;">
+                <p style="font-size:1.15rem;color:#111827;margin:0 0 14px 0;line-height:1.6;font-weight:500;">
+                  Hello <strong style="color:#185ff9;">${name}</strong>,
+                </p>
+                <p style="font-size:1.05rem;color:#4b5563;margin:0 0 18px 0;line-height:1.7;">
+                  Your password has been successfully reset. You can now sign in with your new password.
+                </p>
+
+                <div style="background:linear-gradient(135deg,#eff6ff 0%, #eef2ff 100%);border-radius:16px;padding:26px;margin:24px 0;border:1px solid rgba(24,95,249,0.18);text-align:center;">
+                  <div style="font-size:3.25rem;margin-bottom:10px;">✅</div>
+                  <h3 style="margin:0;color:#111827;font-size:1.2rem;font-weight:900;">All set!</h3>
+                  <p style="margin:8px 0 0 0;color:#4b5563;font-weight:600;">You can continue using UFO Networks safely.</p>
                 </div>
-                
-                <p style="font-size:1rem;color:#5a6c7d;margin:0 0 24px 0;line-height:1.7;">If you did not request this password reset, please contact our support team immediately as your account may have been compromised.</p>
-                
-                <a href="https://review.co.zw/login" style="display:inline-block;background:linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);color:#ffffff;font-weight:600;padding:16px 40px;border-radius:12px;text-decoration:none;font-size:1.1rem;box-shadow:0 8px 24px rgba(39,174,96,0.3);margin-bottom:24px;transition:all 0.3s ease;border:none;">Sign In Now</a>
-                
-                <div style="background:linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);border-radius:12px;padding:20px;margin:24px 0;border-left:4px solid #f39c12;">
-                  <h4 style="margin:0 0 12px 0;color:#2c3e50;font-size:1rem;font-weight:600;">Security Reminders:</h4>
-                  <ul style="margin:0;padding-left:20px;color:#5a6c7d;line-height:1.6;">
-                    <li style="margin-bottom:8px;">Keep your password secure and don't share it with anyone</li>
-                    <li style="margin-bottom:8px;">Use a strong, unique password for each account</li>
-                    <li style="margin-bottom:8px;">Enable two-factor authentication if available</li>
-                    <li style="margin-bottom:0;">Regularly review your account activity for any suspicious activity</li>
-                  </ul>
-                </div>
-                
-                <div style="background:linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);border-radius:12px;padding:20px;margin:24px 0;border-left:4px solid #27ae60;">
-                  <p style="font-size:0.95rem;color:#2c3e50;margin:0;line-height:1.6;font-weight:500;">
-                    <strong style="color:#27ae60;">Need help?</strong> Our support team is here to assist you with any questions about your account security.
-                  </p>
-                </div>
+
+                <p style="font-size:1rem;color:#4b5563;margin:0 0 22px 0;line-height:1.7;">
+                  If you didn&apos;t request this reset, please contact our support team immediately.
+                </p>
+
+                <a href="${appUrl}/login" style="display:inline-block;background:#185ff9;color:#ffffff;font-weight:900;padding:14px 34px;border-radius:12px;text-decoration:none;font-size:1.05rem;box-shadow:0 10px 25px rgba(24,95,249,0.25);">
+                  Sign In
+                </a>
               </td>
             </tr>
-            <tr>
-              <td style="padding:0 40px 40px 40px;">
-                <hr style="border:none;border-top:1px solid #ecf0f1;margin:32px 0;" />
-                <p style="font-size:0.9rem;color:#95a5a6;text-align:center;margin:0;font-weight:400;">&copy; ${new Date().getFullYear()} review.co.zw &mdash; Empowering informed decisions through authentic reviews</p>
-              </td>
-            </tr>
+            ${emailFooter()}
           </table>
         </td>
       </tr>
@@ -657,106 +225,39 @@ function getPasswordResetConfirmationTemplate({ name }: { name: string }) {
 
 function getPasswordResetTemplate({ name, otpCode }: { name: string, otpCode: string }) {
   return `
-  <div style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);padding:0;margin:0;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;min-height:100vh;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);padding:0;margin:0;">
+  <div style="background:linear-gradient(135deg,#185ff9 0%, #2d3040 100%);padding:0;margin:0;font-family:Segoe UI, Tahoma, Geneva, Verdana, sans-serif;min-height:100vh;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:linear-gradient(135deg,#185ff9 0%, #2d3040 100%);padding:0;margin:0;">
       <tr>
         <td align="center" style="padding:40px 20px;">
-          <table width="500" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border-radius:20px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,0.15);overflow:hidden;border:1px solid #f0f0f0;">
+          <table width="560" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border-radius:20px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,0.15);overflow:hidden;border:1px solid rgba(24,95,249,0.15);">
             <tr>
-              <td align="center" style="padding:40px 0 30px 0;background:linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
-                <img src="https://review.co.zw/logo.png" alt="review.co.zw" width="64" height="64" style="display:block;margin:0 auto 16px auto;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,0.2);" />
-                <h1 style="color:#ffffff;font-size:1.8rem;font-weight:600;margin:0;letter-spacing:-0.5px;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Password Reset</h1>
-                <p style="color:#ecf0f1;font-size:1rem;margin:8px 0 0 0;font-weight:300;opacity:0.9;">Secure access to your account</p>
+              <td align="center" style="padding:34px 24px 26px 24px;background:linear-gradient(135deg,#185ff9 0%, #1f3b8a 100%);">
+                ${getUfoLogo()}
+                <h1 style="color:#ffffff;font-size:1.75rem;font-weight:800;margin:10px 0 0 0;letter-spacing:-0.4px;">Password Reset</h1>
+                <p style="color:rgba(255,255,255,0.9);font-size:1rem;margin:8px 0 0 0;font-weight:500;">Use the code below to reset your password</p>
               </td>
             </tr>
             <tr>
-              <td style="padding:40px 40px 30px 40px;">
-                <p style="font-size:1.2rem;color:#2c3e50;margin:0 0 20px 0;line-height:1.6;font-weight:400;">Hello <strong style="color:#3498db;">${name}</strong>,</p>
-                <p style="font-size:1.1rem;color:#5a6c7d;margin:0 0 24px 0;line-height:1.7;">We received a request to reset your password for your review.co.zw account. Use the verification code below to complete the process.</p>
-                
-                <div style="background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);border-radius:16px;padding:32px;margin:32px 0;text-align:center;border:2px dashed #dee2e6;">
-                  <h3 style="margin:0 0 16px 0;color:#2c3e50;font-size:1.1rem;font-weight:600;">Your Verification Code</h3>
-                  <div style="font-size:3rem;font-weight:700;color:#e74c3c;letter-spacing:0.5rem;font-family:'Courier New', monospace;margin:16px 0;">${otpCode}</div>
-                  <p style="font-size:0.9rem;color:#6c757d;margin:0;">This code will expire in 10 minutes</p>
-                </div>
-                
-                <p style="font-size:1rem;color:#5a6c7d;margin:0 0 24px 0;line-height:1.7;">If you didn't request this password reset, please ignore this email. Your account security is important to us.</p>
-                
-                <div style="background:linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);border-radius:12px;padding:20px;margin:24px 0;border-left:4px solid #f39c12;">
-                  <h4 style="margin:0 0 12px 0;color:#2c3e50;font-size:1rem;font-weight:600;">Security Tips:</h4>
-                  <ul style="margin:0;padding-left:20px;color:#5a6c7d;line-height:1.6;">
-                    <li style="margin-bottom:8px;">Never share this code with anyone</li>
-                    <li style="margin-bottom:8px;">Use a strong, unique password</li>
-                    <li style="margin-bottom:8px;">Enable two-factor authentication if available</li>
-                    <li style="margin-bottom:0;">Contact support if you suspect unauthorized access</li>
-                  </ul>
-                </div>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:0 40px 40px 40px;">
-                <hr style="border:none;border-top:1px solid #ecf0f1;margin:32px 0;" />
-                <p style="font-size:0.9rem;color:#95a5a6;text-align:center;margin:0;font-weight:400;">&copy; ${new Date().getFullYear()} review.co.zw &mdash; Empowering informed decisions through authentic reviews</p>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </div>
-  `
-}
+              <td style="padding:34px 34px 28px 34px;">
+                <p style="font-size:1.15rem;color:#111827;margin:0 0 14px 0;line-height:1.6;font-weight:600;">
+                  Hello <strong style="color:#185ff9;">${name}</strong>,
+                </p>
+                <p style="font-size:1.05rem;color:#4b5563;margin:0 0 18px 0;line-height:1.7;">
+                  We received a request to reset your password. Use the verification code below to complete the process.
+                </p>
 
-function getReviewInvitationTemplate(name: string, companyName: string, invitationId: string, companyId: string, message: string) {
-  const reviewUrl = `https://review.co.zw/write-review-${companyId}-${invitationId}`
-  
-  return `
-  <div style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);padding:0;margin:0;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;min-height:100vh;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);padding:0;margin:0;">
-      <tr>
-        <td align="center" style="padding:40px 20px;">
-          <table width="500" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border-radius:20px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,0.15);overflow:hidden;border:1px solid #f0f0f0;">
-            <tr>
-              <td align="center" style="padding:40px 0 30px 0;background:linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
-                <img src="https://review.co.zw/logo.png" alt="review.co.zw" width="64" height="64" style="display:block;margin:0 auto 16px auto;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,0.2);" />
-                <h1 style="color:#ffffff;font-size:1.8rem;font-weight:600;margin:0;letter-spacing:-0.5px;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">Review Invitation</h1>
-                <p style="color:#ecf0f1;font-size:1rem;margin:8px 0 0 0;font-weight:300;opacity:0.9;">Share your experience with ${companyName}</p>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding:40px 40px 30px 40px;">
-                <p style="font-size:1.2rem;color:#2c3e50;margin:0 0 20px 0;line-height:1.6;font-weight:400;">Hello <strong style="color:#3498db;">${name}</strong>,</p>
-                <p style="font-size:1.1rem;color:#5a6c7d;margin:0 0 24px 0;line-height:1.7;">You have been invited to share your experience and review <strong style="color:#2c3e50;">${companyName}</strong> on review.co.zw.</p>
-                
-                ${message ? `
-                <div style="background:linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);border-radius:12px;padding:20px;margin:24px 0;border-left:4px solid #3498db;">
-                  <p style="font-size:1rem;color:#5a6c7d;margin:0;line-height:1.6;font-style:italic;">"${message}"</p>
+                <div style="background:linear-gradient(135deg,#f8fafc 0%, #eef2ff 100%);border-radius:16px;padding:26px;margin:24px 0;text-align:center;border:1px solid #e5e7eb;">
+                  <h3 style="margin:0 0 10px 0;color:#111827;font-size:1.05rem;font-weight:900;">Your Verification Code</h3>
+                  <div style="font-size:3.15rem;font-weight:900;color:#185ff9;letter-spacing:0.25rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;margin:14px 0 8px 0;">${otpCode}</div>
+                  <p style="font-size:0.95rem;color:#6b7280;margin:0;font-weight:700;">This code will expire in 10 minutes</p>
                 </div>
-                ` : ''}
-                
-                <p style="font-size:1rem;color:#5a6c7d;margin:0 0 32px 0;line-height:1.7;">Your honest feedback helps other customers make informed decisions and helps businesses improve their services.</p>
-                
-                <a href="${reviewUrl}" style="display:inline-block;background:linear-gradient(135deg, #3498db 0%, #2980b9 100%);color:#ffffff;font-weight:600;padding:16px 40px;border-radius:12px;text-decoration:none;font-size:1.1rem;box-shadow:0 8px 24px rgba(52,152,219,0.3);margin-bottom:24px;transition:all 0.3s ease;border:none;">Write Your Review</a>
-                
-                <div style="background:linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);border-radius:12px;padding:20px;margin:24px 0;border-left:4px solid #27ae60;">
-                  <h4 style="margin:0 0 12px 0;color:#2c3e50;font-size:1.1rem;font-weight:600;">What to expect:</h4>
-                  <ul style="margin:0;padding-left:20px;color:#5a6c7d;line-height:1.6;">
-                    <li style="margin-bottom:8px;">Share your honest experience and rating</li>
-                    <li style="margin-bottom:8px;">Help other customers make informed decisions</li>
-                    <li style="margin-bottom:8px;">Contribute to the community of authentic reviews</li>
-                    <li style="margin-bottom:0;">Your review will be visible to thousands of users</li>
-                  </ul>
-                </div>
-                
-                <p style="font-size:0.95rem;color:#7f8c8d;margin:0 0 12px 0;line-height:1.5;">If you don't have an account yet, you'll be prompted to create one when you click the review button.</p>
+
+                <p style="font-size:1rem;color:#4b5563;margin:0 0 22px 0;line-height:1.7;">
+                  If you didn&apos;t request this password reset, please ignore this email.
+                </p>
               </td>
             </tr>
-            <tr>
-              <td style="padding:0 40px 40px 40px;">
-                <hr style="border:none;border-top:1px solid #ecf0f1;margin:32px 0;" />
-                <p style="font-size:0.9rem;color:#95a5a6;text-align:center;margin:0;font-weight:400;">&copy; ${new Date().getFullYear()} review.co.zw &mdash; Empowering informed decisions through authentic reviews</p>
-              </td>
-            </tr>
+            ${emailFooter()}
           </table>
         </td>
       </tr>

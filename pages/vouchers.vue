@@ -328,7 +328,7 @@
 </template>
 
 <script lang="ts" setup>
-
+import { getFetchErrorMessage } from '~/utils/getFetchErrorMessage'
 
 // Toast
 const toast = useToast()
@@ -540,9 +540,9 @@ const processOrder = async () => {
     console.error('Error processing order:', error)
     toast.add({
       severity: 'error',
-      summary: 'Error',
-      detail: error.message || 'Failed to process order',
-      life: 3000
+      summary: 'Payment Error',
+      detail: getFetchErrorMessage(error, 'Failed to process order'),
+      life: 8000
     })
   } finally {
     processingOrder.value = false

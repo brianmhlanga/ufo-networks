@@ -274,6 +274,8 @@
  </template>
 
 <script setup lang="ts">
+import { getFetchErrorMessage } from '~/utils/getFetchErrorMessage'
+
 // Get user session
 const session = useUserSession()
 
@@ -481,9 +483,9 @@ const confirmPurchase = async () => {
     console.error('Purchase error:', error)
     toast.add({
       severity: 'error',
-      summary: 'Error',
-      detail: error.data?.message || 'Failed to complete purchase',
-      life: 3000
+      summary: 'Payment Error',
+      detail: getFetchErrorMessage(error, 'Failed to complete purchase'),
+      life: 8000
     })
   } finally {
     purchasing.value = false
