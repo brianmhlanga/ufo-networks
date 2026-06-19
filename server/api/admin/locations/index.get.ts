@@ -31,10 +31,10 @@ export default defineEventHandler(async (event) => {
 
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { code: { contains: search, mode: 'insensitive' } },
-        { town: { contains: search, mode: 'insensitive' } },
-        { area: { contains: search, mode: 'insensitive' } }
+        { name: { contains: search } },
+        { code: { contains: search } },
+        { town: { contains: search } },
+        { area: { contains: search } }
       ]
     }
 

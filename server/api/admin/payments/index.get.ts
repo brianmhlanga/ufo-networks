@@ -44,9 +44,9 @@ export default defineEventHandler(async (event) => {
     
     if (search) {
       where.OR = [
-        { paynowReference: { contains: search, mode: 'insensitive' } },
-        { paynowStatusMsg: { contains: search, mode: 'insensitive' } },
-        { id: { contains: search, mode: 'insensitive' } }
+        { paynowReference: { contains: search } },
+        { paynowStatusMsg: { contains: search } },
+        { id: { contains: search } }
       ]
     }
     

@@ -42,8 +42,8 @@ export default defineEventHandler(async (event) => {
     // Add search filter
     if (search) {
       where.OR = [
-        { voucherNumber: { contains: search, mode: 'insensitive' } },
-        { pin: { contains: search, mode: 'insensitive' } }
+        { voucherNumber: { contains: search } },
+        { pin: { contains: search } }
       ]
     }
 

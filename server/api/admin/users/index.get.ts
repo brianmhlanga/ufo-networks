@@ -1,6 +1,9 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, Role } from '@prisma/client'
 
 const prisma = new PrismaClient()
+
+const VALID_ROLES = new Set<string>(Object.values(Role))
+const VALID_STATUSES = new Set(['ACTIVE', 'INACTIVE', 'BLACKLISTED'])
 
 export default defineEventHandler(async (event) => {
   try {
@@ -32,19 +35,19 @@ export default defineEventHandler(async (event) => {
     // Search filter
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
-        { phone: { contains: search, mode: 'insensitive' } }
+        { name: { contains: search } },
+        { email: { contains: search } },
+        { phone: { contains: search } }
       ]
     }
 
-    // Role filter
-    if (role) {
-      where.role = role
+    // Role filter — ignore placeholders like "All Roles"
+    if (role && VALID_ROLES.has(role)) {
+      where.role = role as Role
     }
 
-    // Status filter (if implemented in schema)
-    if (status) {
+    // Status filter
+    if (status && VALID_STATUSES.has(status)) {
       where.status = status
     }
 

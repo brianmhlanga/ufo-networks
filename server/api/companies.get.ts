@@ -34,14 +34,12 @@ export default defineEventHandler(async (event) => {
       whereClause.OR = [
         {
           name: {
-            contains: search,
-            mode: 'insensitive'
+            contains: search
           }
         },
         {
           description: {
-            contains: search,
-            mode: 'insensitive'
+            contains: search
           }
         }
       ]

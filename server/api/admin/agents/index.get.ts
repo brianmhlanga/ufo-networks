@@ -43,10 +43,10 @@ export default defineEventHandler(async (event) => {
     // Add search filter
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
-        { phone: { contains: search, mode: 'insensitive' } },
-        { agentProfile: { displayName: { contains: search, mode: 'insensitive' } } }
+        { name: { contains: search } },
+        { email: { contains: search } },
+        { phone: { contains: search } },
+        { agentProfile: { displayName: { contains: search } } }
       ]
     }
 

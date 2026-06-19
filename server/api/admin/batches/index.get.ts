@@ -42,8 +42,8 @@ export default defineEventHandler(async (event) => {
     
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { location: { name: { contains: search, mode: 'insensitive' } } }
+        { name: { contains: search } },
+        { location: { name: { contains: search } } }
       ]
     }
     

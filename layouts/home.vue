@@ -138,8 +138,8 @@
             </div>
             <div class="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-gray-300 text-sm">
               <div class="flex items-center gap-6">
-                <a href="#" class="hover:text-primary transition-colors">Terms of Service</a>
-                <a href="#" class="hover:text-primary transition-colors">Privacy Policy</a>
+                <NuxtLink to="/terms-of-service" class="hover:text-primary transition-colors">Terms of Service</NuxtLink>
+                <NuxtLink to="/privacy-policy" class="hover:text-primary transition-colors">Privacy Policy</NuxtLink>
                 <a href="#" class="hover:text-primary transition-colors">Cookie Policy</a>
               </div>
               <span class="text-gray-400">

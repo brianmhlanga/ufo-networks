@@ -55,8 +55,8 @@ export default defineEventHandler(async (event) => {
     // Add search filter
     if (search) {
       whereClause.OR = [
-        { buyerNote: { contains: String(search), mode: 'insensitive' } },
-        { buyerPhone: { contains: String(search), mode: 'insensitive' } }
+        { buyerNote: { contains: String(search) } },
+        { buyerPhone: { contains: String(search) } }
       ]
     }
 

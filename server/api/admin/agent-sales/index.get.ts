@@ -44,10 +44,10 @@ export default defineEventHandler(async (event) => {
     
     if (search) {
       where.OR = [
-        { buyerPhone: { contains: search, mode: 'insensitive' } },
-        { buyerNote: { contains: search, mode: 'insensitive' } },
-        { id: { contains: search, mode: 'insensitive' } },
-        { voucher: { voucherNumber: { contains: search, mode: 'insensitive' } } }
+        { buyerPhone: { contains: search } },
+        { buyerNote: { contains: search } },
+        { id: { contains: search } },
+        { voucher: { voucherNumber: { contains: search } } }
       ]
     }
     
