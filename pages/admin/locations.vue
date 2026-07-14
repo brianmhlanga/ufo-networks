@@ -341,6 +341,17 @@
             />
           </div>
 
+          <!-- WiFi Password -->
+          <div>
+            <label for="wifiPassword" class="font-medium text-[#2d3040] mb-2 block">WiFi Password</label>
+            <InputText
+              id="wifiPassword"
+              v-model="locationForm.wifiPassword"
+              placeholder="e.g., 12345678"
+            />
+            <small class="text-[#2d3040]/60">Printed on vouchers so customers can join the network</small>
+          </div>
+
           <!-- Coordinates -->
           <div class="md:col-span-2">
             <label class="font-medium text-[#2d3040] mb-2 block">Coordinates</label>
@@ -462,6 +473,10 @@
               <label class="font-medium text-[#2d3040]/60 text-sm">SSID</label>
               <p class="text-[#2d3040]">{{ selectedLocation.ssid || 'N/A' }}</p>
             </div>
+            <div>
+              <label class="font-medium text-[#2d3040]/60 text-sm">WiFi Password</label>
+              <p class="text-[#2d3040]">{{ selectedLocation.wifiPassword || 'N/A' }}</p>
+            </div>
             <div class="col-span-2">
               <label class="font-medium text-[#2d3040]/60 text-sm">Coordinates</label>
               <p class="text-[#2d3040]">
@@ -535,6 +550,7 @@ const locationForm = ref({
   province: '',
   routerModel: '',
   ssid: '',
+  wifiPassword: '',
   latitude: null,
   longitude: null,
   status: 'ACTIVE',
@@ -629,6 +645,7 @@ const resetForm = () => {
     province: '',
     routerModel: '',
     ssid: '',
+    wifiPassword: '',
     latitude: null,
     longitude: null,
     status: 'ACTIVE',
@@ -666,6 +683,7 @@ const saveLocation = async () => {
       province: locationForm.value.province,
       routerModel: locationForm.value.routerModel,
       ssid: locationForm.value.ssid,
+      wifiPassword: locationForm.value.wifiPassword,
       latitude: locationForm.value.latitude,
       longitude: locationForm.value.longitude,
       status: locationForm.value.status,
@@ -727,6 +745,7 @@ const editLocation = (location: any) => {
     province: location.province,
     routerModel: location.routerModel || '',
     ssid: location.ssid || '',
+    wifiPassword: location.wifiPassword || '',
     latitude: location.coordinates?.lat || null,
     longitude: location.coordinates?.lng || null,
     status: location.status || 'ACTIVE',

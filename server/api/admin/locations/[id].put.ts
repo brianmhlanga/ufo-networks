@@ -33,6 +33,7 @@ export default defineEventHandler(async (event) => {
       province,
       routerModel,
       ssid,
+      wifiPassword,
       latitude,
       longitude,
       status,
@@ -89,6 +90,7 @@ export default defineEventHandler(async (event) => {
         town,
         area,
         province,
+        wifiPassword: String(wifiPassword || '').trim() || null,
         latitude: latitude ? parseFloat(latitude) : null,
         longitude: longitude ? parseFloat(longitude) : null,
         meta: Object.keys(meta).length > 0 ? meta : null
@@ -118,6 +120,7 @@ export default defineEventHandler(async (event) => {
       voucherCount: location._count.vouchers,
       routerModel: location.meta?.routerModel || '',
       ssid: location.meta?.ssid || '',
+      wifiPassword: location.wifiPassword || '',
       coordinates: location.latitude && location.longitude 
         ? { lat: location.latitude, lng: location.longitude }
         : null,

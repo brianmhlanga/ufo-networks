@@ -193,6 +193,7 @@ export default defineEventHandler(async (event) => {
           pin: updatedVoucher.pin,
           hours: updatedVoucher.hours,
           numberOfUsers: updatedVoucher.numberOfUsers,
+          dataLimitGb: updatedVoucher.dataLimitGb,
           endDate: updatedVoucher.endDate,
           location: updatedVoucher.location
         })

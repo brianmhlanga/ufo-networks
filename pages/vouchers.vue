@@ -110,23 +110,27 @@
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
-                    <InputText 
-                      v-model="customerEmail" 
-                      type="email" 
-                      placeholder="your@email.com" 
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email Address (Optional)</label>
+                    <InputText
+                      v-model="customerEmail"
+                      type="email"
                       class="w-full"
-                      required
                     />
+                    <small class="text-gray-500">We'll email your voucher PINs here if you provide an address.</small>
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number (Optional)</label>
-                    <InputText 
-                      v-model="customerPhone" 
-                      type="tel" 
-                      placeholder="+263 77 123 4567" 
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
+                    <InputText
+                      v-model="customerPhone"
+                      type="tel"
                       class="w-full"
+                      :class="{ 'p-invalid': customerPhone && !isValidZimbabwePhone(customerPhone) }"
+                      required
                     />
+                    <small v-if="customerPhone && !isValidZimbabwePhone(customerPhone)" class="p-error">
+                      Enter a Zimbabwean mobile number, e.g. 077 123 4567. International numbers are not accepted.
+                    </small>
+                    <small v-else class="text-gray-500">Zimbabwean mobile numbers only.</small>
                   </div>
                 </div>
               </div>
@@ -234,22 +238,25 @@
                   <div v-if="paymentMethod === 'mobile'" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
-                      <InputText 
-                        v-model="mobilePhone" 
-                        type="tel" 
-                        placeholder="077 123 4567" 
+                      <InputText
+                        v-model="mobilePhone"
+                        type="tel"
                         class="w-full"
+                        :class="{ 'p-invalid': mobilePhone && !isValidZimbabwePhone(mobilePhone) }"
                         required
                       />
+                      <small v-if="mobilePhone && !isValidZimbabwePhone(mobilePhone)" class="p-error">
+                        Enter the Zimbabwean mobile number registered for mobile money.
+                      </small>
                     </div>
                     <div>
                       <label class="block text-sm font-medium text-gray-700 mb-2">Mobile Provider *</label>
-                      <Select 
-                        v-model="mobileProvider" 
-                        :options="mobileProviderOptions" 
-                        optionLabel="label" 
+                      <Select
+                        v-model="mobileProvider"
+                        :options="mobileProviderOptions"
+                        optionLabel="label"
                         optionValue="value"
-                        placeholder="Select Provider" 
+                        placeholder="Select Provider"
                         class="w-full"
                         required
                       />
@@ -260,11 +267,11 @@
 
               <!-- Submit Button -->
               <div class="flex justify-center">
-                <Button 
-                  type="submit" 
-                  :label="processingOrder ? 'Processing...' : 'Proceed to Payment'" 
+                <Button
+                  type="submit"
+                  :label="processingOrder ? 'Processing...' : 'Proceed to Payment'"
                   :loading="processingOrder"
-                  :disabled="orderSummary.totalItems === 0 || !selectedLocation || !customerEmail"
+                  :disabled="!canSubmitOrder"
                   class="bg-[#185ff9] hover:bg-[#185ff9]/90 text-white px-8 py-3 text-lg font-medium"
                   size="large"
                 />
@@ -357,6 +364,18 @@ const orderSummary = ref({
 // Payment polling state
 const showPaymentPolling = ref(false)
 const paymentPollingData = ref<any>(null)
+
+const canSubmitOrder = computed(() => {
+  if (orderSummary.value.totalItems === 0 || !selectedLocation.value) return false
+  if (!isValidZimbabwePhone(customerPhone.value)) return false
+  if (customerEmail.value && !customerEmail.value.includes('@')) return false
+
+  if (paymentMethod.value === 'mobile') {
+    return isValidZimbabwePhone(mobilePhone.value) && Boolean(mobileProvider.value)
+  }
+
+  return true
+})
 
 // Options
 const locationOptions = ref<any[]>([])
@@ -467,22 +486,33 @@ const updateOrderSummary = () => {
 
 const processOrder = async () => {
   try {
-    // Basic validation
-    if (!customerEmail.value || !customerEmail.value.includes('@')) {
+    // Basic validation. Email is optional; the phone number is not, because it is the number
+    // the voucher code is (or will be) sent to.
+    if (customerEmail.value && !customerEmail.value.includes('@')) {
       toast.add({
         severity: 'error',
         summary: 'Validation Error',
-        detail: 'Please enter a valid email address',
+        detail: 'Please enter a valid email address, or leave it blank',
         life: 3000
       })
       return
     }
 
-    if (paymentMethod.value === 'mobile' && (!mobilePhone.value || !mobileProvider.value)) {
+    if (!isValidZimbabwePhone(customerPhone.value)) {
       toast.add({
         severity: 'error',
         summary: 'Validation Error',
-        detail: 'Please fill in all required fields for mobile payment',
+        detail: 'Please enter a valid Zimbabwean mobile number, e.g. 077 123 4567',
+        life: 3000
+      })
+      return
+    }
+
+    if (paymentMethod.value === 'mobile' && (!isValidZimbabwePhone(mobilePhone.value) || !mobileProvider.value)) {
+      toast.add({
+        severity: 'error',
+        summary: 'Validation Error',
+        detail: 'Enter a valid Zimbabwean mobile money number and select a provider',
         life: 3000
       })
       return
@@ -503,11 +533,11 @@ const processOrder = async () => {
     // Create order
     const orderData = {
       locationId: selectedLocation.value,
-      customerEmail: customerEmail.value,
-      customerPhone: customerPhone.value,
+      customerEmail: customerEmail.value?.trim() || undefined,
+      customerPhone: normalizeZimbabwePhone(customerPhone.value),
       items: orderSummary.value.items,
       paymentMethod: paymentMethod.value,
-      mobilePhone: paymentMethod.value === 'mobile' ? mobilePhone.value : undefined,
+      mobilePhone: paymentMethod.value === 'mobile' ? normalizeZimbabwePhone(mobilePhone.value) : undefined,
       mobileProvider: paymentMethod.value === 'mobile' ? mobileProvider.value : undefined
     }
 

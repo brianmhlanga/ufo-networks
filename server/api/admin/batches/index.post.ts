@@ -36,9 +36,10 @@ export default defineEventHandler(async (event) => {
       currency,
       hours,
       numberOfUsers,
+      dataLimitGb,
       startDate,
       endDate,
-      notes 
+      notes
     } = body
 
     // Validation
@@ -128,61 +129,31 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-         // Create batch
-     const batch = await prisma.voucherBatch.create({
-       data: {
-         name,
-         notes: notes || '',
-         locationId,
-         retailPrice: parseFloat(retailPrice),
-         hours: parseInt(hours),
-         numberOfUsers: parseInt(numberOfUsers),
-         startDate: startDateObj,
-         endDate: endDateObj,
-         active: true
-       },
-       include: {
-         location: {
-           select: {
-             id: true,
-             name: true,
-             code: true
-           }
-         }
-       }
-     })
-
-     // Create a single voucher for manual batch creation
-     await prisma.voucher.create({
-       data: {
-         batchNumber: `MANUAL_${Date.now()}`, // Generate a unique batch number for manual batches
-         batchId: batch.id,
-         locationId: batch.locationId,
-         retailPrice: batch.retailPrice,
-         hours: batch.hours,
-         numberOfUsers: batch.numberOfUsers,
-         startDate: batch.startDate,
-         endDate: batch.endDate,
-         status: 'AVAILABLE',
-         active: true
-       }
-     })
-
-     // Create a default voucher for the batch (this will be replaced when actual vouchers are generated)
-     await prisma.voucher.create({
-       data: {
-         batchNumber: '00000000', // Placeholder
-         batchId: batch.id,
-         locationId: batch.locationId,
-         retailPrice: batch.retailPrice,
-         hours: batch.hours,
-         numberOfUsers: batch.numberOfUsers,
-         startDate: batch.startDate,
-         endDate: batch.endDate,
-         status: 'AVAILABLE',
-         active: true
-       }
-     })
+    // Create batch. No vouchers are created here — real voucher numbers only ever come from the
+    // PDF upload (/api/admin/batches/upload), which is the router's own export.
+    const batch = await prisma.voucherBatch.create({
+      data: {
+        name,
+        notes: notes || '',
+        locationId,
+        retailPrice: parseFloat(retailPrice),
+        hours: parseInt(hours),
+        numberOfUsers: parseInt(numberOfUsers),
+        dataLimitGb: dataLimitGb && parseInt(dataLimitGb) > 0 ? parseInt(dataLimitGb) : null,
+        startDate: startDateObj,
+        endDate: endDateObj,
+        active: true
+      },
+      include: {
+        location: {
+          select: {
+            id: true,
+            name: true,
+            code: true
+          }
+        }
+      }
+    })
 
     const audit = await getAuditActor(event)
     await writeAuditLog(prisma, {

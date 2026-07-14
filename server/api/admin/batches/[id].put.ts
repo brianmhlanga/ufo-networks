@@ -43,6 +43,7 @@ export default defineEventHandler(async (event) => {
       retailPrice,
       hours,
       numberOfUsers,
+      dataLimitGb,
       startDate,
       endDate,
       active,
@@ -120,29 +121,52 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Update batch
-    const updatedBatch = await prisma.voucherBatch.update({
-      where: { id: batchId },
-      data: {
-        name,
-        locationId,
-        retailPrice: parseFloat(retailPrice),
-        hours: parseInt(hours),
-        numberOfUsers: parseInt(numberOfUsers),
-        startDate: startDateObj,
-        endDate: endDateObj,
-        active: typeof active === 'boolean' ? active : existingBatch.active,
-        notes: notes || ''
-      },
-      include: {
-        location: {
-          select: {
-            id: true,
-            name: true,
-            code: true
+    const resolvedDataLimit =
+      dataLimitGb && parseInt(dataLimitGb) > 0 ? parseInt(dataLimitGb) : null
+
+    // Update the batch, and carry the commercial fields down onto vouchers that have not been
+    // sold yet — they were stamped with a copy of the batch's values when they were created.
+    const updatedBatch = await prisma.$transaction(async (tx) => {
+      const updated = await tx.voucherBatch.update({
+        where: { id: batchId },
+        data: {
+          name,
+          locationId,
+          retailPrice: parseFloat(retailPrice),
+          hours: parseInt(hours),
+          numberOfUsers: parseInt(numberOfUsers),
+          dataLimitGb: resolvedDataLimit,
+          startDate: startDateObj,
+          endDate: endDateObj,
+          active: typeof active === 'boolean' ? active : existingBatch.active,
+          notes: notes || ''
+        },
+        include: {
+          location: {
+            select: {
+              id: true,
+              name: true,
+              code: true
+            }
           }
         }
-      }
+      })
+
+      await tx.voucher.updateMany({
+        where: { batchId, status: 'AVAILABLE' },
+        data: {
+          locationId: updated.locationId,
+          retailPrice: updated.retailPrice,
+          hours: updated.hours,
+          numberOfUsers: updated.numberOfUsers,
+          dataLimitGb: updated.dataLimitGb,
+          startDate: updated.startDate,
+          endDate: updated.endDate,
+          expiryDate: updated.endDate
+        }
+      })
+
+      return updated
     })
 
     return {

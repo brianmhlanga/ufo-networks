@@ -547,6 +547,7 @@ function saleForReceipt(voucher: any) {
       pin: voucher.pin,
       hours: voucher.hours,
       numberOfUsers: voucher.numberOfUsers,
+      dataLimitGb: voucher.dataLimitGb ?? null,
       endDate: voucher.endDate,
       location: voucher.location
     },

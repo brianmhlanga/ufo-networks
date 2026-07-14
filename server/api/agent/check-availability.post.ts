@@ -28,20 +28,31 @@ export default defineEventHandler(async (event) => {
 
     // Get request body
     const body = await readBody(event)
-    const { locationId, hours, numberOfUsers } = body
+    const { hours, numberOfUsers } = body
 
     // Validate required fields
-    if (!locationId || !hours || !numberOfUsers) {
+    if (!hours || !numberOfUsers) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Missing required fields: locationId, hours, numberOfUsers'
+        statusMessage: 'Missing required fields: hours, numberOfUsers'
       })
     }
 
-    // Check vouchers in stock at the specific location
+    // The agent's own location, not one supplied in the request body — an agent may only ever
+    // see stock for the location they are assigned to.
+    if (!agentProfile.locationId) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'No location assigned to your agent account. Contact an administrator.'
+      })
+    }
+
+    const locationId = agentProfile.locationId
+
+    // Check vouchers in stock at the agent's location
     const vouchersInStock = await prisma.voucher.count({
       where: {
-        locationId: locationId,
+        locationId,
         hours: Number(hours),
         numberOfUsers: Number(numberOfUsers),
         status: 'AVAILABLE',
@@ -49,7 +60,9 @@ export default defineEventHandler(async (event) => {
       }
     })
 
-    // Check agent entitlements for this voucher type
+    // Entitlements are scoped by agentId alone — deliberately NOT by location. An agent has one
+    // location, and entitlements bought before locations were enforced carry locationId = null;
+    // filtering on location here would hide stock the agent has already paid for.
     const agentEntitlements = await prisma.agentPurchase.aggregate({
       where: {
         agentId: agentProfile.id,

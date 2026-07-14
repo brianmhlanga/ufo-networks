@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+import { normalizeZimbabwePhone } from '~/utils/phone'
 
 const prisma = new PrismaClient()
 
@@ -62,6 +63,17 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    // Normalise the phone so 0771234567 and +263771234567 cannot both be stored as
+    // "different" users — User.phone is unique.
+    const normalizedPhone = normalizeZimbabwePhone(phone)
+
+    if (!normalizedPhone) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Enter a valid Zimbabwean mobile number, e.g. 077 123 4567'
+      })
+    }
+
     // Check if email already exists
     const existingUser = await prisma.user.findUnique({
       where: { email }
@@ -70,7 +82,20 @@ export default defineEventHandler(async (event) => {
     if (existingUser) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Email already exists'
+        statusMessage: 'A user with this email address already exists'
+      })
+    }
+
+    // User.phone is unique too. Without this check a phone already held by any user (e.g. a past
+    // customer checkout) fails as a bare Prisma P2002 and surfaces as an opaque 500.
+    const existingPhone = await prisma.user.findUnique({
+      where: { phone: normalizedPhone }
+    })
+
+    if (existingPhone) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: `A user with the phone number ${normalizedPhone} already exists`
       })
     }
 
@@ -84,7 +109,7 @@ export default defineEventHandler(async (event) => {
         data: {
           name,
           email,
-          phone,
+          phone: normalizedPhone,
           passwordHash,
           role: 'AGENT',
           status: 'ACTIVE'
@@ -114,13 +139,32 @@ export default defineEventHandler(async (event) => {
       user: userWithoutPassword,
       agentProfile: result.agentProfile
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating agent:', error)
-    
+
     if (error.statusCode) {
       throw error
     }
-    
+
+    // Unique constraint — name the field rather than returning a bare 500.
+    if (error.code === 'P2002') {
+      const field = Array.isArray(error.meta?.target)
+        ? error.meta.target.join(', ')
+        : error.meta?.target || 'field'
+      throw createError({
+        statusCode: 400,
+        statusMessage: `An account with this ${field} already exists`
+      })
+    }
+
+    // Foreign key — e.g. a stale location id from the dropdown.
+    if (error.code === 'P2003') {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'The selected location no longer exists. Refresh the page and try again.'
+      })
+    }
+
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal server error'

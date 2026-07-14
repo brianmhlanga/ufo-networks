@@ -67,6 +67,20 @@ export default defineEventHandler(async (event) => {
     // Get total count
     const total = await prisma.user.count({ where })
 
+    // Whitelist sortable columns. Interpolating the raw client value into orderBy 500s on any
+    // field that is nested or not a real column.
+    const direction = sortOrder === 'asc' ? 'asc' : 'desc'
+    const sortMap: Record<string, any> = {
+      name: { name: direction },
+      email: { email: direction },
+      status: { status: direction },
+      createdAt: { createdAt: direction },
+      'agentProfile.displayName': { agentProfile: { displayName: direction } },
+      'agentProfile.defaultDiscountPct': { agentProfile: { defaultDiscountPct: direction } },
+      'agentProfile.location.name': { agentProfile: { location: { name: direction } } },
+    }
+    const orderBy = sortMap[sortBy] || { createdAt: 'desc' }
+
     // Get agents with agent profile
     const agents = await prisma.user.findMany({
       where,
@@ -82,7 +96,7 @@ export default defineEventHandler(async (event) => {
           }
         }
       },
-      orderBy: { [sortBy]: sortOrder },
+      orderBy,
       skip,
       take: limit
     })

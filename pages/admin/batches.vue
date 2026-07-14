@@ -152,7 +152,10 @@
             :rowsPerPageOptions="[10, 20, 50]"
             paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
             currentPageReportTemplate="Showing {first} to {last} of {totalRecords} batches"
+            :sortField="sortField"
+            :sortOrder="sortOrder"
             @page="onPageChange"
+            @sort="onSort"
             dataKey="id"
             stripedRows
             showGridlines
@@ -193,7 +196,14 @@
                 <span class="text-[#2d3040]">{{ data.numberOfUsers }}</span>
               </template>
             </Column>
-            
+
+            <Column field="dataLimitGb" header="Data Limit" sortable>
+              <template #body="{ data }">
+                <span v-if="data.dataLimitGb" class="text-[#2d3040]">{{ data.dataLimitGb }}GB</span>
+                <span v-else class="text-[#2d3040]/40">—</span>
+              </template>
+            </Column>
+
             <Column field="vouchers" header="Vouchers" sortable>
               <template #body="{ data }">
                 <div class="text-center">
@@ -374,19 +384,30 @@
              
              <div>
                <label class="block text-sm font-medium text-[#2d3040] mb-2">Number of Users *</label>
-               <InputNumber 
-                 v-model="batchForm.numberOfUsers" 
-                 placeholder="1" 
+               <InputNumber
+                 v-model="batchForm.numberOfUsers"
+                 placeholder="1"
                  :min="1"
                  class="w-full"
                />
              </div>
-             
+
+             <div>
+               <label class="block text-sm font-medium text-[#2d3040] mb-2">Data Limit (GB)</label>
+               <InputNumber
+                 v-model="batchForm.dataLimitGb"
+                 placeholder="e.g. 8"
+                 :min="1"
+                 class="w-full"
+               />
+               <small class="text-[#2d3040]/60">Leave blank if this package has no data cap</small>
+             </div>
+
                           <div>
                 <label class="block text-sm font-medium text-[#2d3040] mb-2">Validity Period (Days) *</label>
-                <InputNumber 
-                  v-model="batchForm.validityDays" 
-                  placeholder="60" 
+                <InputNumber
+                  v-model="batchForm.validityDays"
+                  placeholder="60"
                   :min="1"
                   :max="maxValidationPeriod"
                   class="w-full"
@@ -394,12 +415,12 @@
                 />
                 <small class="text-[#2d3040]/60">Maximum: {{ maxValidationPeriod }} days</small>
               </div>
-            
+
             <div>
               <label class="block text-sm font-medium text-[#2d3040] mb-2">Start Date *</label>
-              <Calendar 
-                v-model="batchForm.startDate" 
-                placeholder="Select start date" 
+              <Calendar
+                v-model="batchForm.startDate"
+                placeholder="Select start date"
                 :minDate="new Date()"
                 class="w-full"
                 @date-select="onStartDateChange"
@@ -480,6 +501,7 @@
             <div><span class="font-medium">Price:</span> ${{ selectedBatch.retailPrice }}</div>
             <div><span class="font-medium">Duration:</span> {{ formatDuration(selectedBatch.hours) }}</div>
             <div><span class="font-medium">Users:</span> {{ selectedBatch.numberOfUsers }}</div>
+            <div><span class="font-medium">Data Limit:</span> {{ selectedBatch.dataLimitGb ? `${selectedBatch.dataLimitGb}GB` : 'None' }}</div>
             <div><span class="font-medium">Status:</span> {{ selectedBatch.active ? 'Active' : 'Inactive' }}</div>
             <div><span class="font-medium">Start Date:</span> {{ formatDate(selectedBatch.startDate) }}</div>
             <div><span class="font-medium">End Date:</span> {{ formatDate(selectedBatch.endDate) }}</div>
@@ -587,19 +609,30 @@
              
              <div>
                <label class="block text-sm font-medium text-[#2d3040] mb-2">Number of Users *</label>
-               <InputNumber 
-                 v-model="batchForm.numberOfUsers" 
-                 placeholder="1" 
+               <InputNumber
+                 v-model="batchForm.numberOfUsers"
+                 placeholder="1"
                  :min="1"
                  class="w-full"
                />
              </div>
-             
+
+             <div>
+               <label class="block text-sm font-medium text-[#2d3040] mb-2">Data Limit (GB)</label>
+               <InputNumber
+                 v-model="batchForm.dataLimitGb"
+                 placeholder="e.g. 8"
+                 :min="1"
+                 class="w-full"
+               />
+               <small class="text-[#2d3040]/60">Leave blank if this package has no data cap</small>
+             </div>
+
                            <div>
                 <label class="block text-sm font-medium text-[#2d3040] mb-2">Validity Period (Days) *</label>
-                <InputNumber 
-                  v-model="batchForm.validityDays" 
-                  placeholder="60" 
+                <InputNumber
+                  v-model="batchForm.validityDays"
+                  placeholder="60"
                   :min="1"
                   :max="maxValidationPeriod"
                   class="w-full"
@@ -739,6 +772,10 @@ const totalBatches = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(10)
 
+// Sorting is server-side: the DataTable is :lazy, so it will not reorder rows itself.
+const sortField = ref<string | null>(null)
+const sortOrder = ref<number>(-1)
+
 // Dialog states
 const showCreateDialog = ref(false)
 const showUploadDialog = ref(false)
@@ -785,6 +822,7 @@ const batchForm = ref({
   periodValue: 1,
   periodUnit: 'HOURS',
   numberOfUsers: 1,
+  dataLimitGb: null as number | null,
   validityDays: 60,
   startDate: null as Date | null,
   endDate: null as Date | null,
@@ -831,6 +869,7 @@ const buildBatchRequestBody = () => {
     currency: batchForm.value.currency,
     hours,
     numberOfUsers: batchForm.value.numberOfUsers,
+    dataLimitGb: batchForm.value.dataLimitGb,
     validityDays: batchForm.value.validityDays,
     startDate: batchForm.value.startDate?.toISOString(),
     endDate: batchForm.value.endDate?.toISOString(),
@@ -875,6 +914,7 @@ const resetBatchForm = () => {
     periodValue: 1,
     periodUnit: 'HOURS',
     numberOfUsers: 1,
+    dataLimitGb: null,
     validityDays: 60,
     startDate: null,
     endDate: null,
@@ -983,13 +1023,13 @@ const handleFileUpload = async (event: any) => {
           life: 3000
         })
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error extracting PDF:', error)
       toast.add({
         severity: 'error',
-        summary: 'Error',
-        detail: 'Failed to extract batch numbers from PDF. Please try again.',
-        life: 3000
+        summary: 'Failed to read PDF',
+        detail: error?.message || 'Could not extract batch numbers from this PDF.',
+        life: 6000
       })
       // Clear the file and extracted numbers on error
       pdfFile.value = null
@@ -1212,6 +1252,10 @@ const fetchBatches = async () => {
     if (filters.value.active === true || filters.value.active === false) {
       params.append('active', String(filters.value.active))
     }
+    if (sortField.value) {
+      params.append('sortBy', sortField.value)
+      params.append('sortOrder', sortOrder.value === 1 ? 'asc' : 'desc')
+    }
 
     const response = await $fetch(`/api/admin/batches?${params}`)
     if (response.success) {
@@ -1242,6 +1286,13 @@ const fetchBatches = async () => {
 const onPageChange = (event: any) => {
   currentPage.value = event.page + 1
   pageSize.value = event.rows
+  fetchBatches()
+}
+
+const onSort = (event: any) => {
+  sortField.value = event.sortField || null
+  sortOrder.value = event.sortOrder || 1
+  currentPage.value = 1 // a new sort order invalidates the current page offset
   fetchBatches()
 }
 
@@ -1276,6 +1327,7 @@ const editBatch = (batch: any) => {
     periodValue: period.periodValue,
     periodUnit: period.periodUnit,
     numberOfUsers: batch.numberOfUsers || 1,
+    dataLimitGb: batch.dataLimitGb ?? null,
     validityDays: 60,
     startDate: batch.startDate ? new Date(batch.startDate) : null,
     endDate: batch.endDate ? new Date(batch.endDate) : null,

@@ -5,7 +5,9 @@
     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
       <div class="min-w-0">
         <h1 class="text-xl sm:text-2xl font-bold text-gray-900">Buy Vouchers</h1>
-        <p class="text-gray-600 text-sm sm:text-base">Purchase voucher entitlements by type and location</p>
+        <p class="text-gray-600 text-sm sm:text-base">
+          Purchase voucher entitlements by type<template v-if="agentLocationName"> for {{ agentLocationName }}</template>
+        </p>
       </div>
     </div>
 
@@ -43,7 +45,9 @@
             </div>
             <div>
               <h4 class="text-xl font-semibold text-gray-900">{{ voucherType.hours }}H</h4>
-              <p class="text-sm text-gray-500">{{ voucherType.numberOfUsers }} Users</p>
+              <p class="text-sm text-gray-500">
+                {{ voucherType.numberOfUsers }} Users<template v-if="voucherType.dataLimitGb"> &middot; {{ voucherType.dataLimitGb }}GB</template>
+              </p>
             </div>
           </div>
           <div class="text-right">
@@ -81,7 +85,7 @@
              :step="1"
            />
           <p class="text-xs text-gray-500 mt-1">
-            Total available across all locations: {{ voucherType.totalAvailable }}
+            Available at {{ agentLocationName || 'your location' }}: {{ voucherType.totalAvailable }}
           </p>
         </div>
 
@@ -285,6 +289,10 @@ const toast = useToast()
 // State
 const loading = ref(true)
 const availableVoucherTypes = ref<any[]>([])
+
+// An agent is scoped to exactly one location; all stock shown and bought belongs to it.
+const agentLocationId = ref<string | null>(null)
+const agentLocationName = ref('')
 const showPurchaseModal = ref(false)
 const selectedPurchase = ref<any>(null)
 const purchasing = ref(false)
@@ -310,46 +318,37 @@ const mobileProviderOptions = ref([
 
 
 
-// Fetch available voucher types
+// Fetch available voucher types. An agent is scoped to exactly one location, so the endpoint
+// returns at most that one location — nothing is summed across locations any more.
 const fetchAvailableVoucherTypes = async () => {
   loading.value = true
   try {
-    const response = await $fetch('/api/agent/available-vouchers')
-    
+    const response: any = await $fetch('/api/agent/available-vouchers')
+
     if (response.success) {
-      // Process the data to group by voucher type
-      const voucherTypeMap = new Map()
-      
-      response.data.forEach((location: any) => {
-        location.voucherTypes.forEach((type: any) => {
-          const key = `${type.hours}-${type.numberOfUsers}`
-          
-          if (!voucherTypeMap.has(key)) {
-            voucherTypeMap.set(key, {
-              hours: type.hours,
-              numberOfUsers: type.numberOfUsers,
-              retailPrice: type.retailPrice,
-              agentPrice: type.agentPrice,
-              discountPercentage: type.discountPercentage,
-              totalAvailable: 0,
-              quantity: 0
-            })
-          }
-          
-          const voucherType = voucherTypeMap.get(key)
-          voucherType.totalAvailable += type.availableCount
-        })
-      })
-      
-      availableVoucherTypes.value = Array.from(voucherTypeMap.values())
+      const location = response.data[0]
+
+      agentLocationId.value = response.locationId || null
+      agentLocationName.value = location?.name || ''
+
+      availableVoucherTypes.value = (location?.voucherTypes || []).map((type: any) => ({
+        hours: type.hours,
+        numberOfUsers: type.numberOfUsers,
+        dataLimitGb: type.dataLimitGb,
+        retailPrice: type.retailPrice,
+        agentPrice: type.agentPrice,
+        discountPercentage: type.discountPercentage,
+        totalAvailable: type.availableCount,
+        quantity: 0
+      }))
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching available vouchers:', error)
     toast.add({
       severity: 'error',
       summary: 'Error',
-      detail: 'Failed to load available vouchers',
-      life: 3000
+      detail: error?.data?.statusMessage || 'Failed to load available vouchers',
+      life: 5000
     })
   } finally {
     loading.value = false
@@ -435,6 +434,7 @@ const confirmPurchase = async () => {
       mobilePhone: paymentMethod.value === 'mobile' ? mobilePhone.value : undefined,
       mobileProvider: paymentMethod.value === 'mobile' ? mobileProvider.value : undefined,
       items: [{
+        locationId: agentLocationId.value,
         hours: selectedPurchase.value.hours,
         numberOfUsers: selectedPurchase.value.numberOfUsers,
         quantity: selectedPurchase.value.quantity,

@@ -55,14 +55,25 @@ export default defineEventHandler(async (event) => {
     const total = await prisma.user.count({ where })
 
     // Get users with pagination and sorting
+    // Whitelist sortable columns. Interpolating the raw client value into orderBy 500s on any
+    // field that is nested or not a real column.
+    const direction = sortOrder === 'asc' ? 'asc' : 'desc'
+    const sortMap: Record<string, any> = {
+      name: { name: direction },
+      email: { email: direction },
+      phone: { phone: direction },
+      role: { role: direction },
+      status: { status: direction },
+      createdAt: { createdAt: direction },
+    }
+    const orderBy = sortMap[sortBy] || { createdAt: 'desc' }
+
     const users = await prisma.user.findMany({
       where,
       include: {
         agentProfile: true
       },
-      orderBy: {
-        [sortBy]: sortOrder
-      },
+      orderBy,
       skip,
       take: limit
     })

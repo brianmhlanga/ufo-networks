@@ -1,186 +1,121 @@
 import { PrismaClient } from '@prisma/client'
+import { getAuditActor, serializeForAudit, writeAuditLog } from '~/server/utils/auditLog'
+import { applyPaynowStatus } from '~/server/utils/paymentFulfilment'
+import { requirePaynowCredentials } from '~/server/utils/paynow'
 
 const prisma = new PrismaClient()
 
+/**
+ * Paynow IPN (result URL) handler.
+ *
+ * Paynow POSTs this as application/x-www-form-urlencoded with the fields:
+ *   reference, paynowreference, amount, status, pollurl, hash
+ * Note it is `reference`, NOT `paymentReference` — reading the wrong name here caused every
+ * genuine callback to be rejected, so orders paid by card were never marked PAID.
+ *
+ * The status is NOT taken from the request body. This endpoint is public and unauthenticated, so
+ * we re-poll Paynow on the poll URL we stored at initiation and use that as the authoritative
+ * answer. That makes a forged callback useless (it cannot fake Paynow's own response) without
+ * making delivery depend on getting hash reconstruction byte-perfect — a mismatch there would
+ * silently reject every real payment, which is the failure we are fixing.
+ */
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event)
-    
-    // Log the webhook data for debugging
-    console.log('Paynow webhook received:', body)
-    
-    // Extract payment details from webhook
-    const { 
-      paymentReference, 
-      status, 
-      amount, 
-      hash 
-    } = body
 
-    if (!paymentReference || !status) {
+    console.log('Paynow webhook received:', body)
+
+    const paymentReference = body?.reference
+
+    if (!paymentReference) {
       throw createError({
         statusCode: 400,
-        statusMessage: 'Missing required webhook fields'
+        statusMessage: 'Missing required webhook field: reference',
       })
     }
 
-    // Find the payment record
     const payment = await prisma.payment.findUnique({
       where: { paynowReference: paymentReference },
-      include: { order: true }
+      include: { order: true },
     })
 
     if (!payment) {
       throw createError({
         statusCode: 404,
-        statusMessage: 'Payment not found'
+        statusMessage: 'Payment not found',
       })
     }
 
-    // Verify hash if needed (Paynow security)
-    // TODO: Implement hash verification
+    // Hash check is advisory: log a mismatch (it means the payload was not signed by Paynow with
+    // our key) but do not decide the outcome on it — the poll below is what we trust.
+    try {
+      const { Paynow } = await import('paynow')
+      const { integrationId, integrationKey } = requirePaynowCredentials()
+      const paynow = new Paynow(integrationId, integrationKey)
 
-    // Update payment status
-    await prisma.payment.update({
-      where: { id: payment.id },
-      data: {
-        status: status === 'Paid' || status === 'Awaiting Delivery' ? 'PAID' : 'FAILED',
-        paynowStatusMsg: status
+      if (!paynow.verifyHash(body)) {
+        console.warn(`Paynow webhook: hash mismatch for reference ${paymentReference}`)
       }
-    })
-
-    // Update order status
-    if (status === 'Paid' || status === 'Awaiting Delivery') {
-      await prisma.order.update({
-        where: { id: payment.orderId },
-        data: { status: 'PAID' }
-      })
-
-      // Assign vouchers to the order
-      await assignVouchersToOrder(payment.orderId)
-    } else if (status === 'Cancelled' || status === 'Disputed' || status === 'Failed') {
-      await prisma.order.update({
-        where: { id: payment.orderId },
-        data: { status: 'FAILED' }
-      })
-
-      // Release reserved vouchers
-      await releaseReservedVouchers(payment.orderId)
+    } catch (hashError) {
+      console.warn('Paynow webhook: could not verify hash', hashError)
     }
 
-    // Return success to Paynow
+    if (!payment.paynowPollUrl) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'No poll URL recorded for this payment',
+      })
+    }
+
+    // Ask Paynow directly what the status is.
+    const pollResponse = await $fetch(payment.paynowPollUrl)
+
+    let status = 'Pending'
+    if (typeof pollResponse === 'string') {
+      status = new URLSearchParams(pollResponse).get('status') || 'Pending'
+    } else if (pollResponse && typeof pollResponse === 'object') {
+      status = (pollResponse as any).status || (pollResponse as any).Status || 'Pending'
+    }
+
+    const outcome = await applyPaynowStatus(prisma, payment.id, payment.orderId, status)
+
+    if (outcome !== 'PENDING') {
+      const audit = await getAuditActor(event)
+      const paymentSnapshot = await prisma.payment.findUnique({
+        where: { id: payment.id },
+        include: { order: { include: { items: true } } },
+      })
+
+      await writeAuditLog(prisma, {
+        ...audit,
+        action: outcome === 'PAID' ? 'PAYMENT_COMPLETED' : 'PAYMENT_FAILED',
+        entity: 'Payment',
+        entityId: payment.id,
+        details: {
+          source: 'paynow_webhook',
+          paynowStatus: status,
+          amount: body?.amount,
+          paymentReference,
+          snapshot: serializeForAudit(paymentSnapshot),
+        },
+      })
+    }
+
     return {
       success: true,
-      message: 'Webhook processed successfully'
+      message: 'Webhook processed successfully',
     }
-
   } catch (error: any) {
     console.error('Error processing Paynow webhook:', error)
-    
-    // Return error to Paynow (they will retry)
+
+    if (error.statusCode) {
+      throw error
+    }
+
+    // A 5xx tells Paynow to retry, which is what we want for a transient failure.
     throw createError({
       statusCode: 500,
-      statusMessage: 'Failed to process webhook'
+      statusMessage: 'Failed to process webhook',
     })
   }
 })
-
-async function assignVouchersToOrder(orderId: string) {
-  // Find all vouchers reserved for this order
-  const reservedVouchers = await prisma.voucher.findMany({
-    where: {
-      reservedByOrderId: orderId,
-      status: 'RESERVED'
-    }
-  })
-
-  // Update vouchers to SOLD status
-  await prisma.voucher.updateMany({
-    where: {
-      id: { in: reservedVouchers.map(v => v.id) }
-    },
-    data: {
-      status: 'SOLD',
-      soldAt: new Date()
-    }
-  })
-
-  // For agent orders, create AgentPurchase record after payment confirmation
-  const order = await prisma.order.findUnique({
-    where: { id: orderId },
-    include: { items: true }
-  })
-
-  console.log('Webhook: Order found:', order?.id, 'Agent ID:', order?.agentId)
-
-  if (order && order.agentId) {
-    console.log('Webhook: Creating agent purchase for order:', orderId)
-    await createAgentPurchaseFromOrder(orderId, order.agentId, order.items)
-  } else {
-    console.log('Webhook: No agent ID found for order:', orderId)
-  }
-}
-
-async function releaseReservedVouchers(orderId: string) {
-  // Find all vouchers reserved for this order
-  const reservedVouchers = await prisma.voucher.findMany({
-    where: {
-      reservedByOrderId: orderId,
-      status: 'RESERVED'
-    }
-  })
-
-  // Update vouchers back to AVAILABLE status
-  await prisma.voucher.updateMany({
-    where: {
-      id: { in: reservedVouchers.map(v => v.id) }
-    },
-    data: {
-      status: 'AVAILABLE',
-      reservedByOrderId: null,
-      reservedAt: null
-    }
-  })
-}
-
-async function createAgentPurchaseFromOrder(orderId: string, agentId: string, orderItems: any[]) {
-  try {
-    console.log('createAgentPurchaseFromOrder: Starting for order:', orderId, 'agentId:', agentId)
-    
-    // Get the agent profile for this user
-    const agentProfile = await prisma.agentProfile.findUnique({
-      where: { userId: agentId }
-    })
-
-    if (!agentProfile) {
-      console.error('Agent profile not found for user:', agentId)
-      return
-    }
-
-    console.log('createAgentPurchaseFromOrder: Agent profile found:', agentProfile.id)
-
-    // Create AgentPurchase records for each item
-    for (const item of orderItems) {
-      console.log('createAgentPurchaseFromOrder: Creating purchase for item:', item)
-      
-      const agentPurchase = await prisma.agentPurchase.create({
-        data: {
-          agentId: agentProfile.id,
-          locationId: item.locationId || null,
-          quantity: item.quantity,
-          unitCost: item.unitPrice,
-          totalCost: item.lineTotal,
-          claimedCount: 0,
-          notes: `Purchase of ${item.quantity} ${item.hours}H ${item.numberOfUsers}U vouchers via order ${orderId}`
-        }
-      })
-      
-      console.log('createAgentPurchaseFromOrder: Created agent purchase:', agentPurchase.id)
-    }
-    
-    console.log('createAgentPurchaseFromOrder: Completed successfully')
-  } catch (error) {
-    console.error('Error creating agent purchase from order:', error)
-    // Don't throw error here as the order was already created successfully
-  }
-}

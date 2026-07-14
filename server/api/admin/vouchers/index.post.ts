@@ -33,12 +33,13 @@ export default defineEventHandler(async (event) => {
        batchId, 
        locationId, 
        retailPrice, 
-       hours, 
-       numberOfUsers, 
-       status, 
-       startDate, 
-       endDate, 
-       expiryDate 
+       hours,
+       numberOfUsers,
+       dataLimitGb,
+       status,
+       startDate,
+       endDate,
+       expiryDate
      } = body
 
      // Validation
@@ -114,6 +115,7 @@ export default defineEventHandler(async (event) => {
          retailPrice: parseFloat(retailPrice),
          hours: parseInt(hours),
          numberOfUsers: parseInt(numberOfUsers),
+         dataLimitGb: dataLimitGb && parseInt(dataLimitGb) > 0 ? parseInt(dataLimitGb) : null,
          status,
          startDate: new Date(startDate),
          endDate: new Date(endDate),

@@ -145,7 +145,10 @@
           :rowsPerPageOptions="[10, 20, 50]"
           paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
           currentPageReportTemplate="Showing {first} to {last} of {totalRecords} agents"
+          :sortField="sortField"
+          :sortOrder="sortOrder"
           @page="onPageChange"
+          @sort="onSort"
           dataKey="id"
           stripedRows
           showGridlines
@@ -195,13 +198,13 @@
             </template>
           </Column>
           
-          <Column field="agentStats.totalSales" header="Total Sales" sortable>
+          <Column field="agentStats.totalSales" header="Total Sales">
             <template #body="{ data }">
               <span class="text-[#2d3040] font-medium">${{ (data.agentStats?.totalSales || 0).toLocaleString() }}</span>
             </template>
           </Column>
           
-          <Column field="agentStats.totalVouchers" header="Vouchers Sold" sortable>
+          <Column field="agentStats.totalVouchers" header="Vouchers Sold">
             <template #body="{ data }">
               <span class="text-[#2d3040]">{{ data.agentStats?.totalVouchers || 0 }}</span>
             </template>
@@ -621,6 +624,10 @@ const totalAgents = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(10)
 
+// Sorting is server-side: the DataTable is :lazy, so it will not reorder rows itself.
+const sortField = ref<string | null>(null)
+const sortOrder = ref<number>(-1)
+
 // Location data
 const locationOptions = ref<any[]>([])
 const loadingLocations = ref(false)
@@ -660,6 +667,10 @@ const fetchAgents = async () => {
     if (filters.value.search) params.append('search', filters.value.search)
     if (filters.value.status) params.append('status', filters.value.status)
     if (filters.value.performance) params.append('performance', filters.value.performance)
+    if (sortField.value) {
+      params.append('sortBy', sortField.value)
+      params.append('sortOrder', sortOrder.value === 1 ? 'asc' : 'desc')
+    }
 
     const response: any = await $fetch(`/api/admin/agents?${params}`)
     agents.value = response.agents
@@ -823,9 +834,16 @@ const saveAgent = async () => {
     closeDialog()
     fetchAgents() // Refresh the list
     fetchAgentStats() // Refresh stats
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error saving agent:', error)
-    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to save agent', life: 3000 })
+    // Surface what the server actually said — a duplicate email/phone, an invalid location and a
+    // genuine server fault are all fixable by the admin, but only if we tell them which it was.
+    const detail =
+      error?.data?.statusMessage ||
+      error?.data?.message ||
+      error?.statusMessage ||
+      'Failed to save agent'
+    toast.add({ severity: 'error', summary: 'Error', detail, life: 6000 })
   } finally {
     saving.value = false
   }
@@ -994,6 +1012,14 @@ const clearFilters = () => {
 const onPageChange = (event: any) => {
   currentPage.value = event.page + 1
   pageSize.value = event.rows
+  fetchAgents()
+}
+
+const onSort = (event: any) => {
+  sortField.value = event.sortField || null
+  sortOrder.value = event.sortOrder || 1
+  currentPage.value = 1
+  fetchAgents()
 }
 
 // Meta tags

@@ -140,7 +140,7 @@
               <div class="flex items-center gap-6">
                 <NuxtLink to="/terms-of-service" class="hover:text-primary transition-colors">Terms of Service</NuxtLink>
                 <NuxtLink to="/privacy-policy" class="hover:text-primary transition-colors">Privacy Policy</NuxtLink>
-                <a href="#" class="hover:text-primary transition-colors">Cookie Policy</a>
+                <NuxtLink to="/terms-of-service#clause-15-3" class="hover:text-primary transition-colors">Cookie Policy</NuxtLink>
               </div>
               <span class="text-gray-400">
                 Designed by

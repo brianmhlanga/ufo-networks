@@ -33,6 +33,8 @@ export default defineEventHandler(async (event) => {
     const search = query.search as string || ''
     const locationId = query.locationId as string || ''
     const active = query.active === 'true' ? true : query.active === 'false' ? false : null
+    const sortBy = query.sortBy as string || ''
+    const sortOrder = query.sortOrder === 'asc' ? 'asc' : 'desc'
 
     // Calculate offset
     const offset = (page - 1) * limit
@@ -55,6 +57,25 @@ export default defineEventHandler(async (event) => {
       where.active = active
     }
 
+    // Whitelist of sortable columns → Prisma orderBy. Never interpolate a client-supplied field
+    // name straight into orderBy. `vouchers` is a relation count and `location` is nested, so both
+    // need their own shape.
+    const sortMap: Record<string, any> = {
+      name: { name: sortOrder },
+      retailPrice: { retailPrice: sortOrder },
+      hours: { hours: sortOrder },
+      numberOfUsers: { numberOfUsers: sortOrder },
+      dataLimitGb: { dataLimitGb: sortOrder },
+      vouchers: { vouchers: { _count: sortOrder } },
+      startDate: { startDate: sortOrder },
+      endDate: { endDate: sortOrder },
+      active: { active: sortOrder },
+      createdAt: { createdAt: sortOrder },
+      'location.name': { location: { name: sortOrder } },
+    }
+
+    const orderBy = sortMap[sortBy] || { createdAt: 'desc' }
+
     // Get total count
     const total = await prisma.voucherBatch.count({ where })
 
@@ -75,9 +96,7 @@ export default defineEventHandler(async (event) => {
           }
         }
       },
-      orderBy: {
-        createdAt: 'desc'
-      },
+      orderBy,
       skip: offset,
       take: limit
     })

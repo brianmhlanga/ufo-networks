@@ -168,9 +168,13 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Validate batch numbers format (should be 8-digit numbers)
-    const validBatchNumbers = extractedBatchNumbers.filter(num => /^\d{8}$/.test(num))
+    // Validate batch numbers format (should be 8-digit numbers), and de-duplicate:
+    // voucherNumber and pin are both unique columns, so a number repeated within one PDF
+    // would abort the whole insert.
     const invalidBatchNumbers = extractedBatchNumbers.filter(num => !/^\d{8}$/.test(num))
+    const validBatchNumbers = Array.from(
+      new Set(extractedBatchNumbers.filter(num => /^\d{8}$/.test(num)))
+    )
 
     if (validBatchNumbers.length === 0) {
       throw createError({
@@ -179,52 +183,78 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-         // Create batch
-     const batch = await prisma.voucherBatch.create({
-       data: {
-         name,
-         locationId,
-         retailPrice: parseFloat(retailPrice),
-         hours: parseInt(hours),
-         numberOfUsers: parseInt(numberOfUsers),
-         startDate: startDateObj,
-         endDate: endDateObj,
-         active: true,
-         notes: `Uploaded via PDF upload. Found ${validBatchNumbers.length} valid batch numbers. Invalid: ${invalidBatchNumbers.join(', ')}`
-       },
-       include: {
-         location: {
-           select: {
-             id: true,
-             name: true,
-             code: true
-           }
-         }
-       }
-     })
+    // Reject up-front if any of these vouchers already exist, rather than letting the insert
+    // fail half-way and strand an empty batch.
+    const alreadyExisting = await prisma.voucher.findMany({
+      where: { voucherNumber: { in: validBatchNumbers } },
+      select: { voucherNumber: true },
+      take: 10
+    })
 
-     // Create vouchers for each batch number
-     const voucherData = validBatchNumbers.map(batchNumber => ({
-       voucherNumber: batchNumber,
-       pin: batchNumber, // Using batch number as PIN for now
-       batchId: batch.id,
-       locationId: batch.locationId,
-       retailPrice: batch.retailPrice,
-       hours: batch.hours,
-       numberOfUsers: batch.numberOfUsers,
-       startDate: batch.startDate,
-       endDate: batch.endDate,
-       expiryDate: batch.endDate, // Set expiry date same as end date
-       status: 'AVAILABLE'
-     }))
+    if (alreadyExisting.length > 0) {
+      const sample = alreadyExisting.map(v => v.voucherNumber).join(', ')
+      throw createError({
+        statusCode: 400,
+        statusMessage: `These voucher numbers have already been uploaded: ${sample}${alreadyExisting.length === 10 ? ' (and possibly more)' : ''}. This PDF may have been uploaded before.`
+      })
+    }
 
-     await prisma.voucher.createMany({
-       data: voucherData
-     })
+    const dataLimitGb = batchData.dataLimitGb ? parseInt(batchData.dataLimitGb) : null
+    const adminNotes = (batchData.notes || '').trim()
+    const importNote = `Uploaded via PDF. ${validBatchNumbers.length} voucher numbers.${
+      invalidBatchNumbers.length ? ` Skipped invalid: ${invalidBatchNumbers.join(', ')}` : ''
+    }`
+
+    // Create the batch and its vouchers together: a failure part-way through must not leave
+    // an empty batch row behind.
+    const batch = await prisma.$transaction(async (tx) => {
+      const created = await tx.voucherBatch.create({
+        data: {
+          name,
+          locationId,
+          retailPrice: parseFloat(retailPrice),
+          hours: parseInt(hours),
+          numberOfUsers: parseInt(numberOfUsers),
+          dataLimitGb: dataLimitGb && dataLimitGb > 0 ? dataLimitGb : null,
+          startDate: startDateObj,
+          endDate: endDateObj,
+          active: true,
+          notes: adminNotes ? `${adminNotes}\n\n${importNote}` : importNote
+        },
+        include: {
+          location: {
+            select: {
+              id: true,
+              name: true,
+              code: true
+            }
+          }
+        }
+      })
+
+      await tx.voucher.createMany({
+        data: validBatchNumbers.map(batchNumber => ({
+          voucherNumber: batchNumber,
+          pin: batchNumber, // the printed voucher number is the PIN
+          batchId: created.id,
+          locationId: created.locationId,
+          retailPrice: created.retailPrice,
+          hours: created.hours,
+          numberOfUsers: created.numberOfUsers,
+          dataLimitGb: created.dataLimitGb,
+          startDate: created.startDate,
+          endDate: created.endDate,
+          expiryDate: created.endDate,
+          status: 'AVAILABLE'
+        }))
+      })
+
+      return created
+    })
 
     return {
       success: true,
-      message: 'Batch uploaded successfully',
+      message: `Batch uploaded successfully with ${validBatchNumbers.length} vouchers`,
       batch,
       extractedData: {
         totalFound: extractedBatchNumbers.length,
@@ -232,13 +262,20 @@ export default defineEventHandler(async (event) => {
         invalidBatchNumbers
       }
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error uploading batch:', error)
-    
+
     if (error.statusCode) {
       throw error
     }
-    
+
+    if (error.code === 'P2002') {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'One or more voucher numbers in this PDF already exist in the system.'
+      })
+    }
+
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal server error'

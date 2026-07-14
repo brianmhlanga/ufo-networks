@@ -65,6 +65,26 @@ export default defineEventHandler(async (event) => {
     // Calculate pagination
     const skip = (page - 1) * limit
 
+    // Whitelist sortable columns. Interpolating the raw client value into orderBy 500s on any
+    // field that is nested or not a real column.
+    const direction = sortOrder === 'asc' ? 'asc' : 'desc'
+    const sortMap: Record<string, any> = {
+      voucherNumber: { voucherNumber: direction },
+      pin: { pin: direction },
+      retailPrice: { retailPrice: direction },
+      hours: { hours: direction },
+      numberOfUsers: { numberOfUsers: direction },
+      dataLimitGb: { dataLimitGb: direction },
+      status: { status: direction },
+      startDate: { startDate: direction },
+      endDate: { endDate: direction },
+      expiryDate: { expiryDate: direction },
+      createdAt: { createdAt: direction },
+      'location.name': { location: { name: direction } },
+      'batch.name': { batch: { name: direction } },
+    }
+    const orderBy = sortMap[sortBy] || { createdAt: 'desc' }
+
     // Get total count
     const total = await prisma.voucher.count({ where })
 
@@ -108,7 +128,7 @@ export default defineEventHandler(async (event) => {
           }
         }
       },
-      orderBy: { [sortBy]: sortOrder },
+      orderBy,
       skip,
       take: limit
     })

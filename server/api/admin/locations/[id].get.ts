@@ -57,6 +57,7 @@ export default defineEventHandler(async (event) => {
       voucherCount: location._count.vouchers,
       routerModel: location.meta?.routerModel || '',
       ssid: location.meta?.ssid || '',
+      wifiPassword: location.wifiPassword || '',
       coordinates: location.latitude && location.longitude 
         ? { lat: location.latitude, lng: location.longitude }
         : null,

@@ -2,6 +2,13 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
+/**
+ * Voucher stock an agent may buy.
+ *
+ * An agent is scoped to exactly one location (AgentProfile.locationId) and must only ever see or
+ * buy stock for that location — previously this returned every location and the UI summed them
+ * into a single "available across all locations" figure.
+ */
 export default defineEventHandler(async (event) => {
   try {
     // Check if user is authenticated and has agent role
@@ -21,10 +28,31 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    const agentProfile = await prisma.agentProfile.findUnique({
+      where: { userId: user.id },
+      select: { id: true, locationId: true, defaultDiscountPct: true }
+    })
+
+    if (!agentProfile) {
+      throw createError({
+        statusCode: 403,
+        statusMessage: 'No agent profile found for this account'
+      })
+    }
+
+    if (!agentProfile.locationId) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'No location assigned to your agent account. Contact an administrator.'
+      })
+    }
+
     const now = new Date()
-    // Get all locations with available vouchers (only non-expired)
+
+    // Only the agent's own location.
     const locations = await prisma.location.findMany({
       where: {
+        id: agentProfile.locationId,
         vouchers: {
           some: {
             status: 'AVAILABLE',
@@ -46,23 +74,27 @@ export default defineEventHandler(async (event) => {
           select: {
             hours: true,
             numberOfUsers: true,
+            dataLimitGb: true,
             retailPrice: true
           }
         }
       }
     })
 
-    // Process locations to group vouchers by type and calculate agent discounts
+    // The agent's own discount, not a hardcoded 20%.
+    const discountPercentage = Number(agentProfile.defaultDiscountPct) || 0
+
     const processedLocations = locations.map(location => {
-      // Group vouchers by hours and numberOfUsers
+      // Group vouchers by package spec (hours + users + data cap)
       const voucherGroups = new Map()
-      
+
       location.vouchers.forEach(voucher => {
-        const key = `${voucher.hours}-${voucher.numberOfUsers}`
+        const key = `${voucher.hours}-${voucher.numberOfUsers}-${voucher.dataLimitGb ?? 'none'}`
         if (!voucherGroups.has(key)) {
           voucherGroups.set(key, {
             hours: voucher.hours,
             numberOfUsers: voucher.numberOfUsers,
+            dataLimitGb: voucher.dataLimitGb,
             retailPrice: voucher.retailPrice,
             availableCount: 0,
             agentPrice: 0,
@@ -72,12 +104,9 @@ export default defineEventHandler(async (event) => {
         voucherGroups.get(key).availableCount++
       })
 
-      // Calculate agent prices and discounts
       const voucherTypes = Array.from(voucherGroups.values()).map(group => {
-        // Default 20% discount for agents (this could be customized per agent)
-        const discountPercentage = 20
         const agentPrice = parseFloat(group.retailPrice) * (1 - discountPercentage / 100)
-        
+
         return {
           ...group,
           agentPrice: parseFloat(agentPrice.toFixed(2)),
@@ -98,12 +127,13 @@ export default defineEventHandler(async (event) => {
 
     return {
       success: true,
+      locationId: agentProfile.locationId,
       data: processedLocations
     }
 
   } catch (error: any) {
     console.error('Error fetching available vouchers:', error)
-    
+
     if (error.statusCode) {
       throw error
     }

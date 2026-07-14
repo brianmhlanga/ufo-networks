@@ -39,7 +39,44 @@ export function requirePaynowCredentials() {
   return credentials
 }
 
-export function getPaynowAuthEmail(customerEmail: string) {
+/**
+ * Email Paynow associates with the transaction. Buyers may now check out without giving an email,
+ * so fall back to the merchant address — Paynow rejects a payment with no email at all.
+ */
+export function getPaynowAuthEmail(customerEmail?: string | null) {
   const { authEmail } = getPaynowCredentials()
-  return authEmail || customerEmail
+
+  return (
+    authEmail ||
+    customerEmail?.trim() ||
+    process.env.SENDER_EMAIL ||
+    'noreply@ufo-networks.org'
+  )
+}
+
+/**
+ * Public origin of this site, used to build Paynow return/result URLs.
+ *
+ * These URLs are consumed by Paynow's servers and by the buyer's browser, so they must be
+ * publicly reachable. Deriving them from the request (getRequestURL) yields 127.0.0.1:3000
+ * when the reverse proxy does not forward the original Host header, which sends buyers to a
+ * dead address and points the IPN callback back at the app's own loopback.
+ */
+export function getSiteUrl(event: any) {
+  const configured = String(useRuntimeConfig().public?.siteUrl || process.env.NUXT_PUBLIC_SITE_URL || '').trim()
+
+  if (configured) {
+    return configured.replace(/\/+$/, '')
+  }
+
+  const origin = getRequestURL(event).origin
+
+  if (process.env.NODE_ENV === 'production') {
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'NUXT_PUBLIC_SITE_URL is not configured. Paynow callbacks cannot be built safely.',
+    })
+  }
+
+  return origin.replace(/\/+$/, '')
 }

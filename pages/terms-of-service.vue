@@ -75,7 +75,14 @@ const TermsItems = defineComponent({
       'div',
       { class: props.depth === 0 ? 'space-y-4' : 'mt-3 space-y-3' },
       props.items.map((item) =>
-        h('div', { key: item.number, class: 'terms-item' }, [
+        h('div', {
+          key: item.number,
+          // Anchor every clause so it can be deep-linked, e.g. the footer's Cookie Policy link
+          // points at #clause-15-3. Dots are not usable in an id — querySelector reads them as
+          // a class selector — so 15.3 becomes clause-15-3.
+          id: `clause-${item.number.replace(/\./g, '-')}`,
+          class: 'terms-item scroll-mt-32',
+        }, [
           h(
             'p',
             {

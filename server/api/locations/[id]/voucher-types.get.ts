@@ -13,9 +13,10 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Get voucher types available at this location
+    // Get voucher types available at this location. The data cap is part of what defines a
+    // package, so it groups alongside hours/users/price.
     const voucherTypes = await prisma.voucher.groupBy({
-      by: ['hours', 'numberOfUsers', 'retailPrice'],
+      by: ['hours', 'numberOfUsers', 'retailPrice', 'dataLimitGb'],
       where: {
         locationId: locationId,
         status: 'AVAILABLE',
@@ -37,6 +38,7 @@ export default defineEventHandler(async (event) => {
     const formattedVoucherTypes = voucherTypes.map(type => ({
       hours: type.hours,
       numberOfUsers: type.numberOfUsers,
+      dataLimitGb: type.dataLimitGb,
       retailPrice: type.retailPrice,
       availableCount: type._count.id
     }))

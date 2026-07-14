@@ -44,12 +44,17 @@ function formatDate(date: string | Date): string {
   })
 }
 
+/** Customer-facing validity wording. Vouchers are not sold against a fixed calendar expiry. */
+const VALIDITY_NOTICE = 'Valid for first use within'
+const VALIDITY_NOTICE_2 = 'a week from purchase'
+
 export interface SaleForPrint {
   voucher: {
     voucherNumber: string
     pin: string
     hours: number
     numberOfUsers: number
+    dataLimitGb?: number | null
     retailPrice?: number
     endDate: string
     location: { name: string }
@@ -85,17 +90,26 @@ export function encodeVoucherReceipt(sale: SaleForPrint, columns: number = 32): 
   )
   chunks.push(part1)
 
+  // Type line carries the data cap when the package has one, e.g. "1H, 1 user(s), 8GB"
+  const type = [
+    `${v.hours}H`,
+    `${v.numberOfUsers} user(s)`,
+    v.dataLimitGb ? `${v.dataLimitGb}GB` : null,
+  ].filter(Boolean).join(', ')
+
   // Rest of receipt
   const part2 = new TextEncoder().encode(
     cmds.alignLeft +
     lineOfChar('-', columns) +
-    `Type:    ${v.hours}H, ${v.numberOfUsers} user(s)\n` +
-    `Expiry: ${formatDate(v.endDate)}\n` +
+    `Type:    ${type}\n` +
     (sale.buyerNote ? `Customer: ${sale.buyerNote}\n` : '') +
     (sale.buyerPhone ? `Phone:   ${sale.buyerPhone}\n` : '') +
     `Price:   $${Number(sale.soldPrice).toFixed(2)}\n` +
     lineOfChar('-', columns) +
     cmds.alignCenter +
+    center(VALIDITY_NOTICE, columns) + '\n' +
+    center(VALIDITY_NOTICE_2, columns) + '\n' +
+    cmds.feed +
     center('Thank you!', columns) + '\n' +
     center(formatDate(sale.createdAt), columns) + '\n' +
     '\n\n\n' +

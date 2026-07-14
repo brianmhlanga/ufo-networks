@@ -13,6 +13,11 @@ const transport = nodemailer.createTransport({
     user: 'api',
     pass: MAILTRAP_TOKEN,
   },
+  // Voucher delivery runs inside the Paynow webhook and the payment status poll. Without these,
+  // a stalled SMTP connection would hang that request until Paynow times out and retries.
+  connectionTimeout: 10_000,
+  greetingTimeout: 10_000,
+  socketTimeout: 15_000,
 })
 
 function getUfoLogo() {
@@ -104,6 +109,130 @@ export async function sendContactEmail({ firstName, lastName, email, phone, subj
     console.error(`[Contact Email] Error sending to ${contactAdminEmail}: ${error.message}`)
     throw error
   }
+}
+
+export interface VoucherForEmail {
+  voucherNumber: string
+  pin: string
+  hours: number
+  numberOfUsers: number
+  dataLimitGb?: number | null
+  locationName: string
+  wifiPassword?: string | null
+}
+
+export async function sendVoucherEmail({ to, orderId, total, vouchers }: {
+  to: string
+  orderId: string
+  total: number
+  vouchers: VoucherForEmail[]
+}) {
+  try {
+    const html = getVoucherEmailTemplate({ orderId, total, vouchers })
+    const label = vouchers.length === 1 ? 'Your WiFi Voucher' : `Your ${vouchers.length} WiFi Vouchers`
+
+    await transport.sendMail({
+      from: senderEmail,
+      to,
+      subject: `UFO Networks - ${label}`,
+      html,
+    })
+    console.log(`[Voucher Email] Sent ${vouchers.length} voucher(s) to ${to} for order ${orderId}`)
+  } catch (error: any) {
+    console.error(`[Voucher Email] Error sending to ${to}: ${error.message}`)
+    throw error
+  }
+}
+
+function getVoucherEmailTemplate({ orderId, total, vouchers }: {
+  orderId: string
+  total: number
+  vouchers: VoucherForEmail[]
+}) {
+  const voucherCards = vouchers.map((voucher, index) => {
+    const details = [
+      `${voucher.hours}H`,
+      `${voucher.numberOfUsers} user${voucher.numberOfUsers === 1 ? '' : 's'}`,
+      voucher.dataLimitGb ? `${voucher.dataLimitGb} GB` : null,
+    ].filter(Boolean).join(' &middot; ')
+
+    const wifiStep = voucher.wifiPassword
+      ? `Connect to the UFO WIFI network using password &quot;<strong>${voucher.wifiPassword}</strong>&quot;`
+      : 'Connect to the UFO WIFI network'
+
+    return `
+      <div style="background:linear-gradient(135deg,#f8fafc 0%, #eef2ff 100%);border-radius:16px;padding:24px;margin:0 0 18px 0;border-left:5px solid #185ff9;">
+        <h3 style="margin:0 0 4px 0;color:#1f2937;font-size:1.1rem;font-weight:800;">Voucher #${index + 1}</h3>
+        <p style="margin:0 0 16px 0;color:#6b7280;font-size:0.95rem;font-weight:600;">${voucher.locationName}</p>
+
+        <div style="background:#ffffff;border-radius:12px;padding:18px;text-align:center;border:1px solid #e5e7eb;">
+          <div style="color:#6b7280;font-size:0.85rem;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;">WiFi PIN</div>
+          <div style="font-size:2.4rem;font-weight:900;color:#185ff9;letter-spacing:0.2rem;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;margin:8px 0 0 0;">${voucher.pin}</div>
+        </div>
+
+        <div style="margin:16px 0 0 0;font-size:0.95rem;line-height:1.8;">
+          <div><strong style="color:#6b7280;">Voucher Number:</strong> <span style="color:#111827;font-weight:700;">${voucher.voucherNumber}</span></div>
+          <div><strong style="color:#6b7280;">Package:</strong> <span style="color:#111827;font-weight:700;">${details}</span></div>
+        </div>
+
+        <div style="margin:16px 0 0 0;padding:14px 16px;background:#ffffff;border-radius:10px;border:1px solid #e5e7eb;">
+          <div style="color:#111827;font-weight:800;font-size:0.95rem;margin:0 0 8px 0;">How to connect</div>
+          <ol style="margin:0;padding-left:18px;color:#4b5563;font-size:0.92rem;line-height:1.7;">
+            <li>Go to ${voucher.locationName}</li>
+            <li>${wifiStep}</li>
+            <li>Enter the PIN above when prompted</li>
+            <li>Enjoy your internet access</li>
+          </ol>
+        </div>
+
+        <p style="margin:14px 0 0 0;color:#6b7280;font-size:0.85rem;font-weight:700;">
+          Valid for first use within a week from date of purchase
+        </p>
+      </div>
+    `
+  }).join('')
+
+  return `
+  <div style="background:linear-gradient(135deg,#185ff9 0%, #2d3040 100%);padding:0;margin:0;font-family:Segoe UI, Tahoma, Geneva, Verdana, sans-serif;min-height:100vh;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:linear-gradient(135deg,#185ff9 0%, #2d3040 100%);padding:0;margin:0;">
+      <tr>
+        <td align="center" style="padding:40px 20px;">
+          <table width="600" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border-radius:20px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,0.15);overflow:hidden;border:1px solid rgba(24,95,249,0.15);">
+            <tr>
+              <td align="center" style="padding:34px 24px 26px 24px;background:linear-gradient(135deg,#185ff9 0%, #1f3b8a 100%);">
+                ${getUfoLogo()}
+                <h1 style="color:#ffffff;font-size:1.75rem;font-weight:800;margin:10px 0 0 0;letter-spacing:-0.4px;">Payment Successful</h1>
+                <p style="color:rgba(255,255,255,0.9);font-size:1rem;margin:8px 0 0 0;font-weight:500;">Your voucher ${vouchers.length === 1 ? 'PIN is' : 'PINs are'} below</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:34px 34px 28px 34px;">
+                <p style="font-size:1.05rem;color:#4b5563;margin:0 0 22px 0;line-height:1.7;">
+                  Thank you for your purchase. Keep this email safe &mdash; it is your proof of purchase and contains
+                  the ${vouchers.length === 1 ? 'PIN' : 'PINs'} you need to get online.
+                </p>
+
+                ${voucherCards}
+
+                <div style="background:linear-gradient(135deg,#f8fafc 0%, #eef2ff 100%);border-radius:12px;padding:18px;margin:22px 0 0 0;border-left:4px solid #185ff9;">
+                  <div style="font-size:0.95rem;line-height:1.8;">
+                    <div><strong style="color:#6b7280;">Order Reference:</strong> <span style="color:#111827;font-weight:700;">${orderId}</span></div>
+                    <div><strong style="color:#6b7280;">Total Paid:</strong> <span style="color:#111827;font-weight:700;">$${total.toFixed(2)}</span></div>
+                  </div>
+                </div>
+
+                <p style="font-size:0.95rem;color:#6b7280;margin:20px 0 0 0;line-height:1.7;">
+                  Need help? Reply to this email or contact our support team.
+                </p>
+              </td>
+            </tr>
+            ${emailFooter()}
+          </table>
+        </td>
+      </tr>
+    </table>
+  </div>
+  `
 }
 
 function getContactEmailTemplate({ firstName, lastName, email, phone, subject, message }: {

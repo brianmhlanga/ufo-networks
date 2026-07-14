@@ -180,7 +180,10 @@
             :rowsPerPageOptions="[10, 20, 50, 100]"
             paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
             currentPageReportTemplate="Showing {first} to {last} of {totalRecords} vouchers"
+            :sortField="sortField"
+            :sortOrder="sortOrder"
             @page="onPageChange"
+            @sort="onSort"
             dataKey="id"
             stripedRows
             showGridlines
@@ -202,7 +205,7 @@
               </template>
             </Column>
             
-            <Column field="location" header="Location" sortable>
+            <Column field="location.name" header="Location" sortable>
               <template #body="{ data }">
                 <div class="flex items-center space-x-2">
                   <span class="material-icons text-[#185ff9] text-sm">location_on</span>
@@ -211,7 +214,7 @@
               </template>
             </Column>
             
-            <Column field="batch" header="Batch" sortable>
+            <Column field="batch.name" header="Batch" sortable>
               <template #body="{ data }">
                 <div class="text-[#2d3040]">{{ data.batch?.name }}</div>
               </template>
@@ -259,7 +262,7 @@
               </template>
             </Column>
             
-            <Column field="assignedToUser" header="Assigned To" sortable>
+            <Column field="assignedToUser" header="Assigned To">
               <template #body="{ data }">
                 <div v-if="data.assignedToUser" class="text-[#2d3040]">
                   {{ data.assignedToUser.name || data.assignedToUser.email }}
@@ -449,6 +452,18 @@
               />
               <small v-if="submitted && !voucherForm.numberOfUsers" class="p-error">Number of users is required.</small>
             </div>
+
+            <div>
+              <label for="dataLimitGb" class="block text-sm font-medium text-[#2d3040] mb-2">Data Limit (GB)</label>
+              <InputNumber
+                id="dataLimitGb"
+                v-model="voucherForm.dataLimitGb"
+                placeholder="e.g. 8"
+                :min="1"
+                suffix=" GB"
+              />
+              <small class="text-[#2d3040]/60">Leave blank if this voucher has no data cap</small>
+            </div>
           </div>
         </div>
 
@@ -628,6 +643,10 @@ const totalVouchers = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(20)
 
+// Sorting is server-side: the DataTable is :lazy, so it will not reorder rows itself.
+const sortField = ref<string | null>(null)
+const sortOrder = ref<number>(-1)
+
 // Voucher stats
 const voucherStats = ref({
   totalVouchers: 0,
@@ -655,6 +674,7 @@ const voucherForm = ref({
   retailPrice: 0,
   hours: 24,
   numberOfUsers: 1,
+  dataLimitGb: null as number | null,
   status: 'AVAILABLE',
   startDate: new Date() as Date,
   endDate: new Date(Date.now() + (24 * 60 * 60 * 1000)) as Date,
@@ -769,6 +789,7 @@ const resetForm = () => {
     retailPrice: 0,
     hours: 24,
     numberOfUsers: 1,
+    dataLimitGb: null as number | null,
     status: 'AVAILABLE',
     startDate: startTime,
     endDate: endTime,
@@ -926,6 +947,7 @@ const editVoucher = (voucher: any) => {
     retailPrice: voucher.retailPrice || 0,
     hours: voucher.hours || 24,
     numberOfUsers: voucher.numberOfUsers || 1,
+    dataLimitGb: voucher.dataLimitGb ?? null,
     status: voucher.status || 'AVAILABLE',
     startDate: voucher.startDate ? new Date(voucher.startDate) : new Date(),
     endDate: voucher.endDate ? new Date(voucher.endDate) : new Date(Date.now() + (24 * 60 * 60 * 1000)),
@@ -1067,6 +1089,14 @@ const clearFilters = () => {
 const onPageChange = (event: any) => {
   currentPage.value = event.page + 1
   pageSize.value = event.rows
+  fetchVouchers()
+}
+
+const onSort = (event: any) => {
+  sortField.value = event.sortField || null
+  sortOrder.value = event.sortOrder || 1
+  currentPage.value = 1
+  fetchVouchers()
 }
 
 // API functions
@@ -1082,6 +1112,10 @@ const fetchVouchers = async () => {
     if (filters.value.status) params.append('status', filters.value.status)
     if (filters.value.locationId) params.append('locationId', filters.value.locationId)
     if (filters.value.batchId) params.append('batchId', filters.value.batchId)
+    if (sortField.value) {
+      params.append('sortBy', sortField.value)
+      params.append('sortOrder', sortOrder.value === 1 ? 'asc' : 'desc')
+    }
 
     const response: any = await $fetch(`/api/admin/vouchers?${params}`)
     vouchers.value = response.vouchers

@@ -8,6 +8,10 @@ declare module 'paynow' {
     send(payment: Payment): Promise<InitResponse>
     sendMobile(payment: Payment, phoneNumber: string, provider: string): Promise<InitResponse>
     pollTransaction(pollUrl: string): Promise<PollResponse>
+    /** SHA512 of the concatenated field values + integration key, uppercased. */
+    generateHash(values: Record<string, any>, integrationKey: string): string
+    /** True when `values.hash` matches a hash generated from the other fields. */
+    verifyHash(values: Record<string, any>): boolean
   }
 
   export class Payment {

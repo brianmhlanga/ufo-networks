@@ -89,6 +89,11 @@ export default defineNuxtConfig({
     paynowIntegrationId: process.env.PAYNOW_INTEGRATION_ID || process.env.NUXT_PAYNOW_INTEGRATION_ID || '',
     paynowIntegrationKey: process.env.PAYNOW_INTEGRATION_KEY || process.env.NUXT_PAYNOW_INTEGRATION_KEY || '',
     paynowAuthEmail: process.env.PAYNOW_AUTH_EMAIL || process.env.NUXT_PAYNOW_AUTH_EMAIL || '',
+    public: {
+      // Public base URL of this site. Paynow return/result URLs are built from this
+      // rather than the request Host header, which the reverse proxy rewrites to 127.0.0.1:3000.
+      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || '',
+    },
   },
 
   primevue: {

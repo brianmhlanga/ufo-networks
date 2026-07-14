@@ -134,6 +134,8 @@ model Location {
   town        String?
   area        String?
   province    String?
+  // WPA passphrase for this site's SSID, printed on vouchers so buyers can join the network
+  wifiPassword String?
   // router metadata if needed
   meta        Json?
   latitude    Float?
@@ -170,6 +172,7 @@ model VoucherBatch {
   retailPrice     Decimal  @db.Decimal(10,2)
   hours           Int
   numberOfUsers   Int       // concurrent users allowed
+  dataLimitGb     Int?      // data cap in GB; null = no cap advertised
   startDate       DateTime  // when vouchers in this batch can start being used
   endDate         DateTime  // soft business end date (can be <= voucher expiry)
   // safety flags
@@ -203,6 +206,7 @@ model Voucher {
   // capacity & accounting
   hours           Int
   numberOfUsers   Int
+  dataLimitGb     Int?          // data cap in GB, copied from the batch; null = no cap advertised
   usageCount      Int           @default(0)
   // availability windows
   startDate       DateTime
@@ -325,6 +329,10 @@ model Order {
   // - Create Order + reserve n vouchers (status RESERVED)
   // - On Paynow PAID → assign vouchers to user (status SOLD)
   // - If timeout/failed → release reservations
+
+  // Set when the voucher PINs have been emailed to the buyer. Both the IPN webhook and the
+  // client-side status poll can confirm the same payment, so this guards against a double send.
+  voucherEmailSentAt DateTime?
 
   payments        Payment[]
   items           OrderItem[]
