@@ -46,21 +46,49 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Hash check is advisory: log a mismatch (it means the payload was not signed by Paynow with
-    // our key) but do not decide the outcome on it — the poll below is what we trust.
+    // Hash check is advisory for the status (the poll below is what we trust), but it is what
+    // authorises using a poll URL out of the request body.
+    let hashVerified = false
     try {
       const { Paynow } = await import('paynow')
       const { integrationId, integrationKey } = requirePaynowCredentials()
       const paynow = new Paynow(integrationId, integrationKey)
 
-      if (!paynow.verifyHash(body)) {
+      hashVerified = paynow.verifyHash(body)
+      if (!hashVerified) {
         console.warn(`Paynow webhook: hash mismatch for reference ${paymentReference}`)
       }
     } catch (hashError) {
       console.warn('Paynow webhook: could not verify hash', hashError)
     }
 
-    if (!payment.paynowPollUrl) {
+    // Prefer the poll URL we stored at initiation. Paynow can call back before that write lands
+    // (a buyer cancelling on their phone triggers the IPN within a second), so fall back to the
+    // one in the payload — but only when the hash proves Paynow sent it, and only when it points
+    // at Paynow, so this cannot be turned into a request-forgery primitive.
+    let pollUrl = payment.paynowPollUrl
+
+    if (!pollUrl && hashVerified && body?.pollurl) {
+      const candidate = String(body.pollurl)
+      let host = ''
+      try {
+        host = new URL(candidate).hostname.toLowerCase()
+      } catch {
+        host = ''
+      }
+
+      if (host === 'paynow.co.zw' || host.endsWith('.paynow.co.zw')) {
+        pollUrl = candidate
+        await prisma.payment.update({
+          where: { id: payment.id },
+          data: { paynowPollUrl: candidate },
+        })
+      } else {
+        console.warn(`Paynow webhook: refusing non-Paynow poll URL host "${host}"`)
+      }
+    }
+
+    if (!pollUrl) {
       throw createError({
         statusCode: 400,
         statusMessage: 'No poll URL recorded for this payment',
@@ -68,7 +96,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Ask Paynow directly what the status is.
-    const pollResponse = await $fetch(payment.paynowPollUrl)
+    const pollResponse = await $fetch(pollUrl)
 
     let status = 'Pending'
     if (typeof pollResponse === 'string') {

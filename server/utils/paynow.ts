@@ -62,6 +62,9 @@ export function getPaynowAuthEmail(customerEmail?: string | null) {
  * when the reverse proxy does not forward the original Host header, which sends buyers to a
  * dead address and points the IPN callback back at the app's own loopback.
  */
+/** Live site. Used when NUXT_PUBLIC_SITE_URL is unset so payments never depend on the env alone. */
+export const DEFAULT_SITE_URL = 'https://ufo-networks.org'
+
 export function getSiteUrl(event: any) {
   const configured = String(useRuntimeConfig().public?.siteUrl || process.env.NUXT_PUBLIC_SITE_URL || '').trim()
 
@@ -69,14 +72,13 @@ export function getSiteUrl(event: any) {
     return configured.replace(/\/+$/, '')
   }
 
-  const origin = getRequestURL(event).origin
-
+  // In production, fall back to the known public URL rather than the request Host header, which
+  // the reverse proxy rewrites to 127.0.0.1:3000 — that is what sent paying customers to a dead
+  // address. Never throw here: a misconfigured env must not block checkout.
   if (process.env.NODE_ENV === 'production') {
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'NUXT_PUBLIC_SITE_URL is not configured. Paynow callbacks cannot be built safely.',
-    })
+    console.warn(`NUXT_PUBLIC_SITE_URL is not set; falling back to ${DEFAULT_SITE_URL}`)
+    return DEFAULT_SITE_URL
   }
 
-  return origin.replace(/\/+$/, '')
+  return getRequestURL(event).origin.replace(/\/+$/, '')
 }

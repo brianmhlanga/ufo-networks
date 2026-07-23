@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import { getAuditActor, serializeForAudit, writeAuditLog } from '~/server/utils/auditLog'
 import { getPaynowAuthEmail, getSiteUrl, requirePaynowCredentials } from '~/server/utils/paynow'
+import { releaseReservedVouchers } from '~/server/utils/paymentFulfilment'
 import { normalizeZimbabwePhone } from '~/utils/phone'
 
 const prisma = new PrismaClient()
@@ -272,12 +273,31 @@ export default defineEventHandler(async (event) => {
 
     // Create payment
     const payment = paynow.createPayment(paymentReference, getPaynowAuthEmail(customerEmail))
-    
+
          // Add items to payment
      for (const item of orderItems) {
        // Since we don't store voucherType, we'll use a generic description
        payment.add(`WiFi Voucher × ${item.quantity}`, Number(item.lineTotal))
      }
+
+    // Persist the payment record and reserve the vouchers BEFORE handing the transaction to
+    // Paynow. Paynow can POST its IPN while sendMobile()/send() is still in flight — a buyer who
+    // cancels on their phone triggers it within a second — and if the row does not exist yet the
+    // callback 404s and the payment outcome is lost.
+    const paymentRecord = await prisma.payment.create({
+      data: {
+        orderId: order.id,
+        provider: 'PAYNOW',
+        status: 'PENDING',
+        amount: total,
+        paynowReference: paymentReference,
+        paynowPollUrl: ''
+      }
+    })
+
+    if (!isAgentOrder) {
+      await reserveVouchersForOrder(order.id, vouchersToReserve)
+    }
 
     let response
     if (paymentMethod === 'mobile') {
@@ -289,23 +309,15 @@ export default defineEventHandler(async (event) => {
     }
 
     if (response.success) {
-      // Create payment record
-      const paymentRecord = await prisma.payment.create({
+      // Record the poll URL now that Paynow has issued one. An early IPN may already have
+      // settled this payment, so never downgrade a decided status back to PENDING here.
+      await prisma.payment.update({
+        where: { id: paymentRecord.id },
         data: {
-          orderId: order.id,
-          provider: 'PAYNOW',
-          status: 'PENDING',
-          amount: total,
-          paynowReference: paymentReference,
           paynowPollUrl: response.pollUrl || '',
           providerPayload: response
         }
       })
-
-             // Only reserve vouchers for regular orders, not agent orders
-       if (!isAgentOrder) {
-         await reserveVouchersForOrder(order.id, vouchersToReserve)
-       }
 
       // For web payments, we still need to redirect, but also provide pollUrl for status checking
       if (paymentMethod === 'web') {
@@ -337,6 +349,18 @@ export default defineEventHandler(async (event) => {
         }
       }
     } else {
+      // Paynow refused the transaction. Release the stock we were holding so it does not sit
+      // RESERVED against an order that can never be paid.
+      await prisma.payment.update({
+        where: { id: paymentRecord.id },
+        data: { status: 'FAILED', paynowStatusMsg: response.error || 'Payment initiation failed' }
+      })
+      await prisma.order.update({
+        where: { id: order.id },
+        data: { status: 'FAILED' }
+      })
+      await releaseReservedVouchers(prisma, order.id)
+
       throw createError({
         statusCode: 400,
         statusMessage: response.error || 'Payment initiation failed'
