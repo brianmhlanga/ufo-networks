@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { ensureVouchersForPaidOrder } from '~/server/utils/paymentFulfilment'
 
 const prisma = new PrismaClient()
 
@@ -36,6 +37,10 @@ export default defineEventHandler(async (event) => {
         vouchers: []
       }
     }
+
+    // Recover a paid order that ended up with no vouchers linked (its reservation was released by
+    // the old status-flapping bug). Idempotent — a no-op once the order is whole.
+    await ensureVouchersForPaidOrder(prisma, orderId)
 
     const vouchers = await prisma.voucher.findMany({
       where: {

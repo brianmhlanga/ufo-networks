@@ -68,6 +68,7 @@ export async function applyPaynowStatus(
  * order, and email the PINs to the buyer.
  */
 export async function assignVouchersToOrder(prisma: PrismaClient, orderId: string) {
+  // Reserved → SOLD for anything still held for this order.
   const reservedVouchers = await prisma.voucher.findMany({
     where: {
       reservedByOrderId: orderId,
@@ -99,7 +100,70 @@ export async function assignVouchersToOrder(prisma: PrismaClient, orderId: strin
     return
   }
 
+  // Self-heal a paid public order whose reservation was lost. This happens to orders created
+  // before the status-flapping fix: an early "Pending" poll released the held vouchers, so when
+  // "Paid" landed there was nothing to mark SOLD and the buyer saw zero vouchers. Claim fresh
+  // AVAILABLE vouchers matching each item so simply reloading the confirmation page recovers it.
+  await ensureVouchersForPaidOrder(prisma, orderId)
+
   await deliverVoucherEmail(prisma, orderId)
+}
+
+/**
+ * Guarantee a paid public order has as many vouchers tied to it as it paid for. Idempotent:
+ * counts what is already linked and only claims the shortfall.
+ */
+export async function ensureVouchersForPaidOrder(prisma: PrismaClient, orderId: string) {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: { items: true },
+  })
+
+  if (!order || order.status !== 'PAID' || order.agentId) return
+
+  for (const item of order.items) {
+    const linked = await prisma.voucher.count({
+      where: {
+        reservedByOrderId: orderId,
+        hours: item.hours,
+        numberOfUsers: item.numberOfUsers,
+        retailPrice: Number(item.unitPrice),
+      },
+    })
+
+    const missing = item.quantity - linked
+    if (missing <= 0) continue
+
+    const fresh = await prisma.voucher.findMany({
+      where: {
+        status: 'AVAILABLE',
+        ...(item.locationId ? { locationId: item.locationId } : {}),
+        hours: item.hours,
+        numberOfUsers: item.numberOfUsers,
+        retailPrice: Number(item.unitPrice),
+      },
+      take: missing,
+      select: { id: true },
+    })
+
+    if (fresh.length) {
+      await prisma.voucher.updateMany({
+        where: { id: { in: fresh.map((v) => v.id) } },
+        data: {
+          status: 'SOLD',
+          soldAt: new Date(),
+          reservedByOrderId: orderId,
+          reservedAt: new Date(),
+        },
+      })
+    }
+
+    if (fresh.length < missing) {
+      console.error(
+        `Order ${orderId}: paid for ${item.quantity} of ${item.hours}h/${item.numberOfUsers}u but only ${linked + fresh.length} available — ${missing - fresh.length} short`,
+      )
+    }
+  }
 }
 
 /**

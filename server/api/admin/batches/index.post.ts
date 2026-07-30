@@ -85,13 +85,17 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Validate dates
+    // Validate dates.
+    // A one-day grace absorbs the timezone gap between the buyer's browser and this server: a
+    // client in UTC+2 sends "today" as local midnight, which serialises to the previous UTC day,
+    // and a strict "before today" check would wrongly reject it.
+    const DAY_MS = 24 * 60 * 60 * 1000
     const today = new Date()
-    today.setHours(0, 0, 0, 0) // Reset time to start of day
+    today.setHours(0, 0, 0, 0) // start of day, server time
     const startDateObj = new Date(startDate)
     const endDateObj = new Date(endDate)
 
-    if (startDateObj < today) {
+    if (startDateObj.getTime() < today.getTime() - DAY_MS) {
       throw createError({
         statusCode: 400,
         statusMessage: 'Start date cannot be in the past'
@@ -105,24 +109,20 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Check maximum validation period (60 days from today)
-    
     // Start date cannot be more than 60 days from today
-    const maxStartDate = new Date(today)
-    maxStartDate.setDate(today.getDate() + 60 - 1)
-    
-    if (startDateObj > maxStartDate) {
+    const maxStartDate = new Date(today.getTime() + 60 * DAY_MS)
+
+    if (startDateObj.getTime() > maxStartDate.getTime() + DAY_MS) {
       throw createError({
         statusCode: 400,
         statusMessage: 'Start date cannot exceed 60 days from today'
       })
     }
-    
+
     // End date cannot be more than 60 days from start date
-    const maxEndDate = new Date(startDateObj)
-    maxEndDate.setDate(startDateObj.getDate() + 60 - 1)
-    
-    if (endDateObj > maxEndDate) {
+    const maxEndDate = new Date(startDateObj.getTime() + 60 * DAY_MS)
+
+    if (endDateObj.getTime() > maxEndDate.getTime() + DAY_MS) {
       throw createError({
         statusCode: 400,
         statusMessage: 'End date cannot exceed 60 days from start date'

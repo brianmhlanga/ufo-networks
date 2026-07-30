@@ -1185,18 +1185,16 @@ const uploadBatchWithPDF = async () => {
      }
   } catch (error: any) {
     console.error('Error uploading batch:', error)
-    
-    // Handle different types of errors
-    let errorMessage = 'Failed to upload batch'
-    
-    if (error.data?.message) {
-      errorMessage = error.data.message
-    } else if (error.statusMessage) {
-      errorMessage = error.statusMessage
-    } else if (error.message) {
-      errorMessage = error.message
-    }
-    
+
+    // h3 puts the thrown statusMessage under error.data. Show that to the admin rather than a
+    // generic "Failed to upload batch", so a real cause (past date, duplicate numbers) is visible.
+    const errorMessage =
+      error.data?.statusMessage ||
+      error.data?.message ||
+      error.statusMessage ||
+      error.message ||
+      'Failed to upload batch'
+
     toast.add({
       severity: 'error',
       summary: 'Error',

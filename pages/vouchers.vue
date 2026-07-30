@@ -408,8 +408,10 @@ const onLocationChange = async () => {
 const fetchLocations = async () => {
   try {
     loadingLocations.value = true
-    const response: any = await $fetch('/api/locations')
-    
+    // Only locations that actually have available, in-window vouchers. A buyer must never be able
+    // to select a sold-out location and reach a checkout that can only fail.
+    const response: any = await $fetch('/api/locations/with-vouchers')
+
     if (response.success) {
       locationOptions.value = response.data.map((location: any) => ({
         id: location.id,

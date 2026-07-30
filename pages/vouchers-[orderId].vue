@@ -114,13 +114,15 @@
                     </div>
 
                     <!-- Voucher Details Grid -->
-                    <div v-if="vouchers.length === 0" class="text-center py-8">
+                    <div v-if="!vouchersLoaded" class="text-center py-8">
                       <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
                       <p class="text-gray-500">Loading vouchers...</p>
                     </div>
                     <div v-else-if="getVouchersForItem(item).length === 0" class="text-center py-8 text-gray-500">
-                      <span class="material-icons text-4xl text-gray-300 mb-4">wifi_off</span>
-                      <p>No vouchers found for this item</p>
+                      <span class="material-icons text-4xl text-amber-400 mb-4">wifi_off</span>
+                      <p class="font-medium text-gray-700">Your vouchers are being finalised.</p>
+                      <p class="text-sm mt-1">Your payment succeeded. If your PINs don't appear shortly, use the button below or contact support with your payment reference.</p>
+                      <Button label="Refresh" icon="pi pi-refresh" class="mt-4" :loading="refreshingVouchers" @click="refreshVouchers" />
                     </div>
                     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       <div v-for="(voucher, index) in getVouchersForItem(item)" :key="voucher.id" class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
@@ -300,6 +302,10 @@ const VALIDITY_NOTICE = 'Valid for first use within a week from date of purchase
 const loading = ref(true)
 const confirming = ref(false)
 const rechecking = ref(false)
+const refreshingVouchers = ref(false)
+// Distinguishes "still fetching" from "fetched, and it was empty" — without this an empty result
+// leaves the spinner up forever.
+const vouchersLoaded = ref(false)
 const order = ref<any>(null)
 const vouchers = ref<any[]>([])
 
@@ -336,6 +342,17 @@ const fetchVouchers = async () => {
     }
   } catch (error) {
     console.error('Error fetching vouchers:', error)
+  } finally {
+    vouchersLoaded.value = true
+  }
+}
+
+const refreshVouchers = async () => {
+  refreshingVouchers.value = true
+  try {
+    await fetchVouchers()
+  } finally {
+    refreshingVouchers.value = false
   }
 }
 
