@@ -11,6 +11,7 @@
             label="Add New Location"
             icon="add"
             @click="openCreateDialog"
+            v-if="canWrite"
             class="bg-[#185ff9] hover:bg-[#185ff9]/90 border-0"
           >
             <template #icon>
@@ -155,6 +156,7 @@
                     text
                     size="small"
                     @click="editLocation(data)"
+                    v-if="canWrite"
                     class="text-green-600 hover:text-green-800"
                     v-tooltip.top="'Edit Location'"
                   >
@@ -163,7 +165,7 @@
                     </template>
                   </Button>
                   <Button
-                    v-if="data.status === 'ACTIVE'"
+                    v-if="canWrite && data.status === 'ACTIVE'"
                     icon="pause"
                     text
                     size="small"
@@ -176,7 +178,7 @@
                     </template>
                   </Button>
                   <Button
-                    v-else
+                    v-if="canWrite && data.status !== 'ACTIVE'"
                     icon="play_arrow"
                     text
                     size="small"
@@ -193,6 +195,7 @@
                     text
                     size="small"
                     @click="confirmDelete(data)"
+                    v-if="canWrite"
                     class="text-red-600 hover:text-red-800"
                     v-tooltip.top="'Delete Location'"
                   >
@@ -523,6 +526,7 @@ definePageMeta({
 
 // Toast instance
 const toast = useToast()
+const { canWrite } = useAdminRole()
 
 // Reactive data
 const loading = ref(false)

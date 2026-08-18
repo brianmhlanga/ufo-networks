@@ -701,9 +701,11 @@
               </ul>
               
               <!-- CTA Button -->
-                <Button class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl shadow-sm hover:shadow-md font-semibold transition-all duration-300 hover:from-blue-700 hover:to-blue-800">
-                Register as Agent
-              </Button>
+                <NuxtLink to="/contact#send-message" class="block">
+                  <Button class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl shadow-sm hover:shadow-md font-semibold transition-all duration-300 hover:from-blue-700 hover:to-blue-800">
+                  Register as Agent
+                </Button>
+                </NuxtLink>
               </div>
             </div>
           </div>
@@ -744,7 +746,7 @@
                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                       </svg>
                     </div>
-                    <span class="text-gray-600 text-sm leading-relaxed">Thousands of daily views</span>
+                    <span class="text-gray-600 text-sm leading-relaxed">Login Screen Background</span>
                 </li>
                   <li class="flex items-start gap-3">
                     <div class="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -752,7 +754,7 @@
                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                       </svg>
                     </div>
-                    <span class="text-gray-600 text-sm leading-relaxed">Flexible monthly packages</span>
+                    <span class="text-gray-600 text-sm leading-relaxed">Zero Rating for Websites and Web Applications</span>
                 </li>
                   <li class="flex items-start gap-3">
                     <div class="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -765,8 +767,8 @@
               </ul>
               
               <!-- CTA Button -->
-                <Button class="w-full bg-gradient-to-r from-gray-800 to-black text-white rounded-xl shadow-sm hover:shadow-md font-semibold transition-all duration-300 hover:from-gray-900 hover:to-gray-800">
-                View Ad Packages
+                <Button disabled class="w-full bg-gradient-to-r from-gray-800 to-black text-white rounded-xl shadow-sm font-semibold transition-all duration-300 opacity-90 cursor-not-allowed">
+                View Ad Packages <span class="font-normal text-white/70 ml-1">(Coming Soon)</span>
               </Button>
               </div>
             </div>

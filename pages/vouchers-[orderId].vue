@@ -266,12 +266,7 @@
                 </div>
                 <h4 class="font-medium text-gray-900 mb-2">Connect to UFO WiFi</h4>
                 <p class="text-sm text-gray-600">
-                  <template v-if="wifiPassword">
-                    Use password "{{ wifiPassword }}" to join UFO WiFi, then enter your voucher PIN to access the internet
-                  </template>
-                  <template v-else>
-                    Join the UFO WiFi network, then enter your voucher PIN to access the internet
-                  </template>
+                  Join the UFO WiFi network using password "{{ wifiPassword }}", then enter your voucher PIN to access the internet.
                 </p>
               </div>
             </div>
@@ -311,8 +306,9 @@ const vouchers = ref<any[]>([])
 
 const isPaid = computed(() => order.value?.status === 'PAID')
 
-// The WiFi passphrase is per-location; every voucher in an order shares one location.
-const wifiPassword = computed(() => vouchers.value[0]?.location?.wifiPassword || '')
+// The WiFi passphrase is per-location; every voucher in an order shares one location. Falls back
+// to the global default so the connect instructions always show a password.
+const wifiPassword = computed(() => resolveWifiPassword(vouchers.value[0]?.location?.wifiPassword))
 
 const locationName = computed(
   () => order.value?.items?.[0]?.location?.name || vouchers.value[0]?.location?.name || 'Selected Location'
@@ -446,14 +442,16 @@ const getVouchersForItem = (item: any) => {
     .slice(0, item.quantity)
 }
 
-const connectionSteps = () => {
-  const joinStep = wifiPassword.value
-    ? `Connect to the WiFi network using password "${wifiPassword.value}"`
-    : 'Connect to the WiFi network'
+// `html: true` emphasises the password (bold + italic) for the printable HTML voucher; the plain
+// version is used for the .txt download, which cannot carry formatting.
+const connectionSteps = ({ html = false } = {}) => {
+  const pw = html
+    ? `<strong><em>using password "${wifiPassword.value}"</em></strong>`
+    : `using password "${wifiPassword.value}"`
 
   return [
     'Go to the selected UFO Networks location',
-    joinStep,
+    `Connect to the UFO WiFi network ${pw}`,
     'Enter the PIN above when prompted',
     'Enjoy your internet access!'
   ]
@@ -499,7 +497,7 @@ ${steps}
 
 const printVoucher = (voucher: any) => {
   try {
-    const steps = connectionSteps()
+    const steps = connectionSteps({ html: true })
       .map((step, index) => `${index + 1}. ${step}`)
       .join('<br>')
 

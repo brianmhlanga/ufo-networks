@@ -28,19 +28,18 @@ export default defineEventHandler(async (event) => {
 
     // Get request body
     const body = await readBody(event)
-    const { 
-      locationId, 
-      hours, 
-      numberOfUsers, 
-      quantity, 
-      salePrice, 
-      customerName, 
-      customerPhone, 
-      totalAmount 
+    const {
+      locationId,
+      hours,
+      numberOfUsers,
+      quantity,
+      customerName,
+      customerPhone
     } = body
 
-    // Validate required fields
-    if (!locationId || !hours || !numberOfUsers || !quantity || !salePrice || !totalAmount) {
+    // Validate required fields. Price is NOT accepted from the client — it is fixed by the
+    // voucher type's retail price and resolved server-side below.
+    if (!locationId || !hours || !numberOfUsers || !quantity) {
       throw createError({
         statusCode: 400,
         statusMessage: 'Missing required fields'
@@ -150,6 +149,12 @@ export default defineEventHandler(async (event) => {
     }
 
     // Use a transaction to ensure data consistency
+    // Sum the price from the vouchers we're about to sell, computed once outside the transaction
+    // so a transaction retry cannot double-count it.
+    const saleTotal = availableVouchers
+      .slice(0, Number(quantity))
+      .reduce((sum, v) => sum + Number(v.retailPrice), 0)
+
     const result = await prisma.$transaction(async (tx) => {
       const sales = []
       const createdVouchers = []
@@ -157,7 +162,11 @@ export default defineEventHandler(async (event) => {
       // Process each voucher
       for (let i = 0; i < quantity; i++) {
         const voucher = availableVouchers[i]
-        
+
+        // The sale price is the voucher's own retail price — the authoritative source, never a
+        // client-supplied value.
+        const soldPrice = voucher.retailPrice
+
         // Mark voucher as redeemed
         const updatedVoucher = await tx.voucher.update({
           where: { id: voucher.id },
@@ -178,7 +187,7 @@ export default defineEventHandler(async (event) => {
             agentId: agentProfile.id,
             agentPurchaseId: agentPurchase.id,
             voucherId: voucher.id,
-            soldPrice: salePrice,
+            soldPrice,
             buyerPhone: customerPhone || null,
             buyerNote: customerName || null
           }
@@ -218,7 +227,7 @@ export default defineEventHandler(async (event) => {
       data: {
         id: result.sales[0].id,
         quantity: result.sales.length,
-        totalAmount: totalAmount,
+        totalAmount: saleTotal,
         saleDate: new Date(),
         vouchers: result.createdVouchers
       }

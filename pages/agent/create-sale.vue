@@ -80,37 +80,30 @@
             </p>
           </div>
 
-          <!-- Sale Price -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Sale Price per Voucher *</label>
-            <InputNumber 
-              v-model="salePrice" 
-              :min="0.01" 
-              :max="999.99"
-              mode="currency" 
-              currency="USD" 
-              locale="en-US"
-              class="w-full"
-              required
-            />
+          <!-- Price (fixed by the voucher type — the agent does not set it) -->
+          <div v-if="selectedRetailPrice > 0">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Price per Voucher</label>
+            <div class="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-gray-900 font-medium">
+              ${{ selectedRetailPrice.toFixed(2) }}
+            </div>
+            <p class="text-xs text-gray-500 mt-1">Set by the voucher package.</p>
           </div>
 
           <!-- Customer Information -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Customer Name</label>
-              <InputText 
-                v-model="customerName" 
-                placeholder="Customer name" 
+              <InputText
+                v-model="customerName"
+                placeholder="Customer name"
                 class="w-full"
               />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Customer Phone</label>
-              <InputText 
-                v-model="customerPhone" 
-                type="tel" 
-                placeholder="077 123 4567" 
+              <InputText
+                v-model="customerPhone"
+                type="tel"
                 class="w-full"
               />
             </div>
@@ -313,7 +306,6 @@ const availableVoucherTypes = ref<any[]>([])
 const selectedLocation = ref<string>('')
 const selectedVoucherType = ref<string>('')
 const quantity = ref<number>(1)
-const salePrice = ref(0)
 const customerName = ref('')
 const customerPhone = ref('')
 const creating = ref(false)
@@ -350,7 +342,12 @@ async function connectBluetoothPrinter() {
 }
 
 // Computed
-const totalAmount = computed(() => quantity.value * salePrice.value)
+// The price is fixed by the selected voucher package's retail price; the agent never sets it.
+const selectedRetailPrice = computed(() => {
+  const type = availableVoucherTypes.value.find(t => t.value === selectedVoucherType.value)
+  return Number(type?.retailPrice) || 0
+})
+const totalAmount = computed(() => quantity.value * selectedRetailPrice.value)
 
 const assignedLocationLabel = computed(() => {
   if (!assignedLocation.value) return ''
@@ -365,10 +362,10 @@ const maxAvailableQuantity = computed(() => {
 })
 
 const canCreateSale = computed(() => {
-  return selectedLocation.value && 
-         selectedVoucherType.value && 
-         quantity.value > 0 && 
-         salePrice.value > 0 &&
+  return selectedLocation.value &&
+         selectedVoucherType.value &&
+         quantity.value > 0 &&
+         selectedRetailPrice.value > 0 &&
          availabilityCheck.value &&
          quantity.value <= availabilityCheck.value.availableForSale
 })
@@ -472,7 +469,12 @@ const createSale = async () => {
     creating.value = true
     
     const [hours, numberOfUsers] = selectedVoucherType.value.split('-').map(Number)
-    
+
+    // Capture the price before the form resets. The server derives the authoritative price from
+    // the voucher's retail price; these values are only for the on-screen receipt.
+    const unitPrice = selectedRetailPrice.value
+    const total = totalAmount.value
+
     const response = await $fetch('/api/agent/create-sale', {
       method: 'POST',
       body: {
@@ -480,10 +482,8 @@ const createSale = async () => {
         hours,
         numberOfUsers,
         quantity: quantity.value,
-        salePrice: salePrice.value,
         customerName: customerName.value,
-        customerPhone: customerPhone.value,
-        totalAmount: totalAmount.value
+        customerPhone: customerPhone.value
       }
     })
 
@@ -492,8 +492,8 @@ const createSale = async () => {
       const summary = {
         customerName: customerName.value,
         customerPhone: customerPhone.value,
-        salePrice: salePrice.value,
-        totalAmount: totalAmount.value
+        salePrice: unitPrice,
+        totalAmount: total
       }
       createdSaleSummary.value = summary
       createdVouchers.value = vouchers
@@ -502,7 +502,6 @@ const createSale = async () => {
       // Reset form (keep assigned location)
       selectedVoucherType.value = ''
       quantity.value = 1
-      salePrice.value = 0
       customerName.value = ''
       customerPhone.value = ''
       availabilityCheck.value = null
@@ -553,7 +552,7 @@ function saleForReceipt(voucher: any) {
     },
     buyerNote: summary?.customerName ?? customerName.value ?? null,
     buyerPhone: summary?.customerPhone ?? customerPhone.value ?? null,
-    soldPrice: summary?.salePrice ?? salePrice.value,
+    soldPrice: summary?.salePrice ?? selectedRetailPrice.value,
     createdAt: new Date().toISOString()
   }
 }
@@ -812,7 +811,7 @@ const generateVoucherHTML = (voucher: any) => {
             </div>
             <div class="detail-row">
                 <span class="detail-label">Price:</span>
-                <span class="detail-value">$${salePrice.value}</span>
+                <span class="detail-value">$${(createdSaleSummary?.value?.salePrice ?? selectedRetailPrice.value).toFixed(2)}</span>
             </div>
         </div>
         

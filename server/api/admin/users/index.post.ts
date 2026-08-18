@@ -7,10 +7,10 @@ export default defineEventHandler(async (event) => {
   try {
     // Check if user is admin
     const session = await getUserSession(event)
-    if (!session?.user || !['SUPER_ADMIN', 'ADMIN'].includes(session.user.role)) {
+    if (!session?.user || session.user.role !== 'SUPER_ADMIN') {
       throw createError({
-        statusCode: 401,
-        statusMessage: 'Admin access required'
+        statusCode: 403,
+        statusMessage: 'Super Admin access required (Admin is view-only)'
       })
     }
 
@@ -23,6 +23,15 @@ export default defineEventHandler(async (event) => {
       throw createError({
         statusCode: 400,
         statusMessage: 'Missing required fields: name, email, role, password'
+      })
+    }
+
+    // Admins may only create staff/agent accounts. Customers come from public checkout, not here.
+    const CREATABLE_ROLES = ['AGENT', 'ADMIN', 'SUPER_ADMIN']
+    if (!CREATABLE_ROLES.includes(role)) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'Invalid role. Choose Agent, Admin, or Super Admin.'
       })
     }
 

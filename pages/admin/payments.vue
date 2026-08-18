@@ -8,7 +8,8 @@
           <p class="text-gray-600">Manage payment transactions and track financial data</p>
         </div>
         <!-- <Button 
-          @click="openCreateDialog" 
+          @click="openCreateDialog"
+          v-if="canWrite"
           icon="add" 
           label="Create Payment" 
           class="bg-[#185ff9] hover:bg-[#185ff9]/90"
@@ -220,7 +221,8 @@
                     v-tooltip.top="'Edit Payment'"
                   />
                   <Button 
-                    @click="confirmDeletePayment(data)" 
+                    @click="confirmDeletePayment(data)"
+                    v-if="canWrite"
                     icon="delete" 
                     size="small" 
                     text 
@@ -249,6 +251,7 @@
   import { useConfirm } from 'primevue/useconfirm'
   // Toast and Confirm
 const toast = useToast()
+const { canWrite } = useAdminRole()
 const confirm = useConfirm()
   // Reactive data
   const loading = ref(false)

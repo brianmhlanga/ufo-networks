@@ -11,6 +11,7 @@
           label="Add User"
           icon="add"
           @click="openCreateDialog"
+          v-if="canWrite"
           class="custom-primary-button"
         />
         <Button
@@ -174,6 +175,7 @@
                    text
                    size="small"
                    @click="editUser(data)"
+                   v-if="canWrite"
                    v-tooltip.top="'Edit User'"
                    class="action-button edit-button"
                  >
@@ -182,7 +184,7 @@
                    </template>
                  </Button>
                  <Button
-                   v-if="data.status === 'ACTIVE'"
+                   v-if="canWrite && data.status === 'ACTIVE'"
                    text
                    size="small"
                    @click="confirmDisable(data)"
@@ -194,7 +196,7 @@
                    </template>
                  </Button>
                  <Button
-                   v-else
+                   v-if="canWrite && data.status !== 'ACTIVE'"
                    text
                    size="small"
                    @click="confirmEnable(data)"
@@ -210,6 +212,7 @@
                    size="small"
                    severity="danger"
                    @click="confirmDelete(data)"
+                   v-if="canWrite"
                    v-tooltip.top="'Delete User'"
                    class="action-button delete-button"
                  >
@@ -459,6 +462,7 @@ import { useConfirm } from 'primevue/useconfirm'
 
 // Toast instance
 const toast = useToast()
+const { canWrite } = useAdminRole()
 
 // Confirm dialog instance
 const confirm = useConfirm()
@@ -505,16 +509,18 @@ const pageSize = ref(10)
 const sortField = ref<string | null>(null)
 const sortOrder = ref<number>(-1)
 
-// Options for dropdowns
+// Options for dropdowns.
+// Customer is intentionally NOT creatable — customers are created by public checkout, not admins.
 const roleOptions = ref([
-  { label: 'Customer', value: 'CUSTOMER' },
   { label: 'Agent', value: 'AGENT' },
   { label: 'Admin', value: 'ADMIN' },
   { label: 'Super Admin', value: 'SUPER_ADMIN' }
 ])
 
+// The filter still needs Customer so existing customer accounts can be filtered/viewed.
 const filterRoleOptions = computed(() => [
   { label: 'All Roles', value: '' },
+  { label: 'Customer', value: 'CUSTOMER' },
   ...roleOptions.value,
 ])
 

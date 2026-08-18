@@ -7,7 +7,8 @@
           <p class="text-gray-600">Manage ads, track performance, and monitor campaigns</p>
         </div>
         <Button 
-          @click="openCreateDialog" 
+          @click="openCreateDialog"
+          v-if="canWrite"
           icon="add" 
           label="Create Ad" 
           class="bg-[#185ff9] hover:bg-[#185ff9]/90"
@@ -258,7 +259,8 @@
                      <span class="material-icons text-blue-600">visibility</span>
                    </Button>
                    <Button 
-                     @click="editAd(data)" 
+                     @click="editAd(data)"
+                     v-if="canWrite"
                      size="small" 
                      text 
                      severity="warning"
@@ -268,7 +270,8 @@
                      <span class="material-icons text-orange-600">edit</span>
                    </Button>
                    <Button 
-                     @click="confirmDeleteAd(data)" 
+                     @click="confirmDeleteAd(data)"
+                     v-if="canWrite"
                      size="small" 
                      text 
                      severity="danger"
@@ -659,6 +662,7 @@ import { useConfirm } from 'primevue/useconfirm'
 
 // Toast and Confirm
 const toast = useToast()
+const { canWrite } = useAdminRole()
 const $confirm = useConfirm()
 
 // Reactive data

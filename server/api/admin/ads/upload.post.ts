@@ -20,10 +20,10 @@ export default defineEventHandler(async (event) => {
       select: { role: true }
     })
 
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
+    if (!user || (user.role !== 'SUPER_ADMIN')) {
       throw createError({
         statusCode: 403,
-        statusMessage: 'Forbidden: Admin access required'
+        statusMessage: 'Forbidden: Super Admin access required (Admin is view-only)'
       })
     }
 

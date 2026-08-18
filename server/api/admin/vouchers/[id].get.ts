@@ -81,6 +81,19 @@ export default defineEventHandler(async (event) => {
             buyerNote: true,
             createdAt: true
           }
+        },
+        // Public (non-agent) orders reserve the voucher; this exposes the buyer's contact so an
+        // admin can see who purchased/redeemed it.
+        reservedByOrder: {
+          select: {
+            id: true,
+            buyerName: true,
+            buyerEmail: true,
+            buyerPhone: true,
+            total: true,
+            status: true,
+            createdAt: true
+          }
         }
       }
     })

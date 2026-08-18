@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@prisma/client'
 import { sendVoucherEmail } from '~/server/email/emailService'
+import { resolveWifiPassword } from '~/utils/wifi'
 
 /**
  * Shared Paynow fulfilment. Both the IPN webhook and the client-side status poll converge here,
@@ -122,45 +123,62 @@ export async function ensureVouchersForPaidOrder(prisma: PrismaClient, orderId: 
   if (!order || order.status !== 'PAID' || order.agentId) return
 
   for (const item of order.items) {
-    const linked = await prisma.voucher.count({
-      where: {
-        reservedByOrderId: orderId,
-        hours: item.hours,
-        numberOfUsers: item.numberOfUsers,
-        retailPrice: Number(item.unitPrice),
-      },
-    })
-
-    const missing = item.quantity - linked
-    if (missing <= 0) continue
-
-    const fresh = await prisma.voucher.findMany({
-      where: {
-        status: 'AVAILABLE',
-        ...(item.locationId ? { locationId: item.locationId } : {}),
-        hours: item.hours,
-        numberOfUsers: item.numberOfUsers,
-        retailPrice: Number(item.unitPrice),
-      },
-      take: missing,
-      select: { id: true },
-    })
-
-    if (fresh.length) {
-      await prisma.voucher.updateMany({
-        where: { id: { in: fresh.map((v) => v.id) } },
-        data: {
-          status: 'SOLD',
-          soldAt: new Date(),
-          reservedByOrderId: orderId,
-          reservedAt: new Date(),
-        },
-      })
+    // Never claim from a different location than the order was placed for. Orders always carry a
+    // locationId now; if one is somehow missing, skip rather than hand out vouchers valid elsewhere.
+    if (!item.locationId) {
+      console.error(`Order ${orderId}: item ${item.id} has no locationId; cannot self-heal vouchers.`)
+      continue
     }
 
-    if (fresh.length < missing) {
+    // Do the count → select → claim atomically. This runs from a public GET that the confirmation
+    // page can hit concurrently with the IPN webhook, so without a transaction and a
+    // status:'AVAILABLE' guard on the claim two callers could hand out the same voucher twice or
+    // steal one already reserved to another order.
+    const shortfall = await prisma.$transaction(async (tx) => {
+      const linked = await tx.voucher.count({
+        where: {
+          reservedByOrderId: orderId,
+          hours: item.hours,
+          numberOfUsers: item.numberOfUsers,
+          retailPrice: Number(item.unitPrice),
+        },
+      })
+
+      const missing = item.quantity - linked
+      if (missing <= 0) return 0
+
+      const fresh = await tx.voucher.findMany({
+        where: {
+          status: 'AVAILABLE',
+          locationId: item.locationId,
+          hours: item.hours,
+          numberOfUsers: item.numberOfUsers,
+          retailPrice: Number(item.unitPrice),
+        },
+        take: missing,
+        select: { id: true },
+      })
+
+      if (fresh.length) {
+        // The id + status:'AVAILABLE' guard makes the claim a no-op for any voucher another
+        // caller grabbed between the select and here.
+        await tx.voucher.updateMany({
+          where: { id: { in: fresh.map((v) => v.id) }, status: 'AVAILABLE' },
+          data: {
+            status: 'SOLD',
+            soldAt: new Date(),
+            reservedByOrderId: orderId,
+            reservedAt: new Date(),
+          },
+        })
+      }
+
+      return missing - fresh.length
+    })
+
+    if (shortfall > 0) {
       console.error(
-        `Order ${orderId}: paid for ${item.quantity} of ${item.hours}h/${item.numberOfUsers}u but only ${linked + fresh.length} available — ${missing - fresh.length} short`,
+        `Order ${orderId}: short ${shortfall} of ${item.hours}h/${item.numberOfUsers}u at location ${item.locationId}.`,
       )
     }
   }
@@ -219,7 +237,7 @@ export async function deliverVoucherEmail(prisma: PrismaClient, orderId: string)
         numberOfUsers: v.numberOfUsers,
         dataLimitGb: v.dataLimitGb,
         locationName: v.location?.name || '',
-        wifiPassword: v.location?.wifiPassword || null,
+        wifiPassword: resolveWifiPassword(v.location?.wifiPassword),
       })),
     })
   } catch (error) {

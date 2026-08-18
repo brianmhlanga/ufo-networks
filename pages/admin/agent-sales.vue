@@ -7,7 +7,8 @@
           <p class="text-gray-600">Track and manage agent voucher sales and performance</p>
         </div>
         <!-- <Button 
-          @click="openCreateDialog" 
+          @click="openCreateDialog"
+          v-if="canWrite"
           icon="add" 
           label="Create Sale" 
           class="bg-[#185ff9] hover:bg-[#185ff9]/90"
@@ -221,6 +222,7 @@ import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 // Toast and Confirm
 const toast = useToast()
+const { canWrite } = useAdminRole()
 const $confirm = useConfirm()
 
 // Reactive data

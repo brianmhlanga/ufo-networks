@@ -12,11 +12,13 @@
             icon="settings"
             severity="secondary"
             @click="openBulkActions"
+            v-if="canWrite"
           /> -->
           <Button
             label="Add Voucher"
             icon="add"
             @click="openCreateDialog"
+            v-if="canWrite"
             class="custom-primary-button"
           />
         </div>
@@ -292,6 +294,7 @@
                     text
                     size="small"
                     @click="editVoucher(data)"
+                    v-if="canWrite"
                     v-tooltip.top="'Edit Voucher'"
                     class="action-button edit-button"
                   >
@@ -303,6 +306,7 @@
                     text
                     size="small"
                     @click="changeStatus(data)"
+                    v-if="canWrite"
                     v-tooltip.top="'Change Status'"
                     class="action-button status-button"
                   >
@@ -315,6 +319,7 @@
                     size="small"
                     severity="danger"
                     @click="confirmDelete(data)"
+                    v-if="canWrite"
                     v-tooltip.top="'Delete Voucher'"
                     class="action-button delete-button"
                   >
@@ -613,8 +618,75 @@
           </div>
         </template>
              </Dialog>
+
+      <!-- View Details Dialog -->
+      <Dialog
+        v-model:visible="showViewDialog"
+        :modal="true"
+        header="Voucher Details"
+        class="p-fluid w-full max-w-2xl"
+      >
+        <div v-if="loadingViewDetails" class="py-10 text-center text-[#2d3040]/60">
+          <i class="pi pi-spin pi-spinner text-2xl"></i>
+          <p class="mt-2">Loading details…</p>
+        </div>
+        <div v-else-if="viewDetails" class="space-y-5">
+          <!-- Voucher summary -->
+          <div class="grid grid-cols-2 gap-3 text-sm">
+            <div><span class="text-[#2d3040]/60">Voucher #</span><div class="font-mono font-medium">{{ viewDetails.voucherNumber }}</div></div>
+            <div><span class="text-[#2d3040]/60">PIN</span><div class="font-mono font-medium">{{ viewDetails.pin }}</div></div>
+            <div><span class="text-[#2d3040]/60">Package</span><div class="font-medium">{{ viewDetails.hours }}H · {{ viewDetails.numberOfUsers }} user(s)<template v-if="viewDetails.dataLimitGb"> · {{ viewDetails.dataLimitGb }}GB</template></div></div>
+            <div><span class="text-[#2d3040]/60">Price</span><div class="font-medium">${{ Number(viewDetails.retailPrice).toFixed(2) }}</div></div>
+            <div><span class="text-[#2d3040]/60">Location</span><div class="font-medium">{{ viewDetails.location?.name || '—' }}</div></div>
+            <div>
+              <span class="text-[#2d3040]/60">Status</span>
+              <div><Tag :value="viewDetails.status" :severity="getStatusSeverity(viewDetails.status)" /></div>
+            </div>
+            <div v-if="viewDetails.redeemedAt"><span class="text-[#2d3040]/60">Redeemed</span><div class="font-medium">{{ formatDate(viewDetails.redeemedAt) }}</div></div>
+            <div v-if="viewDetails.soldAt"><span class="text-[#2d3040]/60">Sold</span><div class="font-medium">{{ formatDate(viewDetails.soldAt) }}</div></div>
+          </div>
+
+          <!-- Purchase / redemption details -->
+          <div class="border-t border-gray-200 pt-4">
+            <h4 class="font-semibold text-[#2d3040] mb-3">Purchase / Redemption</h4>
+
+            <!-- Sold by an agent -->
+            <div v-if="viewDetails.agentSale" class="space-y-1 text-sm">
+              <div class="text-[#2d3040]/60 mb-1">Sold by agent <span class="font-medium text-[#2d3040]">{{ viewDetails.assignedToAgent?.displayName || '—' }}</span></div>
+              <div><span class="text-[#2d3040]/60">Customer name:</span> <span class="font-medium">{{ viewDetails.agentSale.buyerNote || '—' }}</span></div>
+              <div><span class="text-[#2d3040]/60">Customer phone:</span> <span class="font-medium">{{ viewDetails.agentSale.buyerPhone || '—' }}</span></div>
+              <div><span class="text-[#2d3040]/60">Sold price:</span> <span class="font-medium">${{ Number(viewDetails.agentSale.soldPrice).toFixed(2) }}</span></div>
+              <div><span class="text-[#2d3040]/60">Sold on:</span> <span class="font-medium">{{ formatDate(viewDetails.agentSale.createdAt) }}</span></div>
+            </div>
+
+            <!-- Bought through a public online order -->
+            <div v-else-if="viewDetails.reservedByOrder" class="space-y-1 text-sm">
+              <div class="text-[#2d3040]/60 mb-1">Online purchase · order <span class="font-mono text-[#2d3040]">{{ viewDetails.reservedByOrder.id }}</span></div>
+              <div><span class="text-[#2d3040]/60">Buyer name:</span> <span class="font-medium">{{ viewDetails.reservedByOrder.buyerName || '—' }}</span></div>
+              <div><span class="text-[#2d3040]/60">Buyer email:</span> <span class="font-medium">{{ viewDetails.reservedByOrder.buyerEmail || '—' }}</span></div>
+              <div><span class="text-[#2d3040]/60">Buyer phone:</span> <span class="font-medium">{{ viewDetails.reservedByOrder.buyerPhone || '—' }}</span></div>
+              <div><span class="text-[#2d3040]/60">Paid:</span> <span class="font-medium">${{ Number(viewDetails.reservedByOrder.total).toFixed(2) }}</span></div>
+              <div><span class="text-[#2d3040]/60">Order date:</span> <span class="font-medium">{{ formatDate(viewDetails.reservedByOrder.createdAt) }}</span></div>
+            </div>
+
+            <!-- Directly assigned to a registered user -->
+            <div v-else-if="viewDetails.assignedToUser" class="space-y-1 text-sm">
+              <div class="text-[#2d3040]/60 mb-1">Assigned to registered user</div>
+              <div><span class="text-[#2d3040]/60">Name:</span> <span class="font-medium">{{ viewDetails.assignedToUser.name || '—' }}</span></div>
+              <div><span class="text-[#2d3040]/60">Email:</span> <span class="font-medium">{{ viewDetails.assignedToUser.email || '—' }}</span></div>
+              <div><span class="text-[#2d3040]/60">Phone:</span> <span class="font-medium">{{ viewDetails.assignedToUser.phone || '—' }}</span></div>
+            </div>
+
+            <div v-else class="text-sm text-[#2d3040]/50">Not yet sold or redeemed — no purchase details.</div>
+          </div>
+        </div>
+
+        <template #footer>
+          <Button label="Close" text @click="showViewDialog = false" />
+        </template>
+      </Dialog>
      </div>
-     
+
      <!-- Toast Component -->
      <Toast />
  </template>
@@ -625,6 +697,7 @@ import { useToast } from 'primevue/usetoast'
 
 // Toast instance
 const toast = useToast()
+const { canWrite } = useAdminRole()
 
 // Reactive data
 const loading = ref(false)
@@ -633,6 +706,9 @@ const updatingStatus = ref(false)
 const submitted = ref(false)
 const showDialog = ref(false)
 const showStatusDialog = ref(false)
+const showViewDialog = ref(false)
+const loadingViewDetails = ref(false)
+const viewDetails = ref<any>(null)
 const isEditing = ref(false)
 const selectedVoucher = ref<any>(null)
 const selectedVouchers = ref<any[]>([])
@@ -957,8 +1033,22 @@ const editVoucher = (voucher: any) => {
   showDialog.value = true
 }
 
-const viewVoucher = (voucher: any) => {
-  toast.add({ severity: 'info', summary: 'Info', detail: `Viewing voucher: ${voucher.voucherNumber}`, life: 3000 })
+const viewVoucher = async (voucher: any) => {
+  selectedVoucher.value = voucher
+  showViewDialog.value = true
+  loadingViewDetails.value = true
+  viewDetails.value = null
+  try {
+    const response: any = await $fetch(`/api/admin/vouchers/${voucher.id}`)
+    if (response.success) {
+      viewDetails.value = response.voucher
+    }
+  } catch (error) {
+    console.error('Error loading voucher details:', error)
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to load voucher details', life: 3000 })
+  } finally {
+    loadingViewDetails.value = false
+  }
 }
 
 const changeStatus = (voucher: any) => {

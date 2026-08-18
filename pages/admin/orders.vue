@@ -7,7 +7,8 @@
         <p class="text-gray-600">Manage customer orders and track sales</p>
       </div>
       <!-- <Button 
-        @click="openCreateDialog" 
+        @click="openCreateDialog"
+        v-if="canWrite"
         icon="add" 
         label="Create Order" 
         class="bg-[#185ff9] hover:bg-[#185ff9]/90"
@@ -191,7 +192,8 @@
                   v-tooltip.top="'View Details'"
                 />
                 <Button 
-                  @click="editOrder(data)" 
+                  @click="editOrder(data)"
+                  v-if="canWrite"
                   icon="edit" 
                   size="small" 
                   text 
@@ -199,7 +201,8 @@
                   v-tooltip.top="'Edit Order'"
                 />
                 <Button 
-                  @click="confirmDeleteOrder(data)" 
+                  @click="confirmDeleteOrder(data)"
+                  v-if="canWrite"
                   icon="delete" 
                   size="small" 
                   text 
@@ -213,9 +216,73 @@
       </template>
     </Card>
 
+    <!-- Order Details Dialog -->
+    <Dialog v-model:visible="showViewDialog" :modal="true" header="Order Details" class="p-fluid w-full max-w-3xl">
+      <div v-if="loadingViewDetails" class="py-10 text-center text-[#2d3040]/60">
+        <i class="pi pi-spin pi-spinner text-2xl"></i>
+        <p class="mt-2">Loading order…</p>
+      </div>
+      <div v-else-if="viewDetails" class="space-y-5">
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+          <div><span class="text-[#2d3040]/60">Order</span><div class="font-mono font-medium">{{ viewDetails.id }}</div></div>
+          <div><span class="text-[#2d3040]/60">Date</span><div class="font-medium">{{ formatDate(viewDetails.createdAt) }}</div></div>
+          <div>
+            <span class="text-[#2d3040]/60">Status</span>
+            <div><Tag :value="viewDetails.status" :severity="getStatusSeverity(viewDetails.status)" /></div>
+          </div>
+          <div><span class="text-[#2d3040]/60">Total</span><div class="font-medium">${{ Number(viewDetails.total).toFixed(2) }}</div></div>
+        </div>
+
+        <!-- Buyer -->
+        <div class="border-t border-gray-200 pt-4">
+          <h4 class="font-semibold text-[#2d3040] mb-3">Customer</h4>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+            <div><span class="text-[#2d3040]/60">Name:</span> <span class="font-medium">{{ viewDetails.buyerName || viewDetails.user?.name || '—' }}</span></div>
+            <div><span class="text-[#2d3040]/60">Email:</span> <span class="font-medium">{{ viewDetails.buyerEmail || viewDetails.user?.email || '—' }}</span></div>
+            <div><span class="text-[#2d3040]/60">Phone:</span> <span class="font-medium">{{ viewDetails.buyerPhone || viewDetails.user?.phone || '—' }}</span></div>
+          </div>
+        </div>
+
+        <!-- Vouchers -->
+        <div v-if="viewDetails.reservedVouchers?.length" class="border-t border-gray-200 pt-4">
+          <h4 class="font-semibold text-[#2d3040] mb-3">Vouchers ({{ viewDetails.reservedVouchers.length }})</h4>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead><tr class="text-left text-[#2d3040]/60">
+                <th class="py-1 pr-4">Voucher #</th><th class="py-1 pr-4">PIN</th><th class="py-1 pr-4">Package</th><th class="py-1">Status</th>
+              </tr></thead>
+              <tbody>
+                <tr v-for="v in viewDetails.reservedVouchers" :key="v.id" class="border-t border-gray-100">
+                  <td class="py-1 pr-4 font-mono">{{ v.voucherNumber }}</td>
+                  <td class="py-1 pr-4 font-mono">{{ v.pin }}</td>
+                  <td class="py-1 pr-4">{{ v.hours }}H · {{ v.numberOfUsers }}u</td>
+                  <td class="py-1"><Tag :value="v.status" :severity="getStatusSeverity(v.status)" /></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Payment -->
+        <div v-if="viewDetails.payments?.length" class="border-t border-gray-200 pt-4">
+          <h4 class="font-semibold text-[#2d3040] mb-3">Payment</h4>
+          <div v-for="p in viewDetails.payments" :key="p.id" class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+            <div><span class="text-[#2d3040]/60">Provider:</span> <span class="font-medium">{{ p.provider }}</span></div>
+            <div><span class="text-[#2d3040]/60">Status:</span> <span class="font-medium">{{ p.status }}</span></div>
+            <div><span class="text-[#2d3040]/60">Amount:</span> <span class="font-medium">${{ Number(p.amount).toFixed(2) }}</span></div>
+            <div><span class="text-[#2d3040]/60">Reference:</span> <span class="font-mono text-xs">{{ p.paynowReference || '—' }}</span></div>
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <Button label="Close" text @click="showViewDialog = false" />
+      </template>
+    </Dialog>
+
     <!-- Toast -->
     <Toast />
-    
+
     <!-- Confirm Dialog -->
     <ConfirmDialog />
   </div>
@@ -227,11 +294,16 @@ import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 // Toast
 const toast = useToast()
+const { canWrite } = useAdminRole()
 const confirm = useConfirm()
 // Reactive data
 const loading:any = ref(false)
 const orders:any = ref([])
 const stats:any = ref({})
+const showViewDialog = ref(false)
+const loadingViewDetails = ref(false)
+const viewDetails:any = ref(null)
+const selectedOrder:any = ref(null)
 const pagination = ref({
   page: 1,
   limit: 20,
@@ -323,13 +395,22 @@ const editOrder = (order:any) => {
   })
 }
 
-const viewOrder = (order:any) => {
-  toast.add({
-    severity: 'info',
-    summary: 'Info',
-    detail: 'View order functionality coming soon',
-    life: 3000
-  })
+const viewOrder = async (order:any) => {
+  selectedOrder.value = order
+  showViewDialog.value = true
+  loadingViewDetails.value = true
+  viewDetails.value = null
+  try {
+    const response:any = await $fetch(`/api/admin/orders/${order.id}`)
+    if (response.success) {
+      viewDetails.value = response.order
+    }
+  } catch (error) {
+    console.error('Error loading order details:', error)
+    toast.add({ severity: 'error', summary: 'Error', detail: 'Failed to load order details', life: 3000 })
+  } finally {
+    loadingViewDetails.value = false
+  }
 }
 
 const confirmDeleteOrder = (order:any) => {

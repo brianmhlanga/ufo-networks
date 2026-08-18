@@ -11,6 +11,7 @@
           label="Add Agent"
           icon="add"
           @click="openCreateDialog"
+          v-if="canWrite"
           class="custom-primary-button"
         />
         <Button
@@ -237,6 +238,7 @@
                   text
                   size="small"
                   @click="editAgent(data)"
+                  v-if="canWrite"
                   v-tooltip.top="'Edit Agent'"
                   class="action-button edit-button"
                 >
@@ -245,7 +247,7 @@
                   </template>
                 </Button>
                 <Button
-                  v-if="data.status !== 'BLACKLISTED'"
+                  v-if="canWrite && data.status !== 'BLACKLISTED'"
                   text
                   size="small"
                   @click="blacklistAgent(data)"
@@ -257,7 +259,7 @@
                   </template>
                 </Button>
                 <Button
-                  v-else
+                  v-if="canWrite && data.status === 'BLACKLISTED'"
                   text
                   size="small"
                   @click="unblacklistAgent(data)"
@@ -273,6 +275,7 @@
                   size="small"
                   severity="danger"
                   @click="confirmDelete(data)"
+                  v-if="canWrite"
                   v-tooltip.top="'Delete Agent'"
                   class="action-button delete-button"
                 >
@@ -537,20 +540,21 @@
       <template #footer>
         <div class="flex justify-end space-x-3">
           <Button
+            v-if="canWrite"
             label="Edit"
             icon="edit"
             @click="editFromView"
             class="custom-primary-button"
           />
           <Button
-            v-if="selectedAgent.status !== 'BLACKLISTED'"
+            v-if="canWrite && selectedAgent.status !== 'BLACKLISTED'"
             label="Blacklist"
             icon="block"
             severity="danger"
             @click="blacklistFromView"
           />
           <Button
-            v-else
+            v-if="canWrite && selectedAgent.status === 'BLACKLISTED'"
             label="Remove Blacklist"
             icon="check_circle"
             severity="success"
@@ -583,6 +587,7 @@ import { useConfirm } from 'primevue/useconfirm'
 
 // Toast instance
 const toast = useToast()
+const { canWrite } = useAdminRole()
 
 // Confirm dialog instance
 const confirm = useConfirm()

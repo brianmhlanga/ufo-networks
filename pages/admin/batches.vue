@@ -11,18 +11,21 @@
             label="Generate Vouchers"
             icon="add_card"
             @click="openGenerateDialog"
+            v-if="canWrite"
             class="custom-primary-button"
           />
           <Button
             label="Add Batch"
             icon="add"
             @click="openCreateDialog"
+            v-if="canWrite"
             class="custom-primary-button"
           /> -->
           <Button
             label="Upload PDF Batch"
             icon="upload_file"
             @click="openUploadDialog"
+            v-if="canWrite"
             class="custom-primary-button"
             severity="success"
           />
@@ -254,6 +257,7 @@
                     text
                     size="small"
                     @click="editBatch(data)"
+                    v-if="canWrite"
                     v-tooltip.top="'Edit Batch'"
                     class="action-button edit-button"
                   >
@@ -265,6 +269,7 @@
                     text
                     size="small"
                     @click="toggleBatchStatus(data)"
+                    v-if="canWrite"
                     v-tooltip.top="data.active ? 'Deactivate' : 'Activate'"
                     class="action-button toggle-button"
                   >
@@ -277,6 +282,7 @@
                     size="small"
                     severity="danger"
                     @click="confirmDelete(data)"
+                    v-if="canWrite"
                     v-tooltip.top="'Delete Batch'"
                     class="action-button delete-button"
                   >
@@ -764,6 +770,7 @@ import { useToast } from 'primevue/usetoast'
 
 // Toast instance
 const toast = useToast()
+const { canWrite } = useAdminRole()
 
 // Reactive data
 const loading = ref(false)
