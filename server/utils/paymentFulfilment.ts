@@ -39,13 +39,17 @@ export async function applyPaynowStatus(
 ) {
   const outcome = mapPaynowStatus(rawStatus)
 
-  await prisma.payment.update({
-    where: { id: paymentId },
+  // A PAID payment is final. A late or replayed callback must not move it back to
+  // PENDING/FAILED, so only non-PAID rows are updated to a non-PAID outcome.
+  const updated = await prisma.payment.updateMany({
+    where: outcome === 'PAID' ? { id: paymentId } : { id: paymentId, status: { not: 'PAID' } },
     data: {
       status: outcome,
       paynowStatusMsg: rawStatus,
     },
   })
+
+  if (updated.count === 0) return 'PAID'
 
   if (outcome === 'PAID') {
     await prisma.order.update({
@@ -261,12 +265,19 @@ export async function releaseReservedVouchers(prisma: PrismaClient, orderId: str
   })
 }
 
-async function createAgentPurchaseFromOrder(
+/**
+ * Credit an agent with the stock from a paid order. Idempotent and safe under concurrency:
+ * the webhook and the status poll can both land here at once, so the order row is locked
+ * (SELECT ... FOR UPDATE) before checking for an existing purchase.
+ *
+ * Returns true if the agent holds stock for this order after the call.
+ */
+export async function createAgentPurchaseFromOrder(
   prisma: PrismaClient,
   orderId: string,
   agentUserId: string,
   orderItems: any[],
-) {
+): Promise<boolean> {
   try {
     const agentProfile = await prisma.agentProfile.findUnique({
       where: { userId: agentUserId },
@@ -274,34 +285,40 @@ async function createAgentPurchaseFromOrder(
 
     if (!agentProfile) {
       console.error('Agent profile not found for user:', agentUserId)
-      return
+      return false
     }
 
-    // An order is only fulfilled once, but a retried IPN could land here twice.
-    const existing = await prisma.agentPurchase.findFirst({
-      where: { notes: { contains: `via order ${orderId}` } },
-      select: { id: true },
+    await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM \`Order\` WHERE id = ${orderId} FOR UPDATE`
+
+      const existing = await tx.agentPurchase.findFirst({
+        where: { notes: { contains: `via order ${orderId}` } },
+        select: { id: true },
+      })
+
+      if (existing) return
+
+      for (const item of orderItems) {
+        await tx.agentPurchase.create({
+          data: {
+            agentId: agentProfile.id,
+            locationId: item.locationId || agentProfile.locationId || null,
+            hours: item.hours,
+            numberOfUsers: item.numberOfUsers,
+            quantity: item.quantity,
+            unitCost: item.unitPrice,
+            totalCost: item.lineTotal,
+            claimedCount: 0,
+            notes: `Purchase of ${item.quantity} ${item.hours}H ${item.numberOfUsers}U vouchers via order ${orderId}`,
+          },
+        })
+      }
     })
 
-    if (existing) return
-
-    for (const item of orderItems) {
-      await prisma.agentPurchase.create({
-        data: {
-          agentId: agentProfile.id,
-          locationId: item.locationId || agentProfile.locationId || null,
-          hours: item.hours,
-          numberOfUsers: item.numberOfUsers,
-          quantity: item.quantity,
-          unitCost: item.unitPrice,
-          totalCost: item.lineTotal,
-          claimedCount: 0,
-          notes: `Purchase of ${item.quantity} ${item.hours}H ${item.numberOfUsers}U vouchers via order ${orderId}`,
-        },
-      })
-    }
+    return true
   } catch (error) {
     // The payment has already succeeded; never surface this as a payment failure.
     console.error('Error creating agent purchase from order:', error)
+    return false
   }
 }

@@ -498,9 +498,6 @@ const confirmPurchase = async () => {
 
 // Payment polling event handlers
 const handlePaymentSuccess = async (orderId: string) => {
-  console.log('handlePaymentSuccess called with orderId:', orderId)
-  console.log('Current paymentMethod:', paymentMethod.value)
-  console.log('Current selectedPurchase:', selectedPurchase.value)
   
   try {
     // Show recording status
@@ -511,71 +508,23 @@ const handlePaymentSuccess = async (orderId: string) => {
       instructions: 'Recording your voucher entitlements in the system...'
     }
     
-    // For mobile payments, we need to manually create the AgentPurchase record
-    // since the webhook won't be called
+    // For mobile payments, confirm the entitlement is recorded. The server checks that the
+    // order belongs to the signed-in agent and has been paid; it is a no-op if the webhook
+    // already recorded it.
     if (paymentMethod.value === 'mobile') {
-      console.log('Creating agent purchase for mobile payment success')
-      
-      // Get the order details to create the agent purchase
-      const orderResponse:any = await $fetch(`/api/orders/${orderId}`)
-      console.log('Order response:', orderResponse)
-      
-      if (orderResponse.success && orderResponse.order.agentId) {
-        console.log('Creating agent purchase with orderId:', orderId, 'agentId:', orderResponse.order.agentId)
-        
-        // Create agent purchase record
-        const createResponse = await $fetch('/api/agent/create-purchase-from-order', {
-          method: 'POST',
-          body: {
-            orderId,
-            agentId: orderResponse.order.agentId
-          }
-        })
-        console.log('Agent purchase creation response:', createResponse)
-        
-        // Show success status
-        paymentPollingData.value = {
-          ...paymentPollingData.value,
-          status: 'Successfully Recorded Agent Entitlement!',
-          instructions: 'Your voucher entitlements have been recorded successfully. Redirecting...'
-        }
-        
-        // Wait a moment for user to see the success message
-        await new Promise(resolve => setTimeout(resolve, 2000))
-        
-      } else {
-        console.log('Order not found or no agentId:', orderResponse)
-        
-        // If no agentId, try to get it from the user session
-        const user = session.user.value as any
-        console.log('User session data:', user)
-        
-        if (user?.id) {
-          console.log('Using user ID from session:', user.id)
-          
-          // Create agent purchase record using session user ID
-          const createResponse = await $fetch('/api/agent/create-purchase-from-order', {
-            method: 'POST',
-            body: {
-              orderId,
-              agentId: user.id
-            }
-          })
-          console.log('Agent purchase creation response using session:', createResponse)
-          
-          // Show success status
-          paymentPollingData.value = {
-            ...paymentPollingData.value,
-            status: 'Successfully Recorded Agent Entitlement!',
-            instructions: 'Your voucher entitlements have been recorded successfully. Redirecting...'
-          }
-          
-          // Wait a moment for user to see the success message
-          await new Promise(resolve => setTimeout(resolve, 2000))
-        }
+      await $fetch('/api/agent/create-purchase-from-order', {
+        method: 'POST',
+        body: { orderId }
+      })
+
+      paymentPollingData.value = {
+        ...paymentPollingData.value,
+        status: 'Successfully Recorded Agent Entitlement!',
+        instructions: 'Your voucher entitlements have been recorded successfully. Redirecting...'
       }
+
+      await new Promise(resolve => setTimeout(resolve, 2000))
     } else {
-      console.log('Not a mobile payment, skipping agent purchase creation')
       
       // Show success status for web payments
       paymentPollingData.value = {
@@ -605,7 +554,6 @@ const handlePaymentSuccess = async (orderId: string) => {
   
   // Redirect to success page with order details
   const total = selectedPurchase.value ? (selectedPurchase.value.quantity * selectedPurchase.value.agentPrice).toFixed(2) : '0.00'
-  console.log('Redirecting to success page with total:', total)
   navigateTo(`/agent/purchase-success?orderId=${orderId}&total=${total}`)
 }
 

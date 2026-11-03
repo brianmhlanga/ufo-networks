@@ -1,104 +1,47 @@
 import { PrismaClient } from '@prisma/client'
+import { createAgentPurchaseFromOrder } from '~/server/utils/paymentFulfilment'
+import { requireActiveUser } from '~/server/utils/requireRole'
 
 const prisma = new PrismaClient()
 
+/**
+ * Record the stock from the signed-in agent's own paid order. The webhook and status poll already
+ * do this on payment; this route lets the buy page confirm it. It is idempotent, and it only
+ * credits an order that belongs to the caller and has been paid.
+ */
 export default defineEventHandler(async (event) => {
   try {
-    console.log('create-purchase-from-order API called')
-    const body = await readBody(event)
-    console.log('Request body:', body)
-    
-    const { orderId, agentId } = body
+    const user = await requireActiveUser(event, prisma, ['AGENT'])
 
-    if (!orderId || !agentId) {
-      console.log('Missing required fields:', { orderId, agentId })
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Missing required fields: orderId, agentId'
-      })
+    const { orderId } = await readBody(event)
+    if (!orderId) {
+      throw createError({ statusCode: 400, statusMessage: 'Missing required field: orderId' })
     }
 
-    // Get the order with items
     const order = await prisma.order.findUnique({
-      where: { id: orderId },
-      include: { items: true }
+      where: { id: String(orderId) },
+      include: { items: true },
     })
 
-    if (!order) {
-      throw createError({
-        statusCode: 404,
-        statusMessage: 'Order not found'
-      })
+    if (!order || order.agentId !== user.id) {
+      throw createError({ statusCode: 404, statusMessage: 'Order not found' })
     }
 
-    // Verify the order belongs to this agent
-    if (order.agentId !== agentId) {
-      throw createError({
-        statusCode: 403,
-        statusMessage: 'Order does not belong to this agent'
-      })
+    if (order.status !== 'PAID') {
+      throw createError({ statusCode: 400, statusMessage: 'Order has not been paid' })
     }
 
-    // Get the agent profile
-    const agentProfile = await prisma.agentProfile.findUnique({
-      where: { userId: agentId }
-    })
-
-    if (!agentProfile) {
-      throw createError({
-        statusCode: 404,
-        statusMessage: 'Agent profile not found'
-      })
+    const credited = await createAgentPurchaseFromOrder(prisma, order.id, user.id, order.items)
+    if (!credited) {
+      throw createError({ statusCode: 500, statusMessage: 'Could not record agent purchase' })
     }
 
-    // Check if agent purchase already exists for this order
-    const existingPurchase = await prisma.agentPurchase.findFirst({
-      where: {
-        notes: {
-          contains: orderId
-        }
-      }
-    })
-
-    if (existingPurchase) {
-      return {
-        success: true,
-        message: 'Agent purchase already exists for this order',
-        data: existingPurchase
-      }
-    }
-
-    // Create AgentPurchase records for each item
-    const agentPurchases = []
-    for (const item of order.items) {
-      const agentPurchase = await prisma.agentPurchase.create({
-        data: {
-          agentId: agentProfile.id,
-          locationId: item.locationId || null,
-          hours: item.hours,
-          numberOfUsers: item.numberOfUsers,
-          quantity: item.quantity,
-          unitCost: item.unitPrice,
-          totalCost: item.lineTotal,
-          claimedCount: 0,
-          notes: `Purchase of ${item.quantity} ${item.hours}H ${item.numberOfUsers}U vouchers via order ${orderId}`
-        }
-      })
-      agentPurchases.push(agentPurchase)
-    }
-
-    return {
-      success: true,
-      message: 'Agent purchase created successfully',
-      data: agentPurchases
-    }
-
+    return { success: true, message: 'Agent purchase recorded' }
   } catch (error: any) {
-    console.error('Error creating agent purchase from order:', error)
-    
+    console.error('Error creating agent purchase from order:', error?.statusMessage || error)
     throw createError({
       statusCode: error.statusCode || 500,
-      statusMessage: error.statusMessage || 'Internal Server Error'
+      statusMessage: error.statusMessage || 'Internal Server Error',
     })
   }
 })

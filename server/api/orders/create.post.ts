@@ -3,14 +3,14 @@ import { getAuditActor, serializeForAudit, writeAuditLog } from '~/server/utils/
 import { getPaynowAuthEmail, getSiteUrl, requirePaynowCredentials } from '~/server/utils/paynow'
 import { releaseReservedVouchers } from '~/server/utils/paymentFulfilment'
 import { normalizeZimbabwePhone } from '~/utils/phone'
+import { requireActiveUser } from '~/server/utils/requireRole'
 
 const prisma = new PrismaClient()
 
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event)
-    console.log('Order creation: Request body:', body)
-    
+
     const { 
       locationId, 
       customerEmail, 
@@ -19,16 +19,8 @@ export default defineEventHandler(async (event) => {
       paymentMethod, 
       mobilePhone, 
       mobileProvider,
-      isAgentOrder,
-      agentId
+      isAgentOrder
     } = body
-    
-    console.log('Order creation: Extracted values:', {
-      isAgentOrder,
-      agentId,
-      customerEmail,
-      paymentMethod
-    })
 
     // Validate required fields
     if (!items || !paymentMethod) {
@@ -71,29 +63,17 @@ export default defineEventHandler(async (event) => {
     // For agent orders: resolve agent from session so agentId always references a valid User (avoids FK violation after reseed/stale client id)
     let resolvedAgentId: string | null = null
     let agentLocationId: string | null = null
+    let agentDiscountPct = 0
 
     if (isAgentOrder) {
-      const session = await getUserSession(event)
-      if (!session?.user) {
-        throw createError({
-          statusCode: 401,
-          statusMessage: 'You must be logged in to place an agent order'
-        })
-      }
-      const user = session.user as { id: string; role?: string }
-      if (user.role !== 'AGENT') {
-        throw createError({
-          statusCode: 403,
-          statusMessage: 'Only agents can place agent orders'
-        })
-      }
+      const user = await requireActiveUser(event, prisma, ['AGENT'])
       resolvedAgentId = user.id
 
       // An agent buys stock for their own location only. Take it from their profile — never from
       // the request body, which the agent controls.
       const agentProfile = await prisma.agentProfile.findUnique({
         where: { userId: user.id },
-        select: { locationId: true }
+        select: { locationId: true, defaultDiscountPct: true }
       })
 
       if (!agentProfile?.locationId) {
@@ -104,6 +84,7 @@ export default defineEventHandler(async (event) => {
       }
 
       agentLocationId = agentProfile.locationId
+      agentDiscountPct = Number(agentProfile.defaultDiscountPct) || 0
     }
 
     let normalizedMobilePhone: string | null = null
@@ -173,7 +154,17 @@ export default defineEventHandler(async (event) => {
         })
       }
 
-      const lineTotal = Number(item.unitPrice) * Number(item.quantity)
+      // The price is always decided here, never by the client. Public buyers pay the retail price
+      // they matched on above. Agents pay retail less their own discount, using the same formula
+      // as /api/agent/available-vouchers; if the matched vouchers carry different retail prices,
+      // the highest one is used so an agent can never pay less than intended.
+      let unitPrice = Number(item.unitPrice)
+      if (isAgentOrder) {
+        const retail = Math.max(...availableVouchers.map(v => Number(v.retailPrice)))
+        unitPrice = Number((retail * (1 - agentDiscountPct / 100)).toFixed(2))
+      }
+
+      const lineTotal = Number((unitPrice * Number(item.quantity)).toFixed(2))
       subtotal += lineTotal
       totalItems += Number(item.quantity)
 
@@ -183,7 +174,7 @@ export default defineEventHandler(async (event) => {
       orderItems.push({
         locationId: itemLocationId,
         quantity: Number(item.quantity),
-        unitPrice: Number(item.unitPrice),
+        unitPrice,
         lineTotal,
         hours: Number(item.hours),
         numberOfUsers: Number(item.numberOfUsers)
@@ -217,8 +208,6 @@ export default defineEventHandler(async (event) => {
       orderData.agentId = resolvedAgentId
     }
 
-    console.log('Order creation: Final orderData:', orderData)
-    
     // Create the order
     const order = await prisma.order.create({
       data: orderData
@@ -241,17 +230,6 @@ export default defineEventHandler(async (event) => {
       },
     })
     
-    console.log('Order creation: Created order:', order)
-    
-    // Verify the order was created with agentId
-    if (isAgentOrder) {
-      const verifyOrder = await prisma.order.findUnique({
-        where: { id: order.id },
-        select: { id: true, agentId: true, buyerEmail: true }
-      })
-      console.log('Order creation: Verification query result:', verifyOrder)
-    }
-
     // Initialize Paynow payment
     const { Paynow } = await import('paynow')
     const { integrationId, integrationKey } = requirePaynowCredentials()
@@ -261,9 +239,7 @@ export default defineEventHandler(async (event) => {
     // (the reverse proxy rewrites it to 127.0.0.1:3000).
     const baseUrl = getSiteUrl(event)
     paynow.resultUrl = `${baseUrl}/api/payments/paynow/webhook`
-    
-    console.log('Order creation: Setting webhook URL to:', paynow.resultUrl)
-    
+
     // Set return URL based on order type
     if (isAgentOrder) {
       paynow.returnUrl = `${baseUrl}/agent/purchase-success?orderId=${order.id}&total=${total}`
@@ -296,7 +272,23 @@ export default defineEventHandler(async (event) => {
     })
 
     if (!isAgentOrder) {
-      await reserveVouchersForOrder(order.id, vouchersToReserve)
+      const reserved = await reserveVouchersForOrder(order.id, vouchersToReserve)
+
+      // Another buyer took some of these vouchers between our availability check and the
+      // reservation. Give back what we did get and stop before charging anyone.
+      if (reserved < vouchersToReserve.length) {
+        await releaseReservedVouchers(prisma, order.id)
+        await prisma.payment.update({
+          where: { id: paymentRecord.id },
+          data: { status: 'FAILED', paynowStatusMsg: 'Vouchers no longer available' }
+        })
+        await prisma.order.update({ where: { id: order.id }, data: { status: 'FAILED' } })
+
+        throw createError({
+          statusCode: 409,
+          statusMessage: 'Some of these vouchers were just sold. Please try again.'
+        })
+      }
     }
 
     let response
@@ -381,11 +373,15 @@ export default defineEventHandler(async (event) => {
   }
 })
 
+/**
+ * Reserve vouchers for an order. The status:'AVAILABLE' guard makes this atomic per voucher, so
+ * two buyers racing for the same voucher cannot both reserve it. Returns how many were reserved.
+ */
 async function reserveVouchersForOrder(orderId: string, voucherIds: string[]) {
-  // Reserve vouchers
-  await prisma.voucher.updateMany({
+  const result = await prisma.voucher.updateMany({
     where: {
-      id: { in: voucherIds }
+      id: { in: voucherIds },
+      status: 'AVAILABLE'
     },
     data: {
       status: 'RESERVED',
@@ -393,4 +389,6 @@ async function reserveVouchersForOrder(orderId: string, voucherIds: string[]) {
       reservedAt: new Date()
     }
   })
+
+  return result.count
 }

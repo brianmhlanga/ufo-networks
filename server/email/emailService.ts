@@ -235,7 +235,17 @@ function getVoucherEmailTemplate({ orderId, total, vouchers }: {
   `
 }
 
-function getContactEmailTemplate({ firstName, lastName, email, phone, subject, message }: {
+/** Escape text from website visitors before putting it in an email's HTML. */
+function escapeHtml(value: unknown) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function getContactEmailTemplate(input: {
   firstName: string
   lastName: string
   email: string
@@ -243,6 +253,14 @@ function getContactEmailTemplate({ firstName, lastName, email, phone, subject, m
   subject: string
   message: string
 }) {
+  // Every field comes straight from the public contact form.
+  const firstName = escapeHtml(input.firstName)
+  const lastName = escapeHtml(input.lastName)
+  const email = escapeHtml(input.email)
+  const phone = escapeHtml(input.phone)
+  const subject = escapeHtml(input.subject)
+  const message = escapeHtml(input.message)
+
   const subjectLabels: Record<string, string> = {
     general: 'General Inquiry',
     voucher: 'Voucher Support',

@@ -2,6 +2,11 @@
 import { defineNuxtConfig } from 'nuxt/config'
 import Aura from '@primeuix/themes/aura';
 
+// Sessions are signed with this password. A known fallback would let anyone forge a login, so
+// it is only allowed outside production.
+const sessionPassword = process.env.NUXT_SESSION_PASSWORD
+  || (process.env.NODE_ENV === 'production' ? '' : 'development-session-password-change-me')
+
 export default defineNuxtConfig({
   nitro: {
     compatibilityDate: '2025-07-29'
@@ -83,7 +88,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     session: {
-      password: process.env.NUXT_SESSION_PASSWORD || 'development-session-password-change-me',
+      password: sessionPassword,
       maxAge: 60 * 60 * 24 * 7, // 1 week
     },
     paynowIntegrationId: process.env.PAYNOW_INTEGRATION_ID || process.env.NUXT_PAYNOW_INTEGRATION_ID || '',

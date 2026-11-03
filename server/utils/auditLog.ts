@@ -91,10 +91,10 @@ export async function requireAdminUser(event: H3Event, prisma: PrismaClient) {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { id: true, role: true, name: true, email: true },
+    select: { id: true, role: true, name: true, email: true, status: true },
   })
 
-  if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
+  if (!user || user.status !== 'ACTIVE' || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
     throw createError({
       statusCode: 403,
       statusMessage: 'Forbidden: Admin access required',

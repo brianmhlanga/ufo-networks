@@ -3,7 +3,32 @@ import { hash } from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
+/**
+ * This script wipes every table and creates demo logins with known passwords. Refuse to run it
+ * against production, or any non-local database, unless explicitly told to with ALLOW_DB_SEED=yes.
+ */
+function assertSafeToSeed() {
+  if (process.env.ALLOW_DB_SEED === 'yes') return
+
+  let host = ''
+  try {
+    host = new URL(process.env.DATABASE_URL || '').hostname
+  } catch {
+    host = ''
+  }
+  const isLocal = ['localhost', '127.0.0.1', '::1'].includes(host)
+
+  if (process.env.NODE_ENV === 'production' || !isLocal) {
+    console.error(
+      `Refusing to seed: this deletes all data. Database host is "${host || 'unknown'}". ` +
+      'Set ALLOW_DB_SEED=yes if you really mean to.',
+    )
+    process.exit(1)
+  }
+}
+
 async function main() {
+  assertSafeToSeed()
   console.log('🌱 Starting database seeding...')
 
   // Clear existing data (optional - comment out if you want to keep existing data)

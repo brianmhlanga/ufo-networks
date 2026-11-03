@@ -8,7 +8,7 @@ const ALLOWED_STATUSES = ['ACTIVE', 'INACTIVE', 'BLACKLISTED'] as const
 export default defineEventHandler(async (event) => {
   try {
     const session = await getUserSession(event)
-    if (!session?.user || session.user.role !== 'SUPER_ADMIN') {
+    if (!session?.user || (event.context.authUser as any)?.role !== 'SUPER_ADMIN') {
       throw createError({
         statusCode: 403,
         statusMessage: 'Super Admin access required (Admin is view-only)',

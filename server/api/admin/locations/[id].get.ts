@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   try {
     // Check if user is admin
     const session = await getUserSession(event)
-    if (!session?.user || !['SUPER_ADMIN', 'ADMIN'].includes(session.user.role)) {
+    if (!session?.user || !['SUPER_ADMIN', 'ADMIN'].includes((event.context.authUser as any)?.role)) {
       throw createError({
         statusCode: 401,
         statusMessage: 'Admin access required'

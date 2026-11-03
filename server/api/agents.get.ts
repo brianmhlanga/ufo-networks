@@ -8,12 +8,10 @@ export default defineEventHandler(async (event) => {
     const query = getQuery(event)
     const search = query.search as string
     const province = query.province as string
-    const status = query.status as string || 'ACTIVE'
-
-    // Build where clause
+    // Public listing: only ever active agents. Inactive or blacklisted agents are never exposed.
     const where: any = {
       role: 'AGENT',
-      status: status
+      status: 'ACTIVE'
     }
 
     // Add search filter
