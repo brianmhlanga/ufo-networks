@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '~/server/utils/prisma'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -137,7 +135,5 @@ export default defineEventHandler(async (event) => {
       statusCode: 500,
       statusMessage: 'Internal server error'
     })
-  } finally {
-    await prisma.$disconnect()
   }
 })

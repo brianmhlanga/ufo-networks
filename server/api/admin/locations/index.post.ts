@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '~/server/utils/prisma'
 import { getAuditActor, serializeForAudit, writeAuditLog } from '~/server/utils/auditLog'
-
-const prisma = new PrismaClient()
 
 export default defineEventHandler(async (event) => {
   try {

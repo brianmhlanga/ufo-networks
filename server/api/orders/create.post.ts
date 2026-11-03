@@ -1,11 +1,9 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '~/server/utils/prisma'
 import { getAuditActor, serializeForAudit, writeAuditLog } from '~/server/utils/auditLog'
 import { getPaynowAuthEmail, getSiteUrl, requirePaynowCredentials } from '~/server/utils/paynow'
 import { releaseReservedVouchers } from '~/server/utils/paymentFulfilment'
 import { normalizeZimbabwePhone } from '~/utils/phone'
 import { requireActiveUser } from '~/server/utils/requireRole'
-
-const prisma = new PrismaClient()
 
 export default defineEventHandler(async (event) => {
   try {

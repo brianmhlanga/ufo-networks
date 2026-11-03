@@ -1,6 +1,5 @@
-import { PrismaClient, Role } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { Role } from '@prisma/client'
+import { prisma } from '~/server/utils/prisma'
 
 const VALID_ROLES = new Set<string>(Object.values(Role))
 const VALID_STATUSES = new Set(['ACTIVE', 'INACTIVE', 'BLACKLISTED'])

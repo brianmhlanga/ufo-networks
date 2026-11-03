@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '~/server/utils/prisma'
 import bcrypt from 'bcryptjs'
 import { sendPasswordResetConfirmationEmail } from '~/server/email/emailService'
-
-const prisma = new PrismaClient()
 
 export default defineEventHandler(async (event) => {
   try {
@@ -116,7 +114,5 @@ export default defineEventHandler(async (event) => {
       statusCode: 500,
       statusMessage: 'Internal server error'
     })
-  } finally {
-    await prisma.$disconnect()
   }
 })

@@ -1,9 +1,8 @@
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 import { existsSync } from 'fs'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '~/server/utils/prisma'
 
-const prisma = new PrismaClient()
 export default defineEventHandler(async (event) => {
   try {
     // Check if user is authenticated and has admin role

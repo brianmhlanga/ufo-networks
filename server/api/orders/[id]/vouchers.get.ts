@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '~/server/utils/prisma'
 import { ensureVouchersForPaidOrder } from '~/server/utils/paymentFulfilment'
-
-const prisma = new PrismaClient()
 
 export default defineEventHandler(async (event) => {
   try {

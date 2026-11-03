@@ -1,9 +1,7 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '~/server/utils/prisma'
 import { getAuditActor, serializeForAudit, writeAuditLog } from '~/server/utils/auditLog'
 import { applyPaynowStatus } from '~/server/utils/paymentFulfilment'
 import { requirePaynowCredentials } from '~/server/utils/paynow'
-
-const prisma = new PrismaClient()
 
 /**
  * Paynow IPN (result URL) handler.

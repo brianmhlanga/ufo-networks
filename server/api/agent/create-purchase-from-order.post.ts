@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '~/server/utils/prisma'
 import { createAgentPurchaseFromOrder } from '~/server/utils/paymentFulfilment'
 import { requireActiveUser } from '~/server/utils/requireRole'
-
-const prisma = new PrismaClient()
 
 /**
  * Record the stock from the signed-in agent's own paid order. The webhook and status poll already

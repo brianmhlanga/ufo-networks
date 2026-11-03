@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '~/server/utils/prisma'
 import { getAuditActor } from '~/server/utils/auditLog'
 import { deleteVoucherWithDependencies } from '~/server/utils/deleteLocationCascade'
-
-const prisma = new PrismaClient()
 
 export default defineEventHandler(async (event) => {
   try {

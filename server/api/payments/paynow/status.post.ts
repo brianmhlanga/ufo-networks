@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '~/server/utils/prisma'
 import { applyPaynowStatus } from '~/server/utils/paymentFulfilment'
-
-const prisma = new PrismaClient()
 
 /**
  * Poll Paynow for the current status of a payment and apply it.

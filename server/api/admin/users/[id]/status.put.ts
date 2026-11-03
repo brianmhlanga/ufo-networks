@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '~/server/utils/prisma'
 import { getAuditActor, writeAuditLog } from '~/server/utils/auditLog'
-
-const prisma = new PrismaClient()
 
 const ALLOWED_STATUSES = ['ACTIVE', 'INACTIVE', 'BLACKLISTED'] as const
 

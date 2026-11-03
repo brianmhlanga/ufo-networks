@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '~/server/utils/prisma'
 import { resolveLocationCoords } from '~/utils/locationCoords'
-
-const prisma = new PrismaClient()
 
 export default defineEventHandler(async (event) => {
   try {
