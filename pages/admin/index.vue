@@ -783,40 +783,6 @@ const refreshAnalytics = () => {
   fetchAnalytics()
 }
 
-const generateSampleData = async () => {
-  try {
-    loading.value = true
-    
-    const response = await $fetch('/api/admin/analytics/sample-data', {
-      method: 'POST'
-    })
-    
-    if (response.success) {
-      toast.add({
-        severity: 'success',
-        summary: 'Success',
-        detail: response.message,
-        life: 3000
-      })
-      
-      // Refresh analytics after generating sample data
-      setTimeout(() => {
-        fetchAnalytics()
-      }, 1000)
-    }
-  } catch (error) {
-    console.error('Error generating sample data:', error)
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: 'Failed to generate sample data',
-      life: 3000
-    })
-  } finally {
-    loading.value = false
-  }
-}
-
 const exportData = () => {
   // TODO: Implement data export functionality
   toast.add({

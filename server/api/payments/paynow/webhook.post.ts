@@ -23,8 +23,6 @@ export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event)
 
-    console.log('Paynow webhook received:', body)
-
     const paymentReference = body?.reference
 
     if (!paymentReference) {

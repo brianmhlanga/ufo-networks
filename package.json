@@ -1,5 +1,5 @@
 {
-  "name": "UFO Networks",
+  "name": "ufo-networks",
   "private": true,
   "scripts": {
     "build": "prisma generate && nuxt build",
@@ -73,8 +73,7 @@
     "xlsx": "^0.18.5"
   },
   "version": "1.0.0",
-  "description": "review.co.zw",
-  "main": "index.js",
+  "description": "UFO Networks WiFi voucher sales platform",
   "keywords": [],
   "author": "",
   "license": "ISC",

@@ -1150,16 +1150,6 @@ header {
   }
 }
 
-/* Typewriter library styles */
-.Typewriter__wrapper {
-  display: inline-block;
-}
-
-.Typewriter__cursor {
-  color: white;
-  font-weight: bold;
-}
-
 /* Phone Image Animations */
 @keyframes phone-slide-1 {
   0%, 40% { opacity: 1; transform: translateY(0); }
