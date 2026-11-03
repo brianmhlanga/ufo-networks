@@ -27,7 +27,9 @@ export async function extractBatchNumbers(file: File): Promise<string[]> {
   // fetch it, which the CSP's `connect-src` blocks.
   const data = new Uint8Array(await file.arrayBuffer());
 
-  const pdf = await pdfjsLib.getDocument({ data }).promise;
+  // isEvalSupported: false blocks the known pdf.js font-eval exploit (CVE-2024-4367) on
+  // pdfjs-dist v3, where a crafted PDF could run JavaScript in the admin's browser.
+  const pdf = await pdfjsLib.getDocument({ data, isEvalSupported: false }).promise;
   let textContent = "";
 
   for (let i = 1; i <= pdf.numPages; i++) {

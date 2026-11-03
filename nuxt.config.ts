@@ -14,7 +14,6 @@ export default defineNuxtConfig({
   modules: [
     '@primevue/nuxt-module',
     'nuxt-auth-utils',
-    'nuxt-scheduler',
     ['nuxt-security', {
       enabled: true,
       strict: false,
