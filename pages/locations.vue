@@ -130,8 +130,11 @@
                     {{ location.area }}
                   </p>
                   <div class="flex flex-wrap items-center gap-2">
-                    <span class="inline-flex items-center rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
+                    <span v-if="location.totalVouchers > 0" class="inline-flex items-center rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
                       {{ location.totalVouchers }} voucher{{ location.totalVouchers === 1 ? '' : 's' }} available
+                    </span>
+                    <span v-else class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
+                      No vouchers yet
                     </span>
                     <span v-if="getLowestPrice(location)" class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
                       From ${{ getLowestPrice(location) }}
@@ -139,7 +142,15 @@
                   </div>
                 </div>
 
-                <button 
+                <button
+                  v-if="location.totalVouchers === 0"
+                  disabled
+                  class="mt-auto w-full bg-gray-100 text-gray-500 rounded-xl font-semibold py-3 cursor-not-allowed"
+                >
+                  Vouchers coming soon
+                </button>
+                <button
+                  v-else
                   @click="goToVouchers(location.id)"
                   class="mt-auto w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl font-semibold py-3 transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
                 >
@@ -155,7 +166,7 @@
           <!-- Results Summary -->
           <div v-if="!loading && locations.length > 0" class="text-center mt-12">
             <p class="text-secondary/70">
-              {{ totalLocations }} active location{{ totalLocations === 1 ? '' : 's' }}
+              {{ totalLocations }} location{{ totalLocations === 1 ? '' : 's' }}
             </p>
           </div>
         </div>
@@ -241,7 +252,7 @@ const onMapImageError = (event, locationId) => {
 const fetchLocations = async () => {
   try {
     loading.value = true
-    const response = await $fetch('/api/locations/with-vouchers')
+    const response = await $fetch('/api/locations/with-vouchers', { query: { all: 1 } })
     
     if (response && response.success) {
       locations.value = response.data || []

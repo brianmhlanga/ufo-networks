@@ -3,6 +3,11 @@ import { resolveLocationCoords } from '~/utils/locationCoords'
 
 export default defineEventHandler(async (event) => {
   try {
+    // ?all=1 returns every location, including ones with no stock (the public locations page
+    // lists them all). Without it, only locations with something to buy are returned, which is
+    // what the voucher purchase page needs.
+    const includeEmpty = ['1', 'true'].includes(String(getQuery(event).all || ''))
+
     // Get all locations with their available voucher types
     const locations = await prisma.location.findMany({
       select: {
@@ -62,8 +67,9 @@ export default defineEventHandler(async (event) => {
       })
     )
 
-    // Filter out locations with no available vouchers
-    const activeLocations = locationsWithVouchers.filter(location => location.totalVouchers > 0)
+    const activeLocations = includeEmpty
+      ? locationsWithVouchers
+      : locationsWithVouchers.filter(location => location.totalVouchers > 0)
 
     return {
       success: true,
